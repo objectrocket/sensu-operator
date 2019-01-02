@@ -19,7 +19,7 @@ limitations under the License.
 package v1beta1
 
 import (
-	v1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/sensu/v1beta1"
+	v1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
 	"github.com/objectrocket/sensu-operator/pkg/generated/clientset/versioned/scheme"
 	serializer "k8s.io/apimachinery/pkg/runtime/serializer"
 	rest "k8s.io/client-go/rest"
@@ -27,6 +27,7 @@ import (
 
 type SensuV1beta1Interface interface {
 	RESTClient() rest.Interface
+	CheckConfigsGetter
 	SensuBackupsGetter
 	SensuClustersGetter
 	SensuRestoresGetter
@@ -35,6 +36,10 @@ type SensuV1beta1Interface interface {
 // SensuV1beta1Client is used to interact with features provided by the sensu.io group.
 type SensuV1beta1Client struct {
 	restClient rest.Interface
+}
+
+func (c *SensuV1beta1Client) CheckConfigs(namespace string) CheckConfigInterface {
+	return newCheckConfigs(c, namespace)
 }
 
 func (c *SensuV1beta1Client) SensuBackups(namespace string) SensuBackupInterface {
