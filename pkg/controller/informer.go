@@ -23,6 +23,8 @@ import (
 	api "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
 	"github.com/objectrocket/sensu-operator/pkg/util/k8sutil"
 	"github.com/objectrocket/sensu-operator/pkg/util/probe"
+	sensucli "github.com/sensu/sensu-go/cli"
+	sensutypes "github.com/sensu/sensu-go/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -100,6 +102,7 @@ func (c *Controller) addInformer(namespace string, resourcePlural string, objTyp
 		fields.Everything())
 	informer.indexer, informer.controller = cache.NewIndexerInformer(source, objType, 0, cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
+			c.logger.Warnf("Adding %v to the queue", obj)
 			key, err := cache.MetaNamespaceKeyFunc(obj)
 			if err == nil {
 				informer.queue.Add(key)
@@ -253,13 +256,26 @@ func (c *Controller) onUpdateSensuAsset(newObj interface{}) {
 }
 
 func (c *Controller) onDeleteSensuAsset(obj interface{}) {
-	//TODO: Implement
-	c.logger.Warnf("Deleting SensuAssets not implemented.  Not deleting: %v", obj)
+	//TODO: Implement this once it's supported by sensu
+	c.logger.Warnf("Deleting SensuAssets not implemented.  Not Deleting: %v", obj)
 }
 
 func (c *Controller) syncSensuAsset(obj *api.SensuAsset) {
-	//TODO: Implement
-	c.logger.Warnf("Syncing SensuAssets not implemented.  Not syncing: %v", obj)
+	var (
+		apiAsset *sensutypes.Asset
+		cli      *sensucli.SensuCli
+		err      error
+	)
+
+	apiAsset, err = cli.Client.FetchAsset(obj.Name)
+	if err != nil {
+		c.logger.Warnf("Error fetching asset: %v", err)
+	}
+	apiAsset = obj.ToAPISensuAsset()
+	err = cli.Client.CreateAsset(apiAsset)
+	if err != nil {
+		c.logger.Warnf("Failed to handle syncSensuAsset event: %v", err)
+	}
 }
 
 func (c *Controller) managed(clus *api.SensuCluster) bool {

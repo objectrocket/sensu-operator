@@ -15,6 +15,7 @@
 package v1beta1
 
 import (
+	sensutypes "github.com/sensu/sensu-go/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -36,7 +37,36 @@ type SensuAssetList struct {
 type SensuAsset struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	URL               string   `json:"url"`
-	SHA512            string   `json:"sha512"`
-	Filters           []string `json:"filters"`
+	// URL is the location of the asset
+	URL string `json:"url,omitempty"`
+
+	// Sha512 is the SHA-512 checksum of the asset
+	Sha512 string `json:"sha512,omitempty"`
+
+	// Metadata is a set of key value pair associated with the asset
+	Metadata map[string]string `json:"asset_metadata"`
+
+	// Filters are a collection of sensu queries, used by the system to determine
+	// if the asset should be installed. If more than one filter is present the
+	// queries are joined by the "AND" operator.
+	Filters []string `son:"filters"`
+
+	// Organization indicates to which org an asset belongs to
+	Organization string `json:"organization,omitempty"`
+	ClusterName  string `json:"clusterName"`
+}
+
+// ToAPISensuAsset returns a value of the SensuAsset type from the Sensu API
+func (a SensuAsset) ToAPISensuAsset() *sensutypes.Asset {
+	return &sensutypes.Asset{
+		ObjectMeta: sensutypes.ObjectMeta{
+			Name:        a.ObjectMeta.Name,
+			Namespace:   a.ObjectMeta.Namespace,
+			Labels:      a.ObjectMeta.Labels,
+			Annotations: a.ObjectMeta.Annotations,
+		},
+		URL:     a.URL,
+		Sha512:  a.Sha512,
+		Filters: a.Filters,
+	}
 }
