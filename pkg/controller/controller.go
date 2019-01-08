@@ -22,6 +22,7 @@ import (
 	"github.com/objectrocket/sensu-operator/pkg/cluster"
 	"github.com/objectrocket/sensu-operator/pkg/generated/clientset/versioned"
 	"github.com/objectrocket/sensu-operator/pkg/util/k8sutil"
+	sensucli "github.com/sensu/sensu-go/cli"
 	"github.com/sirupsen/logrus"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	kwatch "k8s.io/apimachinery/pkg/watch"
@@ -78,6 +79,10 @@ type Config struct {
 	WorkerThreads     int
 	ProcessingRetries int
 	ResyncPeriod      time.Duration
+}
+
+func clientForCluster(name string) (*sensucli.SensuCli, error) {
+	return nil, nil
 }
 
 func New(cfg Config) *Controller {

@@ -10,6 +10,7 @@ rules:
   - sensuclusters
   - sensubackups
   - sensurestores
+  - sensuassets
   verbs:
   - "*"
 - apiGroups:

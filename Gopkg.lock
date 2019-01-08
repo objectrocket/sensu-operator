@@ -310,6 +310,7 @@
   name = "github.com/sensu/sensu-go"
   packages = [
     "api/core/v2",
+    "cli",
     "cli/client",
     "cli/client/config",
     "cli/client/config/basic",
@@ -343,6 +344,16 @@
   packages = ["."]
   revision = "298182f68c66c05229eb03ac171abe6e309ee79a"
   version = "v1.0.3"
+
+[[projects]]
+  name = "github.com/stretchr/testify"
+  packages = [
+    "assert",
+    "require",
+    "suite"
+  ]
+  revision = "ffdc059bfe9ce6a4e144ba849dbedead332c6053"
+  version = "v1.3.0"
 
 [[projects]]
   branch = "master"
@@ -671,6 +682,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "fb7846d74a1321e1d1994244c4b960317a9a2b1f0b645faff33362eff1957224"
+  inputs-digest = "fe3dfc67f2deecf75b4855f5dd0308e1fae0f158fe8e9aeb79285b4aeb487ce9"
   solver-name = "gps-cdcl"
   solver-version = 1
