@@ -82,6 +82,7 @@ func (s *InformerTestSuite) TestInformerWithNoEvents() {
 		source          *cache.ListWatch
 		clusterInformer Informer
 		assetInformer   Informer
+		handlerInformer Informer
 	)
 
 	controller := New(Config{
@@ -99,6 +100,11 @@ func (s *InformerTestSuite) TestInformerWithNoEvents() {
 	assetInformer.controller = fakeController{}
 	assetInformer.queue = fakeQueue{}
 	controller.informers[api.SensuAssetResourcePlural] = &assetInformer
+
+	handlerInformer.indexer = fakeIndexer{}
+	handlerInformer.controller = fakeController{}
+	handlerInformer.queue = fakeQueue{}
+	controller.informers[api.SensuHandlerResourcePlural] = &handlerInformer
 
 	err := controller.initResource()
 	s.Require().NoErrorf(err, "Failed to init resources: %v", err)
@@ -171,6 +177,7 @@ func (s *InformerTestSuite) TestInformerWithOneCluster() {
 		source          *cache.ListWatch
 		clusterInformer Informer
 		assetInformer   Informer
+		handlerInformer Informer
 	)
 
 	controller := New(Config{
@@ -188,6 +195,12 @@ func (s *InformerTestSuite) TestInformerWithOneCluster() {
 	assetInformer.controller = fakeController{}
 	assetInformer.queue = fakeQueue{}
 	controller.informers[api.SensuAssetResourcePlural] = &assetInformer
+
+	handlerInformer.indexer = fakeIndexer{}
+	handlerInformer.controller = fakeController{}
+	handlerInformer.queue = fakeQueue{}
+	controller.informers[api.SensuHandlerResourcePlural] = &handlerInformer
+
 	err := controller.initResource()
 	s.Require().NoErrorf(err, "Failed to init resources: %v", err)
 	probe.SetReady()

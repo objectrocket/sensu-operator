@@ -15,6 +15,7 @@
 package v1beta1
 
 import (
+	sensutypes "github.com/sensu/sensu-go/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -41,10 +42,10 @@ type SensuHandler struct {
 	Command           string        `json:"command"`
 	Timeout           uint32        `json:"timeout"`
 	Socket            HandlerSocket `json:"socket"`
-	Handlers          string        `json:"handlers"`
-	Filters           string        `json:"filters"`
-	EnvVars           string        `json:"envVars"`
-	RuntimeAssets     string        `json:"runtimeAssets"`
+	Handlers          []string      `json:"handlers"`
+	Filters           []string      `json:"filters"`
+	EnvVars           []string      `json:"envVars"`
+	RuntimeAssets     []string      `json:"runtimeAssets"`
 }
 
 // +k8s:deepcopy-gen=false
@@ -52,4 +53,28 @@ type SensuHandler struct {
 type HandlerSocket struct {
 	Host string `json:"host"`
 	Port uint32 `json:"port"`
+}
+
+// ToAPISensuHandler returns a value of the Handler type from the Sensu API
+func (a SensuHandler) ToAPISensuHandler() *sensutypes.Handler {
+	return &sensutypes.Handler{
+		ObjectMeta: sensutypes.ObjectMeta{
+			Name:        a.ObjectMeta.Name,
+			Namespace:   a.ObjectMeta.Namespace,
+			Labels:      a.ObjectMeta.Labels,
+			Annotations: a.ObjectMeta.Annotations,
+		},
+		Type:     a.Type,
+		Mutator:  a.Mutator,
+		Command:  a.Command,
+		Timeout:  a.Timeout,
+		Handlers: a.Handlers,
+		Socket: &sensutypes.HandlerSocket{
+			Host: a.Socket.Host,
+			Port: a.Socket.Port,
+		},
+		Filters:       a.Filters,
+		EnvVars:       a.EnvVars,
+		RuntimeAssets: a.RuntimeAssets,
+	}
 }

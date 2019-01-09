@@ -452,6 +452,13 @@ func (in *SensuAsset) DeepCopyInto(out *SensuAsset) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+	if in.Metadata != nil {
+		in, out := &in.Metadata, &out.Metadata
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	if in.Filters != nil {
 		in, out := &in.Filters, &out.Filters
 		*out = make([]string, len(*in))
@@ -655,6 +662,26 @@ func (in *SensuHandler) DeepCopyInto(out *SensuHandler) {
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
 	out.Socket = in.Socket
+	if in.Handlers != nil {
+		in, out := &in.Handlers, &out.Handlers
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.Filters != nil {
+		in, out := &in.Filters, &out.Filters
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.EnvVars != nil {
+		in, out := &in.EnvVars, &out.EnvVars
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.RuntimeAssets != nil {
+		in, out := &in.RuntimeAssets, &out.RuntimeAssets
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 

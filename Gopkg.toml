@@ -56,3 +56,7 @@
 [[constraint]]
   name = "github.com/sensu/sensu-go"
   branch = "master"
+
+[[override]]
+  name = "github.com/pmezard/go-difflib"
+  version = "1.0.0"

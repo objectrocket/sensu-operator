@@ -63,6 +63,7 @@ func (c *Controller) Start(ctx context.Context) {
 	}
 	c.addInformer(ns, api.SensuClusterResourcePlural, &api.SensuCluster{})
 	c.addInformer(ns, api.SensuAssetResourcePlural, &api.SensuAsset{})
+	c.addInformer(ns, api.SensuHandlerResourcePlural, &api.SensuHandler{})
 	c.startProcessing(ctx)
 }
 
@@ -70,16 +71,22 @@ func (c *Controller) startProcessing(ctx context.Context) {
 	var (
 		clusterController hasSynced
 		assetController   hasSynced
+		handlerController hasSynced
 	)
 	clusterController = c.informers[api.SensuClusterResourcePlural].controller
 	assetController = c.informers[api.SensuAssetResourcePlural].controller
+	handlerController = c.informers[api.SensuHandlerResourcePlural].controller
 	go clusterController.Run(ctx.Done())
 	go assetController.Run(ctx.Done())
+	go handlerController.Run(ctx.Done())
 	if !cache.WaitForCacheSync(ctx.Done(), clusterController.HasSynced) {
 		c.logger.Fatal("Timed out waiting for cluster caches to sync")
 	}
 	if !cache.WaitForCacheSync(ctx.Done(), assetController.HasSynced) {
 		c.logger.Fatal("Timed out waiting for asset caches to sync")
+	}
+	if !cache.WaitForCacheSync(ctx.Done(), handlerController.HasSynced) {
+		c.logger.Fatal("Timed out waiting for handler caches to sync")
 	}
 	for i := 0; i < c.Config.WorkerThreads; i++ {
 		go wait.Until(c.run, time.Second, ctx.Done())
@@ -141,6 +148,12 @@ func (c *Controller) run() {
 		for c.processNextAssetItem() {
 		}
 	}()
+	go func() {
+		defer wg.Done()
+		defer c.informers[api.SensuHandlerResourcePlural].queue.ShutDown()
+		for c.processNextHandlerItem() {
+		}
+	}()
 	wg.Wait()
 }
 
@@ -189,6 +202,30 @@ func (c *Controller) processNextAssetItem() bool {
 		}
 	}
 	assetInformer.queue.Forget(key)
+	return true
+}
+
+func (c *Controller) processNextHandlerItem() bool {
+	var handlerInformer = c.informers[api.SensuHandlerResourcePlural]
+	key, quit := handlerInformer.queue.Get()
+	if quit {
+		return false
+	}
+	defer handlerInformer.queue.Done(key)
+	obj, exists, err := handlerInformer.indexer.GetByKey(key.(string))
+	if err != nil {
+		if handlerInformer.queue.NumRequeues(key) < c.Config.ProcessingRetries {
+			handlerInformer.queue.AddRateLimited(key)
+			return true
+		}
+	} else {
+		if !exists {
+			c.onDeleteSensuHandler(obj)
+		} else {
+			c.onUpdateSensuHandler(obj)
+		}
+	}
+	handlerInformer.queue.Forget(key)
 	return true
 }
 
@@ -275,6 +312,33 @@ func (c *Controller) syncSensuAsset(obj *api.SensuAsset) {
 	err = cli.Client.CreateAsset(apiAsset)
 	if err != nil {
 		c.logger.Warnf("Failed to handle syncSensuAsset event: %v", err)
+	}
+}
+
+func (c *Controller) onUpdateSensuHandler(newObj interface{}) {
+	c.syncSensuHandler(newObj.(*api.SensuHandler))
+}
+
+func (c *Controller) onDeleteSensuHandler(obj interface{}) {
+	//TODO: Implement this once it's supported by sensu
+	c.logger.Warnf("Deleting SensuHandlers not implemented.  Not Deleting: %v", obj)
+}
+
+func (c *Controller) syncSensuHandler(obj *api.SensuHandler) {
+	var (
+		apiHandler *sensutypes.Handler
+		cli        *sensucli.SensuCli
+		err        error
+	)
+
+	apiHandler, err = cli.Client.FetchHandler(obj.Name)
+	if err != nil {
+		c.logger.Warnf("Error fetching handler: %v", err)
+	}
+	apiHandler = obj.ToAPISensuHandler()
+	err = cli.Client.CreateHandler(apiHandler)
+	if err != nil {
+		c.logger.Warnf("Failed to handle syncSensuHandler event: %v", err)
 	}
 }
 
