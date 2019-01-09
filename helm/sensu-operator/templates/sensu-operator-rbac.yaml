@@ -20,6 +20,8 @@ rules:
   - objectrocket.com
   resources:
   - sensuclusters
+  - sensuassets
+  - sensuhandlers
   - sensubackups
   - sensurestores
   verbs:
@@ -44,6 +46,12 @@ rules:
   - apps
   resources:
   - deployments
+  verbs:
+  - "*"
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - networkpolicies
   verbs:
   - "*"
 # The following permissions can be removed if not using S3 backup and TLS
