@@ -30,16 +30,20 @@ const (
 
 	SensuRestoreResourceKind   = "SensuRestore"
 	SensuRestoreResourcePlural = "sensurestores"
+
+	SensuCheckConfigResourceKind   = "SensuCheckConfig"
+	SensuCheckConfigResourcePlural = "sensucheckconfigs"
 )
 
 var (
 	SchemeBuilder = runtime.NewSchemeBuilder(addKnownTypes)
 	AddToScheme   = SchemeBuilder.AddToScheme
 
-	SchemeGroupVersion  = schema.GroupVersion{Group: groupName, Version: "v1beta1"}
-	SensuClusterCRDName = SensuClusterResourcePlural + "." + groupName
-	SensuBackupCRDName  = SensuBackupResourcePlural + "." + groupName
-	SensuRestoreCRDName = SensuRestoreResourcePlural + "." + groupName
+	SchemeGroupVersion      = schema.GroupVersion{Group: groupName, Version: "v1beta1"}
+	SensuClusterCRDName     = SensuClusterResourcePlural + "." + groupName
+	SensuBackupCRDName      = SensuBackupResourcePlural + "." + groupName
+	SensuRestoreCRDName     = SensuRestoreResourcePlural + "." + groupName
+	SensuCheckConfigCRDName = SensuCheckConfigResourcePlural + "." + groupName
 )
 
 // Resource gets a SensuCluster GroupResource for a specified resource
@@ -56,6 +60,8 @@ func addKnownTypes(s *runtime.Scheme) error {
 		&SensuBackupList{},
 		&SensuRestore{},
 		&SensuRestoreList{},
+		&SensuCheckConfig{},
+		&SensuCheckConfigList{},
 	)
 	metav1.AddToGroupVersion(s, SchemeGroupVersion)
 	return nil

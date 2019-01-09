@@ -41,8 +41,9 @@ func init() {
 // Start the controller's informer to watch for custom resource update
 func (c *Controller) Start(ctx context.Context) {
 	var (
-		ns     string
-		source *cache.ListWatch
+		ns                   string
+		source               *cache.ListWatch
+		checkConfigListWatch *cache.ListWatch
 	)
 	// TODO: get rid of this init code. CRD and storage class will be managed outside of operator.
 	for {
@@ -61,14 +62,16 @@ func (c *Controller) Start(ctx context.Context) {
 	} else {
 		ns = c.Config.Namespace
 	}
+
 	c.queue = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 	defer c.queue.ShutDown()
+
 	source = cache.NewListWatchFromClient(
 		c.Config.SensuCRCli.ObjectrocketV1beta1().RESTClient(),
 		api.SensuClusterResourcePlural,
 		ns,
 		fields.Everything())
-	c.indexer, c.informer = cache.NewIndexerInformer(source, &api.SensuCluster{}, 0, cache.ResourceEventHandlerFuncs{
+	c.indexer, c.informer = cache.NewIndexerInformer(source, &api.SensuCluster{}, 60*time.Second, cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			key, err := cache.MetaNamespaceKeyFunc(obj)
 			if err == nil {
@@ -90,6 +93,38 @@ func (c *Controller) Start(ctx context.Context) {
 			}
 		},
 	}, cache.Indexers{})
+
+	c.checkConfigQueue = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
+	defer c.checkConfigQueue.ShutDown()
+
+	checkConfigListWatch = cache.NewListWatchFromClient(
+		c.Config.SensuCRCli.ObjectrocketV1beta1().RESTClient(),
+		api.SensuCheckConfigResourcePlural,
+		ns,
+		fields.Everything())
+	c.checkConfigIndexer, c.checkConfigInformer = cache.NewIndexerInformer(checkConfigListWatch, &api.SensuCheckConfig{}, 60*time.Second, cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			key, err := cache.MetaNamespaceKeyFunc(obj)
+			if err == nil {
+				c.checkConfigQueue.Add(key)
+			}
+		},
+		UpdateFunc: func(old interface{}, new interface{}) {
+			key, err := cache.MetaNamespaceKeyFunc(new)
+			if err == nil {
+				c.checkConfigQueue.Add(key)
+			}
+		},
+		DeleteFunc: func(obj interface{}) {
+			// IndexerInformer uses a delta queue, therefore for deletes we have to use this
+			// key function.
+			key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
+			if err == nil {
+				c.checkConfigQueue.Add(key)
+			}
+		},
+	}, cache.Indexers{})
+
 	c.startProcessing(ctx)
 }
 
@@ -105,8 +140,15 @@ func (c *Controller) startProcessing(ctx context.Context) {
 	if !cache.WaitForCacheSync(infCtx.Done(), c.informer.HasSynced) {
 		c.logger.Fatal("Timed out waiting for caches to sync")
 	}
+	go c.checkConfigInformer.Run(infCtx.Done())
+	if !cache.WaitForCacheSync(infCtx.Done(), c.checkConfigInformer.HasSynced) {
+		c.logger.Fatal("Timed out waiting for checkconfig caches to sync")
+	}
 	for i := 0; i < c.Config.WorkerThreads; i++ {
+		c.logger.Infof("Running cluster controller/informer work queue loop...")
 		go wait.Until(c.run, time.Second, untilStopCh)
+		c.logger.Infof("Running checkconfig controller/informer work queue loop...")
+		go wait.Until(c.runCheckConfig, time.Second, untilStopCh)
 	}
 	select {
 	case <-ctx.Done():

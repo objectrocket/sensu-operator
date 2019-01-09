@@ -15,6 +15,8 @@
 package controller
 
 import (
+	"os"
+	"runtime/pprof"
 	"time"
 )
 
@@ -34,6 +36,7 @@ func newPanicTimer(d time.Duration, msg string) *panicTimer {
 
 func (pt *panicTimer) start() {
 	pt.t = time.AfterFunc(pt.d, func() {
+		pprof.Lookup("goroutine").WriteTo(os.Stdout, 1)
 		panic(pt.msg)
 	})
 }

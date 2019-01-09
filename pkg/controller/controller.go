@@ -33,11 +33,15 @@ import (
 
 var initRetryWaitTime = 30 * time.Second
 
+// Event is the cluster event that pairs the event type (add/update/delete)
+// with the sensu cluster object, and is passed through the controller
 type Event struct {
 	Type   kwatch.EventType
 	Object *api.SensuCluster
 }
 
+// Controller is a sensu controller for CRDs, handling each with a workqueue
+// which manages the lifecycle of clusters, and resource within sensu clusters
 type Controller struct {
 	logger *logrus.Entry
 	Config
@@ -45,9 +49,15 @@ type Controller struct {
 	indexer  cache.Indexer
 	queue    workqueue.RateLimitingInterface
 	informer cache.Controller
+
+	checkConfigQueue    workqueue.RateLimitingInterface
+	checkConfigIndexer  cache.Indexer
+	checkConfigInformer cache.Controller
+
 	clusters map[string]*cluster.Cluster
 }
 
+// Config is the configuration for the sensu controller
 type Config struct {
 	Namespace         string
 	ClusterWide       bool
@@ -60,6 +70,11 @@ type Config struct {
 	ProcessingRetries int
 }
 
+func init() {
+	logrus.SetLevel(logrus.DebugLevel)
+}
+
+// New returns a sensu controller given a configuration
 func New(cfg Config) *Controller {
 	return &Controller{
 		logger: logrus.WithField("pkg", "controller"),
@@ -137,5 +152,14 @@ func (c *Controller) initCRD() error {
 	if err != nil {
 		return fmt.Errorf("failed to create CRD: %v", err)
 	}
-	return k8sutil.WaitCRDReady(c.KubeExtCli, api.SensuClusterCRDName)
+	err = k8sutil.CreateCRD(c.KubeExtCli, api.SensuCheckConfigCRDName, api.SensuCheckConfigResourceKind, api.SensuCheckConfigResourcePlural, "checkconfig")
+	if err != nil {
+		return fmt.Errorf("failed to create CRD: %v", err)
+	}
+	for _, crdName := range []string{api.SensuClusterCRDName, api.SensuCheckConfigCRDName} {
+		if err = k8sutil.WaitCRDReady(c.KubeExtCli, crdName); err != nil {
+			return fmt.Errorf("CRD for %s failed to become ready", crdName)
+		}
+	}
+	return nil
 }
