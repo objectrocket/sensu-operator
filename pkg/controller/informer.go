@@ -271,7 +271,7 @@ func (c *Controller) syncSensuAsset(obj *api.SensuAsset) {
 	if err != nil {
 		c.logger.Warnf("Error fetching asset: %v", err)
 	}
-	apiAsset = obj.ToAPISensuAsset()
+	apiAsset = obj.ToSensuType()
 	err = cli.Client.CreateAsset(apiAsset)
 	if err != nil {
 		c.logger.Warnf("Failed to handle syncSensuAsset event: %v", err)

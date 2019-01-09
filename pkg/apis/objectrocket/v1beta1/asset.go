@@ -57,7 +57,7 @@ type SensuAsset struct {
 }
 
 // ToAPISensuAsset returns a value of the SensuAsset type from the Sensu API
-func (a SensuAsset) ToAPISensuAsset() *sensutypes.Asset {
+func (a SensuAsset) ToSensuType() *sensutypes.Asset {
 	return &sensutypes.Asset{
 		ObjectMeta: sensutypes.ObjectMeta{
 			Name:        a.ObjectMeta.Name,
