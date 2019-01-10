@@ -9,38 +9,6 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-func (c *Controller) runCheckConfig() {
-	for c.processNextCheckConfigItem() {
-	}
-}
-
-func (c *Controller) processNextCheckConfigItem() bool {
-	key, quit := c.checkConfigQueue.Get()
-	if quit {
-		return false
-	}
-	defer c.checkConfigQueue.Done(key)
-	obj, exists, err := c.checkConfigIndexer.GetByKey(key.(string))
-	c.logger.Debugf("key: %+v, obj: %+v, exists: %t, err: %+v from checkConfigIndexer.GetByKey", key, obj, exists, err)
-	if err != nil {
-		if c.checkConfigQueue.NumRequeues(key) < c.Config.ProcessingRetries {
-			c.logger.Debugf("running checkConfigQueue.AddRateLimited(key) while managing checkconfigs")
-			c.checkConfigQueue.AddRateLimited(key)
-			return true
-		}
-	} else {
-		if !exists {
-			c.logger.Debugf("Calling onDeleteSensuCheckConfig with obj: %+v", obj)
-			c.onDeleteSensuCheckConfig(obj)
-		} else {
-			c.logger.Debugf("Calling onUpdateSensuCheckConfig with obj: %+v", obj)
-			c.onUpdateSensuCheckConfig(obj)
-		}
-	}
-	c.queue.Forget(key)
-	return true
-}
-
 func (c *Controller) onUpdateSensuCheckConfig(newObj interface{}) {
 	c.syncSensuCheckConfig(newObj.(*api.SensuCheckConfig))
 }

@@ -23,6 +23,7 @@ rules:
   - sensubackups
   - sensurestores
   - sensucheckconfigs
+  - sensuassets
   verbs:
   - "*"
 - apiGroups:

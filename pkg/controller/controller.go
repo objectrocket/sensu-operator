@@ -28,7 +28,6 @@ import (
 	kwatch "k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/util/workqueue"
 )
 
 var initRetryWaitTime = 30 * time.Second
@@ -68,8 +67,9 @@ type Informer struct {
 type Controller struct {
 	logger *logrus.Entry
 	Config
-	informers map[string]*Informer
-	clusters  map[string]*cluster.Cluster
+	informers  map[string]*Informer
+	clusters   map[string]*cluster.Cluster
+	finalizers map[string]cache.Indexer
 }
 
 // Config is the configuration for the sensu controller
@@ -97,10 +97,11 @@ func init() {
 // New returns a sensu controller given a configuration
 func New(cfg Config) *Controller {
 	return &Controller{
-		logger:    logrus.WithField("pkg", "controller"),
-		informers: make(map[string]*Informer),
-		Config:    cfg,
-		clusters:  make(map[string]*cluster.Cluster),
+		logger:     logrus.WithField("pkg", "controller"),
+		informers:  make(map[string]*Informer),
+		Config:     cfg,
+		clusters:   make(map[string]*cluster.Cluster),
+		finalizers: make(map[string]cache.Indexer),
 	}
 }
 
@@ -183,6 +184,14 @@ func (c *Controller) initCRD() error {
 	err = k8sutil.WaitCRDReady(c.KubeExtCli, api.SensuAssetCRDName)
 	if err != nil {
 		return fmt.Errorf("failed to create %s CRD: %v", api.SensuAssetCRDName, err)
+	}
+	err = k8sutil.CreateCRD(c.KubeExtCli, api.SensuCheckConfigCRDName, api.SensuCheckConfigResourceKind, api.SensuCheckConfigResourcePlural, "sensucheckconfig")
+	if err != nil {
+		return fmt.Errorf("failed to create %s CRD: %v", api.SensuCheckConfigCRDName, err)
+	}
+	err = k8sutil.WaitCRDReady(c.KubeExtCli, api.SensuCheckConfigCRDName)
+	if err != nil {
+		return fmt.Errorf("failed to create %s CRD: %v", api.SensuCheckConfigCRDName, err)
 	}
 	return nil
 }

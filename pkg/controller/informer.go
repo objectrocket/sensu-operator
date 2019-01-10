@@ -44,9 +44,7 @@ func init() {
 // Start the controller's informer to watch for custom resource update
 func (c *Controller) Start(ctx context.Context) {
 	var (
-		ns                   string
-		source               *cache.ListWatch
-		checkConfigListWatch *cache.ListWatch
+		ns string
 	)
 	// TODO: get rid of this init code. CRD and storage class will be managed outside of operator.
 	for {
@@ -67,23 +65,30 @@ func (c *Controller) Start(ctx context.Context) {
 	}
 	c.addInformer(ns, api.SensuClusterResourcePlural, &api.SensuCluster{})
 	c.addInformer(ns, api.SensuAssetResourcePlural, &api.SensuAsset{})
+	c.addInformer(ns, api.SensuCheckConfigResourcePlural, &api.SensuCheckConfig{})
 	c.startProcessing(ctx)
 }
 
 func (c *Controller) startProcessing(ctx context.Context) {
 	var (
-		clusterController hasSynced
-		assetController   hasSynced
+		clusterController     hasSynced
+		assetController       hasSynced
+		checkconfigController hasSynced
 	)
 	clusterController = c.informers[api.SensuClusterResourcePlural].controller
 	assetController = c.informers[api.SensuAssetResourcePlural].controller
+	checkconfigController = c.informers[api.SensuCheckConfigResourcePlural].controller
 	go clusterController.Run(ctx.Done())
 	go assetController.Run(ctx.Done())
+	go checkconfigController.Run(ctx.Done())
 	if !cache.WaitForCacheSync(ctx.Done(), clusterController.HasSynced) {
 		c.logger.Fatal("Timed out waiting for cluster caches to sync")
 	}
 	if !cache.WaitForCacheSync(ctx.Done(), assetController.HasSynced) {
 		c.logger.Fatal("Timed out waiting for asset caches to sync")
+	}
+	if !cache.WaitForCacheSync(ctx.Done(), checkconfigController.HasSynced) {
+		c.logger.Fatal("Timed out waiting for checkconfig caches to sync")
 	}
 	for i := 0; i < c.Config.WorkerThreads; i++ {
 		go wait.Until(c.run, time.Second, ctx.Done())
@@ -104,12 +109,15 @@ func (c *Controller) addInformer(namespace string, resourcePlural string, objTyp
 		resourcePlural,
 		namespace,
 		fields.Everything())
+	//create deleted indexer for custom deployment
+	finalizer := cache.NewIndexer(cache.DeletionHandlingMetaNamespaceKeyFunc, cache.Indexers{})
 	informer.indexer, informer.controller = cache.NewIndexerInformer(source, objType, 0, cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			c.logger.Warnf("Adding %v to the queue", obj)
 			key, err := cache.MetaNamespaceKeyFunc(obj)
 			if err == nil {
 				informer.queue.Add(key)
+				finalizer.Delete(obj)
 			}
 		},
 		UpdateFunc: func(old interface{}, new interface{}) {
@@ -123,16 +131,18 @@ func (c *Controller) addInformer(namespace string, resourcePlural string, objTyp
 			// key function.
 			key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 			if err == nil {
+				finalizer.Add(obj)
 				informer.queue.Add(key)
 			}
 		},
 	}, cache.Indexers{})
 	c.informers[resourcePlural] = &informer
+	c.finalizers[resourcePlural] = finalizer
 }
 
 func (c *Controller) run() {
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(3)
 	go func() {
 		defer wg.Done()
 		defer c.informers[api.SensuClusterResourcePlural].queue.ShutDown()
@@ -143,6 +153,12 @@ func (c *Controller) run() {
 		defer wg.Done()
 		defer c.informers[api.SensuAssetResourcePlural].queue.ShutDown()
 		for c.processNextAssetItem() {
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		defer c.informers[api.SensuCheckConfigResourcePlural].queue.ShutDown()
+		for c.processNextCheckConfigItem() {
 		}
 	}()
 	wg.Wait()
@@ -164,6 +180,9 @@ func (c *Controller) processNextClusterItem() bool {
 	} else {
 		if !exists {
 			c.onDeleteSensuClus(obj)
+			// Finalizers do nothing with sensu clusters?
+			// TODO: verify
+			c.finalizers[api.SensuClusterResourcePlural].Delete(key)
 		} else {
 			c.onUpdateSensuClus(obj)
 		}
@@ -187,12 +206,58 @@ func (c *Controller) processNextAssetItem() bool {
 		}
 	} else {
 		if !exists {
-			c.onDeleteSensuAsset(obj)
+			_, exists, err := c.finalizers[api.SensuAssetResourcePlural].GetByKey(key.(string))
+			if exists && err != nil {
+				c.finalizers[api.SensuAssetResourcePlural].Delete(key)
+			}
 		} else {
-			c.onUpdateSensuAsset(obj)
+			if obj != nil {
+				c.onUpdateSensuAsset(obj)
+				asset := obj.(*api.SensuAsset)
+				// If asset deletion has been initiated, also delete asset from sensu cluster
+				if asset.DeletionTimestamp != nil {
+					c.onDeleteSensuAsset(obj)
+				}
+			}
 		}
 	}
 	assetInformer.queue.Forget(key)
+	return true
+}
+
+func (c *Controller) processNextCheckConfigItem() bool {
+	var checkconfigInformer = c.informers[api.SensuCheckConfigResourcePlural]
+	key, quit := checkconfigInformer.queue.Get()
+	c.logger.Warnf("key from Get on checkconfigInformer.queue: %+v", key)
+	if quit {
+		return false
+	}
+	defer checkconfigInformer.queue.Done(key)
+	obj, exists, err := checkconfigInformer.indexer.GetByKey(key.(string))
+	c.logger.Warnf("obj: %+v, exists: %t, err: %+v from GetByKey on checkconfigInformer.indexer", obj, exists, err)
+	if err != nil {
+		if checkconfigInformer.queue.NumRequeues(key) < c.Config.ProcessingRetries {
+			checkconfigInformer.queue.AddRateLimited(key)
+			return true
+		}
+	} else {
+		if !exists {
+			_, exists, err := c.finalizers[api.SensuCheckConfigResourcePlural].GetByKey(key.(string))
+			if exists && err != nil {
+				c.finalizers[api.SensuCheckConfigResourcePlural].Delete(key)
+			}
+		} else {
+			if obj != nil {
+				c.onUpdateSensuCheckConfig(obj)
+				checkconfig := obj.(*api.SensuCheckConfig)
+				// If checkconfig deletion has been initiated, also delete checkconfig from sensu cluster
+				if checkconfig.DeletionTimestamp != nil {
+					c.onDeleteSensuCheckConfig(obj)
+				}
+			}
+		}
+	}
+	checkconfigInformer.queue.Forget(key)
 	return true
 }
 
