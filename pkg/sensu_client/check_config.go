@@ -29,6 +29,10 @@ func (s *SensuClient) UpdateCheckConfig(c *v1beta1.SensuCheckConfig) error {
 
 // DeleteCheckConfig will delete an existing checkconfig from the sensu server
 func (s *SensuClient) DeleteCheckConfig(c *v1beta1.SensuCheckConfig) error {
+	if err := s.ensureCredentials(); err != nil {
+		return err
+	}
+
 	c1 := make(chan error, 1)
 
 	go func() {

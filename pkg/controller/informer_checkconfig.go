@@ -18,8 +18,7 @@ func (c *Controller) onDeleteSensuCheckConfig(obj interface{}) {
 	if !ok {
 		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
 		if !ok {
-			// prevent panic on nil object.
-			// TODO: why are these nil objects coming through?
+			// prevent panic on nil object/such as actual deletion
 			if obj == nil {
 				return
 			}
@@ -31,13 +30,17 @@ func (c *Controller) onDeleteSensuCheckConfig(obj interface{}) {
 		}
 	}
 
-	// pt.start()
 	sensuClient := sensu_client.New(checkConfig.Spec.SensuMetadata.Name, checkConfig.ObjectMeta.Namespace, checkConfig.Spec.SensuMetadata.Namespace)
 	err := sensuClient.DeleteCheckConfig(checkConfig)
 	if err != nil {
-		c.logger.Warningf("fail to handle checkconfig delete event: %v", err)
+		c.logger.Warningf("failed to handle checkconfig delete event: %v", err)
+		return
 	}
-	// pt.stop()
+	cc := checkConfig.DeepCopy()
+	cc.Finalizers = make([]string, 0)
+	if _, err = c.SensuCRCli.ObjectrocketV1beta1().SensuCheckConfigs(checkConfig.GetNamespace()).Update(cc); err != nil {
+		c.logger.Warningf("failed to update checkconfig to remove finalizer: %+v", err)
+	}
 }
 
 func (c *Controller) syncSensuCheckConfig(checkConfig *api.SensuCheckConfig) {

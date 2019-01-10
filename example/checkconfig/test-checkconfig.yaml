@@ -4,6 +4,8 @@ kind: SensuCheckConfig
 metadata:
   name: sensu
   namespace: sensu
+  finalizers:
+  - checkconfig.finalizer.objectrocket.com
 spec:
   command: check-http.go -u https://www.google.com/
   subscriptions:

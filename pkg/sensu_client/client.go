@@ -1,6 +1,7 @@
 package client
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -29,6 +30,10 @@ type SensuClient struct {
 
 	sensuCli *cli.SensuCli
 }
+
+var (
+	errSensuClusterObjectNotFound = errors.New("not found")
+)
 
 // New will return a new SensuClient tied to a specific cluster within a k8s
 // namespace, and tied to a specific sensu namespace.

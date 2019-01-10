@@ -21,10 +21,10 @@ import (
 	"time"
 
 	api "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
+	sensu_client "github.com/objectrocket/sensu-operator/pkg/sensu_client"
 	"github.com/objectrocket/sensu-operator/pkg/util/k8sutil"
 	"github.com/objectrocket/sensu-operator/pkg/util/probe"
-	sensucli "github.com/sensu/sensu-go/cli"
-	sensutypes "github.com/sensu/sensu-go/types"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -325,26 +325,58 @@ func (c *Controller) onUpdateSensuAsset(newObj interface{}) {
 }
 
 func (c *Controller) onDeleteSensuAsset(obj interface{}) {
-	//TODO: Implement this once it's supported by sensu
-	c.logger.Warnf("Deleting SensuAssets not implemented.  Not Deleting: %v", obj)
+	asset, ok := obj.(*api.SensuAsset)
+	if !ok {
+		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
+		if !ok {
+			// prevent panic on nil object/such as actual deletion
+			if obj == nil {
+				return
+			}
+			panic(fmt.Sprintf("unknown object from SensuAsset delete event: %#v", obj))
+		}
+		asset, ok = tombstone.Obj.(*api.SensuAsset)
+		if !ok {
+			panic(fmt.Sprintf("Tombstone contained object that is not a Asset: %#v", obj))
+		}
+	}
+
+	// TODO asset needs sensu namespace in crd
+	sensuClient := sensu_client.New(asset.ClusterName, asset.GetNamespace(), "default")
+	err := sensuClient.DeleteAsset(asset)
+	if err != nil {
+		c.logger.Warningf("failed to handle asset delete event: %v", err)
+		return
+	}
+	a := asset.DeepCopy()
+	a.Finalizers = make([]string, 0)
+	if _, err = c.SensuCRCli.ObjectrocketV1beta1().SensuAssets(asset.GetNamespace()).Update(a); err != nil {
+		c.logger.Warningf("failed to update asset to remove finalizer: %+v", err)
+	}
 }
 
-func (c *Controller) syncSensuAsset(obj *api.SensuAsset) {
+func (c *Controller) syncSensuAsset(asset *api.SensuAsset) {
 	var (
-		apiAsset *sensutypes.Asset
-		cli      *sensucli.SensuCli
-		err      error
+		err error
 	)
 
-	apiAsset, err = cli.Client.FetchAsset(obj.Name)
+	c.logger.Warnf("in syncSensuAsset, about to update checkconfig within sensu cluster")
+	// TODO sensu namespace needs to be in CRD
+	sensuClient := sensu_client.New(asset.ClusterName, asset.GetNamespace(), "default")
+	err = sensuClient.UpdateAsset(asset)
+	c.logger.Warnf("in syncSensuAsset, after update asset in sensu cluster")
 	if err != nil {
-		c.logger.Warnf("Error fetching asset: %v", err)
+		c.logger.Warningf("failed to handle asset update event: %v", err)
+		return
 	}
-	apiAsset = obj.ToAPISensuAsset()
-	err = cli.Client.CreateAsset(apiAsset)
-	if err != nil {
-		c.logger.Warnf("Failed to handle syncSensuAsset event: %v", err)
-	}
+	// TODO asset needs status
+	// copy := asset.DeepCopy()
+	// copy.Status.Accepted = true
+	// c.logger.Warnf("in syncSensuAsset, about to update asset status within k8s")
+	// if _, err = c.SensuCRCli.ObjectrocketV1beta1().SensuCheckConfigs(copy.GetNamespace()).Update(copy); err != nil {
+	// 	c.logger.Warningf("failed to update checkconfig's status during update event: %v", err)
+	// }
+	// c.logger.Warnf("in syncSensuAsset, done updating checkconfig status within k8s")
 }
 
 func (c *Controller) managed(clus *api.SensuCluster) bool {
