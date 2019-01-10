@@ -54,7 +54,6 @@ type SensuHandlerSpec struct {
 	RuntimeAssets []string      `json:"runtimeAssets"`
 }
 
-// +k8s:deepcopy-gen=false
 // HandlerSocket is the socket description of a sensu handler.
 type HandlerSocket struct {
 	Host string `json:"host"`
