@@ -9,11 +9,9 @@ import (
 	"time"
 
 	api "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
-	"github.com/objectrocket/sensu-operator/pkg/cluster"
 	fakesensu "github.com/objectrocket/sensu-operator/pkg/generated/clientset/versioned/fake"
 	sensuscheme "github.com/objectrocket/sensu-operator/pkg/generated/clientset/versioned/scheme"
 	"github.com/objectrocket/sensu-operator/pkg/util/probe"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	fakeapiextensionsapiserver "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 	"k8s.io/apimachinery/pkg/fields"

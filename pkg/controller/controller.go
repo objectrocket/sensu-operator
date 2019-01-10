@@ -90,11 +90,6 @@ func clientForCluster(name string) (*sensucli.SensuCli, error) {
 	return nil, nil
 }
 
-func init() {
-	logrus.SetLevel(logrus.DebugLevel)
-}
-
-// New returns a sensu controller given a configuration
 func New(cfg Config) *Controller {
 	return &Controller{
 		logger:     logrus.WithField("pkg", "controller"),
@@ -185,13 +180,13 @@ func (c *Controller) initCRD() error {
 	if err != nil {
 		return fmt.Errorf("failed to create %s CRD: %v", api.SensuAssetCRDName, err)
 	}
-	err = k8sutil.CreateCRD(c.KubeExtCli, api.SensuCheckConfigCRDName, api.SensuCheckConfigResourceKind, api.SensuCheckConfigResourcePlural, "sensucheckconfig")
-	if err != nil {
-		return fmt.Errorf("failed to create %s CRD: %v", api.SensuCheckConfigCRDName, err)
-	}
-	err = k8sutil.WaitCRDReady(c.KubeExtCli, api.SensuCheckConfigCRDName)
-	if err != nil {
-		return fmt.Errorf("failed to create %s CRD: %v", api.SensuCheckConfigCRDName, err)
-	}
+    err = k8sutil.CreateCRD(c.KubeExtCli, api.SensuAssetCRDName, api.SensuAssetResourceKind, api.SensuAssetResourcePlural, "sensuasset")
+    if err != nil {
+        return fmt.Errorf("failed to create %s CRD: %v", api.SensuAssetCRDName, err)
+    }
+    err = k8sutil.WaitCRDReady(c.KubeExtCli, api.SensuAssetCRDName)
+    if err != nil {
+        return fmt.Errorf("failed to create %s CRD: %v", api.SensuAssetCRDName, err)
+    }
 	return nil
 }
