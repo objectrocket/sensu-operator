@@ -21,6 +21,7 @@ import (
 	"time"
 
 	api "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
+	sensu_client "github.com/objectrocket/sensu-operator/pkg/sensu_client"
 	"github.com/objectrocket/sensu-operator/pkg/util/k8sutil"
 	"github.com/objectrocket/sensu-operator/pkg/util/probe"
 	sensucli "github.com/sensu/sensu-go/cli"
@@ -320,23 +321,22 @@ func (c *Controller) onUpdateSensuHandler(newObj interface{}) {
 }
 
 func (c *Controller) onDeleteSensuHandler(obj interface{}) {
-	//TODO: Implement this once it's supported by sensu
+	//TODO: ???
 	c.logger.Warnf("Deleting SensuHandlers not implemented.  Not Deleting: %v", obj)
 }
 
 func (c *Controller) syncSensuHandler(obj *api.SensuHandler) {
 	var (
-		apiHandler *sensutypes.Handler
-		cli        *sensucli.SensuCli
-		err        error
+		sclient *sensu_client.SensuClient
+		err     error
 	)
 
-	apiHandler, err = cli.Client.FetchHandler(obj.Name)
+	sclient = sensu_client.New("sensu", obj.ObjectMeta.Namespace, obj.ObjectMeta.Namespace)
+	_, err = sclient.CLI().Client.FetchHandler(obj.ObjectMeta.Name)
 	if err != nil {
 		c.logger.Warnf("Error fetching handler: %v", err)
 	}
-	apiHandler = obj.ToAPISensuHandler()
-	err = cli.Client.CreateHandler(apiHandler)
+	err = sclient.CLI().Client.CreateHandler(obj.ToSensuType())
 	if err != nil {
 		c.logger.Warnf("Failed to handle syncSensuHandler event: %v", err)
 	}

@@ -37,15 +37,21 @@ type SensuHandlerList struct {
 type SensuHandler struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Type              string        `json:"type"`
-	Mutator           string        `json:"mutator"`
-	Command           string        `json:"command"`
-	Timeout           uint32        `json:"timeout"`
-	Socket            HandlerSocket `json:"socket"`
-	Handlers          []string      `json:"handlers"`
-	Filters           []string      `json:"filters"`
-	EnvVars           []string      `json:"envVars"`
-	RuntimeAssets     []string      `json:"runtimeAssets"`
+	Spec              SensuHandlerSpec   `json:"spec"`
+	Status            SensuHandlerStatus `json:"status"`
+}
+
+// SensuHandlerSpec is the spec section of the custom object
+type SensuHandlerSpec struct {
+	Type          string        `json:"type"`
+	Mutator       string        `json:"mutator"`
+	Command       string        `json:"command"`
+	Timeout       uint32        `json:"timeout"`
+	Socket        HandlerSocket `json:"socket"`
+	Handlers      []string      `json:"handlers"`
+	Filters       []string      `json:"filters"`
+	EnvVars       []string      `json:"envVars"`
+	RuntimeAssets []string      `json:"runtimeAssets"`
 }
 
 // +k8s:deepcopy-gen=false
@@ -55,8 +61,13 @@ type HandlerSocket struct {
 	Port uint32 `json:"port"`
 }
 
-// ToAPISensuHandler returns a value of the Handler type from the Sensu API
-func (a SensuHandler) ToAPISensuHandler() *sensutypes.Handler {
+// SensuHandlerStatus is the status of the sensu handler
+type SensuHandlerStatus struct {
+	Accepted bool `json:"accepted"`
+}
+
+// ToSensuType returns a value of the Handler type from the Sensu API
+func (a SensuHandler) ToSensuType() *sensutypes.Handler {
 	return &sensutypes.Handler{
 		ObjectMeta: sensutypes.ObjectMeta{
 			Name:        a.ObjectMeta.Name,
@@ -64,17 +75,17 @@ func (a SensuHandler) ToAPISensuHandler() *sensutypes.Handler {
 			Labels:      a.ObjectMeta.Labels,
 			Annotations: a.ObjectMeta.Annotations,
 		},
-		Type:     a.Type,
-		Mutator:  a.Mutator,
-		Command:  a.Command,
-		Timeout:  a.Timeout,
-		Handlers: a.Handlers,
+		Type:     a.Spec.Type,
+		Mutator:  a.Spec.Mutator,
+		Command:  a.Spec.Command,
+		Timeout:  a.Spec.Timeout,
+		Handlers: a.Spec.Handlers,
 		Socket: &sensutypes.HandlerSocket{
-			Host: a.Socket.Host,
-			Port: a.Socket.Port,
+			Host: a.Spec.Socket.Host,
+			Port: a.Spec.Socket.Port,
 		},
-		Filters:       a.Filters,
-		EnvVars:       a.EnvVars,
-		RuntimeAssets: a.RuntimeAssets,
+		Filters:       a.Spec.Filters,
+		EnvVars:       a.Spec.EnvVars,
+		RuntimeAssets: a.Spec.RuntimeAssets,
 	}
 }

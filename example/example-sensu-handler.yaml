@@ -1,0 +1,14 @@
+apiVersion: "objectrocket.com/v1beta1"
+kind: "SensuHandler"
+metadata:
+  name: "example-sensu-handler"
+  namespace: sensu
+  ## Adding this annotation make this cluster managed by clusterwide operators
+  ## namespaced operators ignore it
+  # annotations:
+  #   objectrocket.com/scope: clusterwide
+spec:
+  type: tcp
+  socket:
+    host: example.com
+    port: 8888
