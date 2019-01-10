@@ -25,25 +25,29 @@ const (
 	SensuClusterResourcePlural = "sensuclusters"
 	groupName                  = "objectrocket.com"
 
-	SensuAssetResourceKind   = "SensuAsset"
-	SensuAssetResourcePlural = "sensuassets"
-
 	SensuBackupResourceKind   = "SensuBackup"
 	SensuBackupResourcePlural = "sensubackups"
 
 	SensuRestoreResourceKind   = "SensuRestore"
 	SensuRestoreResourcePlural = "sensurestores"
+
+	SensuAssetResourceKind   = "SensuAsset"
+	SensuAssetResourcePlural = "sensuassets"
+
+	SensuCheckConfigResourceKind   = "SensuCheckConfig"
+	SensuCheckConfigResourcePlural = "sensucheckconfigs"
 )
 
 var (
 	SchemeBuilder = runtime.NewSchemeBuilder(addKnownTypes)
 	AddToScheme   = SchemeBuilder.AddToScheme
 
-	SchemeGroupVersion  = schema.GroupVersion{Group: groupName, Version: "v1beta1"}
-	SensuClusterCRDName = SensuClusterResourcePlural + "." + groupName
-	SensuAssetCRDName   = SensuAssetResourcePlural + "." + groupName
-	SensuBackupCRDName  = SensuBackupResourcePlural + "." + groupName
-	SensuRestoreCRDName = SensuRestoreResourcePlural + "." + groupName
+	SchemeGroupVersion      = schema.GroupVersion{Group: groupName, Version: "v1beta1"}
+	SensuClusterCRDName     = SensuClusterResourcePlural + "." + groupName
+	SensuAssetCRDName       = SensuAssetResourcePlural + "." + groupName
+	SensuBackupCRDName      = SensuBackupResourcePlural + "." + groupName
+	SensuRestoreCRDName     = SensuRestoreResourcePlural + "." + groupName
+	SensuCheckConfigCRDName = SensuCheckConfigResourcePlural + "." + groupName
 )
 
 // Resource gets a SensuCluster GroupResource for a specified resource
@@ -62,6 +66,8 @@ func addKnownTypes(s *runtime.Scheme) error {
 		&SensuRestoreList{},
 		&SensuAsset{},
 		&SensuAssetList{},
+		&SensuCheckConfig{},
+		&SensuCheckConfigList{},
 	)
 	metav1.AddToGroupVersion(s, SchemeGroupVersion)
 	return nil
