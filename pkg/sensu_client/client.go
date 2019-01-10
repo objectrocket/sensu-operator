@@ -2,7 +2,7 @@ package client
 
 import (
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
+	"time"
 
 	"github.com/sirupsen/logrus"
 
@@ -72,12 +72,26 @@ func (s *SensuClient) ensureCredentials() (err error) {
 	var tokens *types.Tokens
 
 	currentTokens := s.sensuCli.Config.Tokens()
-	s.logger.Warnf("currentTokens during ensureCredentials: %s", spew.Sdump(currentTokens))
 	if currentTokens == nil || currentTokens.Access == "" {
-		s.logger.Warnf("About to attempt to create access token with url: %s", fmt.Sprintf("http://%s:8080", s.makeFullyQualifiedSensuClientURL()))
-		if tokens, err = s.sensuCli.Client.CreateAccessToken(fmt.Sprintf("http://%s:8080", s.makeFullyQualifiedSensuClientURL()), "admin", "P@ssw0rd!"); err != nil {
-			s.logger.Errorf("create token err: %+v", err)
-			return
+
+		c1 := make(chan types.Tokens, 1)
+		go func() {
+			if tokens, err = s.sensuCli.Client.CreateAccessToken(fmt.Sprintf("http://%s:8080", s.makeFullyQualifiedSensuClientURL()), "admin", "P@ssw0rd!"); err != nil {
+				s.logger.Errorf("create token err: %+v", err)
+				return
+			}
+			c1 <- *tokens
+		}()
+
+		select {
+		case response := <-c1:
+			tokens = &response
+		case <-time.After(10 * time.Second):
+			s.logger.Warnf("timeout from sensu server after 10 seconds")
+		}
+
+		if tokens == nil {
+			return fmt.Errorf("failed to retrieve new access token from sensu server")
 		}
 
 		conf := basic.Config{
@@ -106,3 +120,63 @@ func (s *SensuClient) ensureCredentials() (err error) {
 	}
 	return nil
 }
+
+// // New builds a new client with defaults
+// func newRestyClient(conf config.Config) *client.RestClient {
+// 	restyInst := resty.New()
+// 	restyInst.SetTimeout(15 * time.Second)
+// 	restClient := &client.RestClient{resty: restyInst, config: conf}
+
+// 	// Standardize redirect policy
+// 	restyInst.SetRedirectPolicy(resty.FlexibleRedirectPolicy(10))
+
+// 	// JSON
+// 	restyInst.SetHeader("Accept", "application/json")
+// 	restyInst.SetHeader("Content-Type", "application/json")
+
+// 	// Check that Access-Token has not expired
+// 	restyInst.OnBeforeRequest(func(c *resty.Client, r *resty.Request) error {
+// 		// Guard against requests that are not sending auth details
+// 		if c.Token == "" || r.UserInfo != nil {
+// 			return nil
+// 		}
+
+// 		// If the client access token is expired, it means this request is trying to
+// 		// retrieve a new access token and therefore we do not need to do it again
+// 		// otherwise we will have an infinite loop!
+// 		// if restClient.Ex{
+// 		// 	return nil
+// 		// }
+
+// 		tokens := conf.Tokens()
+// 		expiry := time.Unix(tokens.ExpiresAt, 0)
+
+// 		// No-op if token has not yet expired
+// 		if hasExpired := expiry.Before(time.Now()); !hasExpired {
+// 			return nil
+// 		}
+
+// 		if tokens.Refresh == "" {
+// 			return errors.New("configured access token has expired")
+// 		}
+
+// 		// Mark the token as expired to prevent an infinite loop in this method
+// 		client.expiredToken = true
+
+// 		// TODO: Move this into it's own file / package
+// 		// Request a new access token from the server
+// 		tokens, err := restClient.RefreshAccessToken(tokens.Refresh)
+// 		if err != nil {
+// 			return fmt.Errorf(
+// 				"failed to request new refresh token; client returned '%s'",
+// 				err,
+// 			)
+// 		}
+
+// 		c.SetAuthToken(tokens.Access)
+
+// 		return nil
+// 	})
+
+// 	return client
+// }

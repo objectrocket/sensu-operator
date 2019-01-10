@@ -3,7 +3,6 @@ package client
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/sirupsen/logrus"
 
 	"github.com/sensu/sensu-go/types"
 )
@@ -92,20 +91,15 @@ func (client *RestClient) FetchCheck(name string) (*types.CheckConfig, error) {
 	var check *types.CheckConfig
 
 	path := checksPath(client.config.Namespace(), name)
-	logger := logrus.New()
-	logger.Warnf("path in FetchCheck: %s", path)
 	res, err := client.R().Get(path)
 	if err != nil {
-		logger.Warnf("err during FetchCheck: %+v", err)
 		return nil, fmt.Errorf("GET %q: %s", path, err)
 	}
 
 	if res.StatusCode() >= 400 {
-		logger.Warnf("res.statusCode > 400 during FetchCheck: res: %+v", *res)
 		return nil, UnmarshalError(res)
 	}
 
-	logger.Warnf("full response.body during FetchCheck: res: %s", res.Body())
 	err = json.Unmarshal(res.Body(), &check)
 	return check, err
 }

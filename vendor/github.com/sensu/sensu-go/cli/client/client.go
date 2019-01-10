@@ -36,6 +36,7 @@ func init() {
 // New builds a new client with defaults
 func New(config config.Config) *RestClient {
 	restyInst := resty.New()
+	restyInst.SetTimeout(10 * time.Second)
 	client := &RestClient{resty: restyInst, config: config}
 
 	// Standardize redirect policy
