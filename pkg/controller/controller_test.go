@@ -9,9 +9,11 @@ import (
 	"time"
 
 	api "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
+	"github.com/objectrocket/sensu-operator/pkg/cluster"
 	fakesensu "github.com/objectrocket/sensu-operator/pkg/generated/clientset/versioned/fake"
 	sensuscheme "github.com/objectrocket/sensu-operator/pkg/generated/clientset/versioned/scheme"
 	"github.com/objectrocket/sensu-operator/pkg/util/probe"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	fakeapiextensionsapiserver "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 	"k8s.io/apimachinery/pkg/fields"
@@ -304,4 +306,67 @@ func (s *InformerTestSuite) TestInformerWithOneCluster() {
 	go controller.startProcessing(ctx)
 	time.Sleep(5 * time.Second)
 	cancelFunc()
+}
+
+func TestController_initCRD(t *testing.T) {
+	type fields struct {
+		logger              *logrus.Entry
+		Config              Config
+		indexer             cache.Indexer
+		queue               workqueue.RateLimitingInterface
+		informer            cache.Controller
+		checkConfigQueue    workqueue.RateLimitingInterface
+		checkConfigIndexer  cache.Indexer
+		checkConfigInformer cache.Controller
+		clusters            map[string]*cluster.Cluster
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			"test both cluster, and checkconfig crds are created, and become valid",
+			fields{
+				logrus.WithField("pkg", "test"),
+				Config{
+					Namespace:         "testns",
+					ClusterWide:       true,
+					ServiceAccount:    "testsa",
+					KubeCli:           testclient.NewSimpleClientset(),
+					KubeExtCli:        fakeapiextensionsapiserver.NewSimpleClientset(),
+					SensuCRCli:        fakesensu.NewSimpleClientset(),
+					CreateCRD:         false,
+					WorkerThreads:     1,
+					ProcessingRetries: 0,
+				},
+				nil,
+				nil,
+				nil,
+				nil,
+				nil,
+				nil,
+				map[string]*cluster.Cluster{},
+			},
+			false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &Controller{
+				logger:              tt.fields.logger,
+				Config:              tt.fields.Config,
+				indexer:             tt.fields.indexer,
+				queue:               tt.fields.queue,
+				informer:            tt.fields.informer,
+				checkConfigQueue:    tt.fields.checkConfigQueue,
+				checkConfigIndexer:  tt.fields.checkConfigIndexer,
+				checkConfigInformer: tt.fields.checkConfigInformer,
+				clusters:            tt.fields.clusters,
+			}
+			if err := c.initCRD(); (err != nil) != tt.wantErr {
+				t.Errorf("Controller.initCRD() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
 }

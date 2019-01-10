@@ -377,7 +377,7 @@ func CreateNetPolicy(kubecli kubernetes.Interface, clusterName, namespace string
 			ObjectMeta: metav1.ObjectMeta{
 				GenerateName: "sensu-block-all-",
 				Labels:       labels,
-				Namespace:    metav1.NamespaceDefault,
+				Namespace:    namespace,
 			},
 			Spec: networkingv1.NetworkPolicySpec{
 				PodSelector: metav1.LabelSelector{
@@ -390,7 +390,7 @@ func CreateNetPolicy(kubecli kubernetes.Interface, clusterName, namespace string
 			ObjectMeta: metav1.ObjectMeta{
 				GenerateName: "sensu-api-pods-",
 				Labels:       labels,
-				Namespace:    metav1.NamespaceDefault,
+				Namespace:    namespace,
 			},
 			Spec: networkingv1.NetworkPolicySpec{
 				PodSelector: metav1.LabelSelector{
@@ -418,7 +418,7 @@ func CreateNetPolicy(kubecli kubernetes.Interface, clusterName, namespace string
 			ObjectMeta: metav1.ObjectMeta{
 				GenerateName: "sensu-operator-pods-",
 				Labels:       labels,
-				Namespace:    metav1.NamespaceDefault,
+				Namespace:    namespace,
 			},
 			Spec: networkingv1.NetworkPolicySpec{
 				PodSelector: metav1.LabelSelector{
@@ -451,7 +451,7 @@ func CreateNetPolicy(kubecli kubernetes.Interface, clusterName, namespace string
 			ObjectMeta: metav1.ObjectMeta{
 				GenerateName: "sensu-cluster-pods-",
 				Labels:       labels,
-				Namespace:    metav1.NamespaceDefault,
+				Namespace:    namespace,
 			},
 			Spec: networkingv1.NetworkPolicySpec{
 				PodSelector: metav1.LabelSelector{
@@ -612,7 +612,7 @@ func newSensuPod(m *etcdutil.Member, initialCluster []string, clusterName, state
 					done`, DNSTimeout, m.Addr())},
 			}},
 			Containers:    []v1.Container{container},
-			RestartPolicy: v1.RestartPolicyNever,
+			RestartPolicy: v1.RestartPolicyAlways,
 			Volumes:       volumes,
 			// DNS A record: `[m.Name].[clusterName].Namespace.svc`
 			// For example, etcd-795649v9kq in default namesapce will have DNS name

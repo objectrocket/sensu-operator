@@ -27,7 +27,7 @@ spec:
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
         - containerPort: 8080
-          name: http        
+          name: http
         resources:
           limits:
           {{- range .Values.resourceSettings.limit }}

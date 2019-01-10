@@ -43,7 +43,11 @@ func init() {
 
 // Start the controller's informer to watch for custom resource update
 func (c *Controller) Start(ctx context.Context) {
-	var ns string
+	var (
+		ns                   string
+		source               *cache.ListWatch
+		checkConfigListWatch *cache.ListWatch
+	)
 	// TODO: get rid of this init code. CRD and storage class will be managed outside of operator.
 	for {
 		err := c.initResource()

@@ -1,0 +1,14 @@
+---
+apiVersion: objectrocket.com/v1beta1
+kind: SensuCheckConfig
+metadata:
+  name: sensu
+  namespace: sensu
+spec:
+  command: check-http.go -u https://www.google.com/
+  subscriptions:
+  - test
+  interval: 15
+  sensu_metadata:
+    name: sensu
+    namespace: default

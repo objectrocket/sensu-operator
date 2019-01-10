@@ -27,10 +27,14 @@ import (
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	kwatch "k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/util/workqueue"
 )
 
 var initRetryWaitTime = 30 * time.Second
 
+// Event is the cluster event that pairs the event type (add/update/delete)
+// with the sensu cluster object, and is passed through the controller
 type Event struct {
 	Type   kwatch.EventType
 	Object *api.SensuCluster
@@ -68,6 +72,7 @@ type Controller struct {
 	clusters  map[string]*cluster.Cluster
 }
 
+// Config is the configuration for the sensu controller
 type Config struct {
 	Namespace         string
 	ClusterWide       bool
@@ -85,6 +90,11 @@ func clientForCluster(name string) (*sensucli.SensuCli, error) {
 	return nil, nil
 }
 
+func init() {
+	logrus.SetLevel(logrus.DebugLevel)
+}
+
+// New returns a sensu controller given a configuration
 func New(cfg Config) *Controller {
 	return &Controller{
 		logger:    logrus.WithField("pkg", "controller"),

@@ -334,7 +334,7 @@
     "util/path",
     "util/strings"
   ]
-  revision = "d1d0214bc20eb8bf5b2cdd4b8990064a1e3ba7ea"
+  revision = "cda8b637047f94f591cad5a4d8e3da612aaa5389"
 
 [[projects]]
   name = "github.com/sensu/yaml"
@@ -453,7 +453,7 @@
     "internal/gopathwalk",
     "internal/semver"
   ]
-  revision = "aa033095749b3c5414cb40cb5fb235173be6b186"
+  revision = "e063def13b29c433b3c57fc99257c18c1f9399ce"
 
 [[projects]]
   name = "google.golang.org/appengine"

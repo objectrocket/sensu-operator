@@ -20,7 +20,10 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
 	"runtime"
+	"runtime/pprof"
+	"syscall"
 	"time"
 
 	"github.com/objectrocket/sensu-operator/pkg/client"
@@ -134,6 +137,14 @@ func run(stop <-chan struct{}) {
 	c := controller.New(cfg)
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	go c.Start(ctx)
+	sigc := make(chan os.Signal, 1)
+	signal.Notify(sigc, syscall.SIGUSR1)
+	go func() {
+		select {
+		case <-sigc:
+			stackTrace()
+		}
+	}()
 	select {
 	case <-stop:
 		cancelFunc()
@@ -182,4 +193,8 @@ func createRecorder(kubecli kubernetes.Interface, name, namespace string) record
 	eventBroadcaster.StartLogging(logrus.Infof)
 	eventBroadcaster.StartRecordingToSink(&v1core.EventSinkImpl{Interface: v1core.New(kubecli.Core().RESTClient()).Events(namespace)})
 	return eventBroadcaster.NewRecorder(scheme.Scheme, v1.EventSource{Component: name})
+}
+
+func stackTrace() {
+	pprof.Lookup("goroutine").WriteTo(os.Stdout, 1)
 }
