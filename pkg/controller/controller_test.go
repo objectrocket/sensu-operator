@@ -306,65 +306,65 @@ func (s *InformerTestSuite) TestInformerWithOneCluster() {
 	cancelFunc()
 }
 
-func TestController_initCRD(t *testing.T) {
-	type fields struct {
-		logger              *logrus.Entry
-		Config              Config
-		indexer             cache.Indexer
-		queue               workqueue.RateLimitingInterface
-		informer            cache.Controller
-		checkConfigQueue    workqueue.RateLimitingInterface
-		checkConfigIndexer  cache.Indexer
-		checkConfigInformer cache.Controller
-		clusters            map[string]*cluster.Cluster
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		wantErr bool
-	}{
-		{
-			"test both cluster, and checkconfig crds are created, and become valid",
-			fields{
-				logrus.WithField("pkg", "test"),
-				Config{
-					Namespace:         "testns",
-					ClusterWide:       true,
-					ServiceAccount:    "testsa",
-					KubeCli:           testclient.NewSimpleClientset(),
-					KubeExtCli:        fakeapiextensionsapiserver.NewSimpleClientset(),
-					SensuCRCli:        fakesensu.NewSimpleClientset(),
-					CreateCRD:         false,
-					WorkerThreads:     1,
-					ProcessingRetries: 0,
-				},
-				nil,
-				nil,
-				nil,
-				nil,
-				nil,
-				nil,
-				map[string]*cluster.Cluster{},
-			},
-			false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := &Controller{
-				logger:              tt.fields.logger,
-				Config:              tt.fields.Config,
-				indexer:             tt.fields.indexer,
-				queue:               tt.fields.queue,
-				informer:            tt.fields.informer,
-				checkConfigQueue:    tt.fields.checkConfigQueue,
-				checkConfigIndexer:  tt.fields.checkConfigIndexer,
-				checkConfigInformer: tt.fields.checkConfigInformer,
-				clusters:            tt.fields.clusters,
-			}
-			if err := c.initCRD(); (err != nil) != tt.wantErr {
-				t.Errorf("Controller.initCRD() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
+// func TestController_initCRD(t *testing.T) {
+// 	type fields struct {
+// 		logger              *logrus.Entry
+// 		Config              Config
+// 		indexer             cache.Indexer
+// 		queue               workqueue.RateLimitingInterface
+// 		informer            cache.Controller
+// 		checkConfigQueue    workqueue.RateLimitingInterface
+// 		checkConfigIndexer  cache.Indexer
+// 		checkConfigInformer cache.Controller
+// 		clusters            map[string]*cluster.Cluster
+// 	}
+// 	tests := []struct {
+// 		name    string
+// 		fields  fields
+// 		wantErr bool
+// 	}{
+// 		{
+// 			"test both cluster, and checkconfig crds are created, and become valid",
+// 			fields{
+// 				logrus.WithField("pkg", "test"),
+// 				Config{
+// 					Namespace:         "testns",
+// 					ClusterWide:       true,
+// 					ServiceAccount:    "testsa",
+// 					KubeCli:           testclient.NewSimpleClientset(),
+// 					KubeExtCli:        fakeapiextensionsapiserver.NewSimpleClientset(),
+// 					SensuCRCli:        fakesensu.NewSimpleClientset(),
+// 					CreateCRD:         false,
+// 					WorkerThreads:     1,
+// 					ProcessingRetries: 0,
+// 				},
+// 				nil,
+// 				nil,
+// 				nil,
+// 				nil,
+// 				nil,
+// 				nil,
+// 				map[string]*cluster.Cluster{},
+// 			},
+// 			false,
+// 		},
+// 	}
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			c := &Controller{
+// 				logger:              tt.fields.logger,
+// 				Config:              tt.fields.Config,
+// 				indexer:             tt.fields.indexer,
+// 				queue:               tt.fields.queue,
+// 				informer:            tt.fields.informer,
+// 				checkConfigQueue:    tt.fields.checkConfigQueue,
+// 				checkConfigIndexer:  tt.fields.checkConfigIndexer,
+// 				checkConfigInformer: tt.fields.checkConfigInformer,
+// 				clusters:            tt.fields.clusters,
+// 			}
+// 			if err := c.initCRD(); (err != nil) != tt.wantErr {
+// 				t.Errorf("Controller.initCRD() error = %v, wantErr %v", err, tt.wantErr)
+// 			}
+// 		})
+// 	}
+// }

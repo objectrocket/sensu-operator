@@ -44,7 +44,6 @@ func (c *Controller) onDeleteSensuCheckConfig(obj interface{}) {
 }
 
 func (c *Controller) syncSensuCheckConfig(checkConfig *api.SensuCheckConfig) {
-	// pt.start()
 	c.logger.Warnf("in syncSensuCheckConfig, about to update checkconfig within sensu cluster")
 	sensuClient := sensu_client.New(checkConfig.Spec.SensuMetadata.Name, checkConfig.ObjectMeta.Namespace, checkConfig.Spec.SensuMetadata.Namespace)
 	err := sensuClient.UpdateCheckConfig(checkConfig)
@@ -59,5 +58,4 @@ func (c *Controller) syncSensuCheckConfig(checkConfig *api.SensuCheckConfig) {
 		c.logger.Warningf("failed to update checkconfig's status during update event: %v", err)
 	}
 	c.logger.Warnf("in syncSensuCheckConfig, done updating checkconfig status within k8s")
-	// pt.stop()
 }

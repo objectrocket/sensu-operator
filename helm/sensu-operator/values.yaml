@@ -7,7 +7,7 @@ replicaCount: 1
 
 image:
   repository: 'objectrocket/sensu-operator'
-  tag: 0.0.38
+  tag: 0.0.41
   pullPolicy: IfNotPresent
 
 imagePullSecret:

@@ -512,6 +512,7 @@ func (in *SensuAsset) DeepCopyInto(out *SensuAsset) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	in.SensuMetadata.DeepCopyInto(&out.SensuMetadata)
 	return
 }
 
@@ -930,6 +931,7 @@ func (in *SensuHandlerSpec) DeepCopyInto(out *SensuHandlerSpec) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	in.SensuMetadata.DeepCopyInto(&out.SensuMetadata)
 	return
 }
 

@@ -20,10 +20,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"os/signal"
 	"runtime"
-	"runtime/pprof"
-	"syscall"
 	"time"
 
 	"github.com/objectrocket/sensu-operator/pkg/client"

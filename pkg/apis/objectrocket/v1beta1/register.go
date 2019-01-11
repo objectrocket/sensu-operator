@@ -28,8 +28,8 @@ const (
 	SensuAssetResourceKind   = "SensuAsset"
 	SensuAssetResourcePlural = "sensuassets"
 
-    SensuCheckConfigResourceKind   = "SensuCheckConfig"
-    SensuCheckConfigResourcePlural = "sensucheckconfigs"
+	SensuCheckConfigResourceKind   = "SensuCheckConfig"
+	SensuCheckConfigResourcePlural = "sensucheckconfigs"
 
 	SensuHandlerResourceKind   = "SensuHandler"
 	SensuHandlerResourcePlural = "sensuhandlers"
@@ -39,25 +39,19 @@ const (
 
 	SensuRestoreResourceKind   = "SensuRestore"
 	SensuRestoreResourcePlural = "sensurestores"
-
-	SensuAssetResourceKind   = "SensuAsset"
-	SensuAssetResourcePlural = "sensuassets"
-
-	SensuCheckConfigResourceKind   = "SensuCheckConfig"
-	SensuCheckConfigResourcePlural = "sensucheckconfigs"
 )
 
 var (
 	SchemeBuilder = runtime.NewSchemeBuilder(addKnownTypes)
 	AddToScheme   = SchemeBuilder.AddToScheme
 
-	SchemeGroupVersion  = schema.GroupVersion{Group: groupName, Version: "v1beta1"}
-	SensuClusterCRDName = SensuClusterResourcePlural + "." + groupName
-	SensuAssetCRDName   = SensuAssetResourcePlural + "." + groupName
-    SensuCheckConfigCRDName = SensuCheckConfigResourcePlural + "." + groupName
-	SensuHandlerCRDName = SensuHandlerResourcePlural + "." + groupName
-	SensuBackupCRDName  = SensuBackupResourcePlural + "." + groupName
-	SensuRestoreCRDName = SensuRestoreResourcePlural + "." + groupName
+	SchemeGroupVersion      = schema.GroupVersion{Group: groupName, Version: "v1beta1"}
+	SensuClusterCRDName     = SensuClusterResourcePlural + "." + groupName
+	SensuAssetCRDName       = SensuAssetResourcePlural + "." + groupName
+	SensuCheckConfigCRDName = SensuCheckConfigResourcePlural + "." + groupName
+	SensuHandlerCRDName     = SensuHandlerResourcePlural + "." + groupName
+	SensuBackupCRDName      = SensuBackupResourcePlural + "." + groupName
+	SensuRestoreCRDName     = SensuRestoreResourcePlural + "." + groupName
 )
 
 // Resource gets a SensuCluster GroupResource for a specified resource

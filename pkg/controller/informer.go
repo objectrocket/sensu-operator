@@ -66,6 +66,7 @@ func (c *Controller) Start(ctx context.Context) {
 	c.addInformer(ns, api.SensuClusterResourcePlural, &api.SensuCluster{})
 	c.addInformer(ns, api.SensuAssetResourcePlural, &api.SensuAsset{})
 	c.addInformer(ns, api.SensuCheckConfigResourcePlural, &api.SensuCheckConfig{})
+	c.addInformer(ns, api.SensuHandlerResourcePlural, &api.SensuHandler{})
 	c.startProcessing(ctx)
 }
 
@@ -74,13 +75,16 @@ func (c *Controller) startProcessing(ctx context.Context) {
 		clusterController     hasSynced
 		assetController       hasSynced
 		checkconfigController hasSynced
+		handlerController     hasSynced
 	)
 	clusterController = c.informers[api.SensuClusterResourcePlural].controller
 	assetController = c.informers[api.SensuAssetResourcePlural].controller
 	checkconfigController = c.informers[api.SensuCheckConfigResourcePlural].controller
+	handlerController = c.informers[api.SensuHandlerResourcePlural].controller
 	go clusterController.Run(ctx.Done())
 	go assetController.Run(ctx.Done())
 	go checkconfigController.Run(ctx.Done())
+	go handlerController.Run(ctx.Done())
 	if !cache.WaitForCacheSync(ctx.Done(), clusterController.HasSynced) {
 		c.logger.Fatal("Timed out waiting for cluster caches to sync")
 	}
@@ -89,6 +93,9 @@ func (c *Controller) startProcessing(ctx context.Context) {
 	}
 	if !cache.WaitForCacheSync(ctx.Done(), checkconfigController.HasSynced) {
 		c.logger.Fatal("Timed out waiting for checkconfig caches to sync")
+	}
+	if !cache.WaitForCacheSync(ctx.Done(), handlerController.HasSynced) {
+		c.logger.Fatal("Timed out waiting for handler caches to sync")
 	}
 	for i := 0; i < c.Config.WorkerThreads; i++ {
 		go wait.Until(c.run, time.Second, ctx.Done())
@@ -159,6 +166,12 @@ func (c *Controller) run() {
 		defer wg.Done()
 		defer c.informers[api.SensuCheckConfigResourcePlural].queue.ShutDown()
 		for c.processNextCheckConfigItem() {
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		defer c.informers[api.SensuHandlerResourcePlural].queue.ShutDown()
+		for c.processNextHandlerItem() {
 		}
 	}()
 	wg.Wait()
@@ -261,6 +274,42 @@ func (c *Controller) processNextCheckConfigItem() bool {
 	return true
 }
 
+func (c *Controller) processNextHandlerItem() bool {
+	var handlerInformer = c.informers[api.SensuHandlerResourcePlural]
+	key, quit := handlerInformer.queue.Get()
+	c.logger.Warnf("key from Get on handlerInformer.queue: %+v", key)
+	if quit {
+		return false
+	}
+	defer handlerInformer.queue.Done(key)
+	obj, exists, err := handlerInformer.indexer.GetByKey(key.(string))
+	c.logger.Warnf("obj: %+v, exists: %t, err: %+v from GetByKey on handlerInformer.indexer", obj, exists, err)
+	if err != nil {
+		if handlerInformer.queue.NumRequeues(key) < c.Config.ProcessingRetries {
+			handlerInformer.queue.AddRateLimited(key)
+			return true
+		}
+	} else {
+		if !exists {
+			_, exists, err := c.finalizers[api.SensuHandlerResourcePlural].GetByKey(key.(string))
+			if exists && err != nil {
+				c.finalizers[api.SensuHandlerResourcePlural].Delete(key)
+			}
+		} else {
+			if obj != nil {
+				c.onUpdateSensuHandler(obj.(*api.SensuHandler))
+				handler := obj.(*api.SensuHandler)
+				// If checkconfig deletion has been initiated, also delete checkconfig from sensu cluster
+				if handler.DeletionTimestamp != nil {
+					c.onDeleteSensuHandler(obj)
+				}
+			}
+		}
+	}
+	handlerInformer.queue.Forget(key)
+	return true
+}
+
 func (c *Controller) initResource() error {
 	if c.Config.CreateCRD {
 		err := c.initCRD()
@@ -342,7 +391,7 @@ func (c *Controller) onDeleteSensuAsset(obj interface{}) {
 	}
 
 	// TODO asset needs sensu namespace in crd
-	sensuClient := sensu_client.New(asset.ClusterName, asset.GetNamespace(), "default")
+	sensuClient := sensu_client.New(asset.SensuMetadata.Name, asset.GetNamespace(), asset.SensuMetadata.Namespace)
 	err := sensuClient.DeleteAsset(asset)
 	if err != nil {
 		c.logger.Warningf("failed to handle asset delete event: %v", err)
@@ -362,7 +411,7 @@ func (c *Controller) syncSensuAsset(asset *api.SensuAsset) {
 
 	c.logger.Warnf("in syncSensuAsset, about to update checkconfig within sensu cluster")
 	// TODO sensu namespace needs to be in CRD
-	sensuClient := sensu_client.New(asset.ClusterName, asset.GetNamespace(), "default")
+	sensuClient := sensu_client.New(asset.SensuMetadata.Name, asset.GetNamespace(), asset.SensuMetadata.Namespace)
 	err = sensuClient.UpdateAsset(asset)
 	c.logger.Warnf("in syncSensuAsset, after update asset in sensu cluster")
 	if err != nil {
