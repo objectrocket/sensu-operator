@@ -91,6 +91,7 @@ func (a SensuAsset) GetCustomResourceValidation() *k8s_api_extensions_v1beta1.Cu
 		OpenAPIV3Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
 			Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
 				"metadata": k8s_api_extensions_v1beta1.JSONSchemaProps{
+					Required: []string{"finalizers", "name", "namespace"},
 					Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
 						"finalizers": k8s_api_extensions_v1beta1.JSONSchemaProps{
 							Type:     "array",
