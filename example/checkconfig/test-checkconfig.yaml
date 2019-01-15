@@ -15,5 +15,5 @@ spec:
   runtime_assets:
   - sensu-asset-http
   sensu_metadata:
-    name: sensu
+    name: platdev0
     namespace: default
