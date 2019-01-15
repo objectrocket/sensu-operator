@@ -261,10 +261,11 @@ func (c SensuCheckConfig) GetCustomResourceValidation() *k8s_api_extensions_v1be
 				"metadata": k8s_api_extensions_v1beta1.JSONSchemaProps{
 					Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
 						"finalizers": k8s_api_extensions_v1beta1.JSONSchemaProps{
-							Type:        "array",
-							MinItems:    &minItems,
-							UniqueItems: true,
-						},
+							Type:     "array",
+							MinItems: &minItems,
+							// This is required to be set to false, or you get error
+							// 'uniqueItems cannot be set to true since the runtime complexity becomes quadratic'
+							UniqueItems: false},
 					},
 				},
 			},
