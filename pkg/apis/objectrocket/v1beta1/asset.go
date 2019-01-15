@@ -98,6 +98,8 @@ func (a SensuAsset) GetCustomResourceValidation() *k8s_api_extensions_v1beta1.Cu
 							// This is required to be set to false, or you get error
 							// 'uniqueItems cannot be set to true since the runtime complexity becomes quadratic'
 							UniqueItems: false,
+							// MinItems by itself doesn't seem to work.  I'm requiring a specific finalizer name
+							Required: []string{"asset.finalizer.objectrocket.com"},
 						},
 					},
 				},
