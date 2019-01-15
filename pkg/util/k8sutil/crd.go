@@ -80,6 +80,10 @@ func CreateCRD(clientset apiextensionsclient.Interface,
 	}
 	existingCRD, err := clientset.ApiextensionsV1beta1().CustomResourceDefinitions().Create(crd)
 	if err != nil && IsKubernetesResourceAlreadyExistError(err) {
+		// Get the version from k8s, as the above version doesn't seem to have resourceversion
+		if existingCRD, err = clientset.ApiextensionsV1beta1().CustomResourceDefinitions().Get(crd.GetName(), metav1.GetOptions{}); err != nil {
+			return err
+		}
 		if !crdEqual(existingCRD, crd) {
 			crd.ResourceVersion = existingCRD.ResourceVersion
 			if _, err := clientset.ApiextensionsV1beta1().CustomResourceDefinitions().Update(crd); err != nil {
