@@ -17,6 +17,7 @@ package k8sutil
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"time"
 
 	api "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
@@ -77,11 +78,29 @@ func CreateCRD(clientset apiextensionsclient.Interface,
 	if len(shortName) != 0 {
 		crd.Spec.Names.ShortNames = []string{shortName}
 	}
-	_, err := clientset.ApiextensionsV1beta1().CustomResourceDefinitions().Create(crd)
-	if err != nil && !IsKubernetesResourceAlreadyExistError(err) {
+	existingCRD, err := clientset.ApiextensionsV1beta1().CustomResourceDefinitions().Create(crd)
+	if err != nil && IsKubernetesResourceAlreadyExistError(err) {
+		if !crdEqual(existingCRD, crd) {
+			if _, err := clientset.ApiextensionsV1beta1().CustomResourceDefinitions().Update(crd); err != nil {
+				return err
+			}
+		}
+		return nil
+	} else if err != nil && !IsKubernetesResourceAlreadyExistError(err) {
 		return err
 	}
 	return nil
+}
+
+func crdEqual(crd1, crd2 *apiextensionsv1beta1.CustomResourceDefinition) (equal bool) {
+	if crd1.Spec.Group != crd2.Spec.Group ||
+		crd1.Spec.Version != crd2.Spec.Version ||
+		crd1.Spec.Scope != crd2.Spec.Scope ||
+		!reflect.DeepEqual(crd1.Spec.Names, crd2.Spec.Names) ||
+		!reflect.DeepEqual(crd1.Spec.Validation, crd2.Spec.Validation) {
+		return false
+	}
+	return true
 }
 
 func WaitCRDReady(clientset apiextensionsclient.Interface, crdName string) error {
