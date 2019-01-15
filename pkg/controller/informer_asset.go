@@ -48,7 +48,8 @@ func (c *Controller) syncSensuAsset(asset *api.SensuAsset) {
 		err error
 	)
 
-	c.logger.Debugf("in syncSensuAsset, about to update checkconfig within sensu cluster")
+	c.logger.Debugf("in syncSensuAsset, about to update asset within sensu cluster, using sensu cluster '%s', within k8s namespace '%s', and sensu namespace '%s'",
+		asset.Spec.SensuMetadata.Name, asset.GetNamespace(), asset.Spec.SensuMetadata.Namespace)
 	sensuClient := sensu_client.New(asset.Spec.SensuMetadata.Name, asset.GetNamespace(), asset.Spec.SensuMetadata.Namespace)
 	err = sensuClient.UpdateAsset(asset)
 	c.logger.Debugf("in syncSensuAsset, after update asset in sensu cluster")
@@ -59,10 +60,12 @@ func (c *Controller) syncSensuAsset(asset *api.SensuAsset) {
 	if !asset.Status.Accepted {
 		copy := asset.DeepCopy()
 		copy.Status.Accepted = true
-		c.logger.Debugf("in syncSensuAsset, about to update asset status within k8s")
+		c.logger.Debugf("in syncSensuAsset, about to update asset status within k8s, using sensu cluster '%s', within k8s namespace '%s', and sensu namespace '%s'",
+			asset.Spec.SensuMetadata.Name, asset.GetNamespace(), asset.Spec.SensuMetadata.Namespace)
 		if _, err = c.SensuCRCli.ObjectrocketV1beta1().SensuAssets(copy.GetNamespace()).Update(copy); err != nil {
 			c.logger.Warningf("failed to update assets's status during update event: %v", err)
 		}
-		c.logger.Debugf("in syncSensuAsset, done updating asset's status within k8s")
+		c.logger.Debugf("in syncSensuAsset, done updating asset's status within k8s, using sensu cluster '%s', within k8s namespace '%s', and sensu namespace '%s",
+			asset.Spec.SensuMetadata.Name, asset.GetNamespace(), asset.Spec.SensuMetadata.Namespace)
 	}
 }
