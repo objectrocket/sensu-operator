@@ -16,6 +16,7 @@ package v1beta1
 
 import (
 	sensutypes "github.com/sensu/sensu-go/types"
+	k8s_api_extensions_v1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -54,6 +55,8 @@ type SensuHandlerSpec struct {
 	RuntimeAssets []string      `json:"runtimeAssets"`
 	// Metadata contains the name, namespace, and labels of the handler
 	SensuMetadata ObjectMeta `json:"sensu_metadata,omitempty"`
+	// Validation is the OpenAPIV3Schema validation for sensu assets
+	Validation k8s_api_extensions_v1beta1.CustomResourceValidation `json:"validation,omitempty"`
 }
 
 // HandlerSocket is the socket description of a sensu handler.
@@ -88,5 +91,25 @@ func (a SensuHandler) ToSensuType() *sensutypes.Handler {
 		Filters:       a.Spec.Filters,
 		EnvVars:       a.Spec.EnvVars,
 		RuntimeAssets: a.Spec.RuntimeAssets,
+	}
+}
+
+// GetCustomResourceValidation rreturns the handlers's resource validation
+func (a SensuHandler) GetCustomResourceValidation() *k8s_api_extensions_v1beta1.CustomResourceValidation {
+	minItems := int64(1)
+	return &k8s_api_extensions_v1beta1.CustomResourceValidation{
+		OpenAPIV3Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
+			Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
+				"metadata": k8s_api_extensions_v1beta1.JSONSchemaProps{
+					Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
+						"finalizers": k8s_api_extensions_v1beta1.JSONSchemaProps{
+							Type:        "array",
+							MinItems:    &minItems,
+							UniqueItems: true,
+						},
+					},
+				},
+			},
+		},
 	}
 }

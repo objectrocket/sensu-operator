@@ -30,7 +30,7 @@ func (c *Controller) onDeleteSensuAsset(obj interface{}) {
 		}
 	}
 
-	sensuClient := sensu_client.New(asset.SensuMetadata.Name, asset.GetNamespace(), asset.SensuMetadata.Namespace)
+	sensuClient := sensu_client.New(asset.Spec.SensuMetadata.Name, asset.GetNamespace(), asset.Spec.SensuMetadata.Namespace)
 	err := sensuClient.DeleteAsset(asset)
 	if err != nil {
 		c.logger.Warningf("failed to handle asset delete event: %v", err)
@@ -49,7 +49,7 @@ func (c *Controller) syncSensuAsset(asset *api.SensuAsset) {
 	)
 
 	c.logger.Debugf("in syncSensuAsset, about to update checkconfig within sensu cluster")
-	sensuClient := sensu_client.New(asset.SensuMetadata.Name, asset.GetNamespace(), asset.SensuMetadata.Namespace)
+	sensuClient := sensu_client.New(asset.Spec.SensuMetadata.Name, asset.GetNamespace(), asset.Spec.SensuMetadata.Namespace)
 	err = sensuClient.UpdateAsset(asset)
 	c.logger.Debugf("in syncSensuAsset, after update asset in sensu cluster")
 	if err != nil {

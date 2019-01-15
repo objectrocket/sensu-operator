@@ -53,7 +53,12 @@ func listClustersURI(ns string) string {
 	return fmt.Sprintf("/apis/%s/namespaces/%s/%s", api.SchemeGroupVersion.String(), ns, api.SensuClusterResourcePlural)
 }
 
-func CreateCRD(clientset apiextensionsclient.Interface, crdName, rkind, rplural, shortName string) error {
+func CreateCRD(clientset apiextensionsclient.Interface,
+	crdName,
+	rkind,
+	rplural,
+	shortName string,
+	validation *apiextensionsv1beta1.CustomResourceValidation) error {
 	crd := &apiextensionsv1beta1.CustomResourceDefinition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: crdName,
@@ -66,6 +71,7 @@ func CreateCRD(clientset apiextensionsclient.Interface, crdName, rkind, rplural,
 				Plural: rplural,
 				Kind:   rkind,
 			},
+			Validation: validation,
 		},
 	}
 	if len(shortName) != 0 {
