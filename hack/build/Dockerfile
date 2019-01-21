@@ -6,8 +6,8 @@ RUN go get github.com/golang/dep/cmd/dep
 WORKDIR $REPO_PATH
 COPY Gopkg.toml ${REPO_PATH}
 COPY Gopkg.lock ${REPO_PATH}
-RUN dep ensure -v --vendor-only
 COPY . $REPO_PATH
+RUN dep ensure -v --vendor-only
 RUN make build-linux
 
 FROM alpine:3.6
