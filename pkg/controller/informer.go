@@ -197,6 +197,11 @@ func (c *Controller) processNextClusterItem() bool {
 	}
 	defer clusterInformer.queue.Done(key)
 	obj, exists, err := clusterInformer.indexer.GetByKey(key.(string))
+	if obj == nil {
+		c.logger.Errorf("Got nil obj for key %v", key)
+	} else {
+		c.logger.Errorf("Got non-nil obj %v for key %v", obj, key)
+	}
 	if err != nil {
 		if clusterInformer.queue.NumRequeues(key) < c.Config.ProcessingRetries {
 			clusterInformer.queue.AddRateLimited(key)

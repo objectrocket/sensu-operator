@@ -1,11 +1,12 @@
 apiVersion: "objectrocket.com/v1beta1"
 kind: "SensuCluster"
 metadata:
-  name: "example-sensu-cluster"
+  name: "sensu"
   ## Adding this annotation make this cluster managed by clusterwide operators
   ## namespaced operators ignore it
   # annotations:
   #   objectrocket.com/scope: clusterwide
 spec:
   size: 3
-  version: "master"
+  version: "1"
+  repository: "objectrocket/sensu"

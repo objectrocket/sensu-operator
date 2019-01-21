@@ -54,6 +54,7 @@ type clusterEvent struct {
 	cluster *api.SensuCluster
 }
 
+// Config is the Kubernetes related configuration for the Cluster
 type Config struct {
 	ServiceAccount string
 
@@ -61,6 +62,7 @@ type Config struct {
 	SensuCRCli versioned.Interface
 }
 
+// Cluster is the type for a SensuCluster inside the operator
 type Cluster struct {
 	logger *logrus.Entry
 
@@ -75,16 +77,12 @@ type Cluster struct {
 	eventCh chan *clusterEvent
 	stopCh  chan struct{}
 
-	// members repsersents the members in the etcd cluster.
-	// the name of the member is the the name of the pod the member
-	// process runs in.
-	members etcdutil.MemberSet
-
 	tlsConfig *tls.Config
 
 	eventsCli corev1.EventInterface
 }
 
+// New makes a new cluster
 func New(config Config, cl *api.SensuCluster) *Cluster {
 	lg := logrus.WithField("pkg", "cluster").WithField("cluster-name", cl.Name)
 
@@ -159,13 +157,13 @@ func (c *Cluster) create() error {
 	}
 	c.logClusterCreation()
 
-	return c.prepareSeedMember()
+	return c.prepareCluster()
 }
 
-func (c *Cluster) prepareSeedMember() error {
+func (c *Cluster) prepareCluster() error {
 	c.status.SetScalingUpCondition(0, c.cluster.Spec.Size)
 
-	err := c.bootstrap()
+	err := c.startStatefulSet()
 	if err != nil {
 		return err
 	}
@@ -174,6 +172,7 @@ func (c *Cluster) prepareSeedMember() error {
 	return nil
 }
 
+// Delete triggers the delete of a cluster
 func (c *Cluster) Delete() {
 	c.logger.Info("cluster is deleted by user")
 	close(c.stopCh)
@@ -256,14 +255,6 @@ func (c *Cluster) run() {
 				break
 			}
 
-			// On controller restore, we could have "members == nil"
-			if rerr != nil || c.members == nil {
-				rerr = c.updateMembers(podsToMemberSet(running, c.isSecureClient()))
-				if rerr != nil {
-					c.logger.Errorf("failed to update members: %v", rerr)
-					break
-				}
-			}
 			rerr = c.reconcile(running)
 			if rerr != nil {
 				c.logger.Errorf("failed to reconcile: %v", rerr)
@@ -314,24 +305,21 @@ func isSpecEqual(s1, s2 api.ClusterSpec) bool {
 	return true
 }
 
-func (c *Cluster) startSeedMember() error {
-	m := &etcdutil.Member{
-		Name:         k8sutil.UniqueMemberName(c.cluster.Name),
+func (c *Cluster) startStatefulSet() error {
+	m := &etcdutil.MemberConfig{
 		Namespace:    c.cluster.Namespace,
 		SecurePeer:   c.isSecurePeer(),
 		SecureClient: c.isSecureClient(),
 	}
-	ms := etcdutil.NewMemberSet(m)
-	if err := c.createPod(ms, m, "new"); err != nil {
-		return fmt.Errorf("failed to create seed member (%s): %v", m.Name, err)
+	if err := c.createStatefulSet(m); err != nil {
+		return fmt.Errorf("failed to create statefulset (%s): %v", c.cluster.Name, err)
 	}
-	c.members = ms
-	c.logger.Infof("cluster created with seed member (%s)", m.Name)
-	_, err := c.eventsCli.Create(k8sutil.NewMemberAddEvent(m.Name, c.cluster))
+
+	c.logger.Infof("cluster created with seed member (%s)", c.cluster.Name)
+	_, err := c.eventsCli.Create(k8sutil.NewMemberAddEvent(c.cluster))
 	if err != nil {
 		c.logger.Errorf("failed to create new member add event: %v", err)
 	}
-
 	return nil
 }
 
@@ -343,11 +331,7 @@ func (c *Cluster) isSecureClient() bool {
 	return c.cluster.Spec.TLS.IsSecureClient()
 }
 
-// bootstrap creates the seed etcd member for a new cluster.
-func (c *Cluster) bootstrap() error {
-	return c.startSeedMember()
-}
-
+// Update triggers a Cluster update
 func (c *Cluster) Update(cl *api.SensuCluster) {
 	c.send(&clusterEvent{
 		typ:     eventModifyCluster,
@@ -378,31 +362,23 @@ func (c *Cluster) isPodPVEnabled() bool {
 	return false
 }
 
-func (c *Cluster) createPod(members etcdutil.MemberSet, m *etcdutil.Member, state string) error {
-	pod := k8sutil.NewSensuPod(m, members.PeerURLPairs(), c.cluster.Name, state, uuid.New(), c.cluster.Spec, c.cluster.AsOwner())
+func (c *Cluster) createStatefulSet(m *etcdutil.MemberConfig) error {
+	set := k8sutil.NewSensuStatefulSet(m, c.cluster.Name, uuid.New(), c.cluster.Spec, c.cluster.AsOwner())
 	if c.isPodPVEnabled() {
 		pvc := k8sutil.NewSensuPodPVC(m, *c.cluster.Spec.Pod.PersistentVolumeClaimSpec, c.cluster.Name, c.cluster.Namespace, c.cluster.AsOwner())
 		_, err := c.config.KubeCli.CoreV1().PersistentVolumeClaims(c.cluster.Namespace).Create(pvc)
 		if err != nil {
-			return fmt.Errorf("failed to create PVC for member (%s): %v", m.Name, err)
+			return fmt.Errorf("failed to create PVC for member (%s): %v", c.cluster.Name, err)
 		}
-		k8sutil.AddEtcdVolumeToPod(pod, pvc)
+		k8sutil.AddEtcdVolumeToPod(&set.Spec.Template, pvc)
 	} else {
-		k8sutil.AddEtcdVolumeToPod(pod, nil)
+		k8sutil.AddEtcdVolumeToPod(&set.Spec.Template, nil)
 	}
-	_, err := c.config.KubeCli.CoreV1().Pods(c.cluster.Namespace).Create(pod)
-	return err
-}
-
-func (c *Cluster) removePod(name string) error {
-	ns := c.cluster.Namespace
-	opts := metav1.NewDeleteOptions(podTerminationGracePeriod)
-	err := c.config.KubeCli.Core().Pods(ns).Delete(name, opts)
+	createdSet, err := c.config.KubeCli.AppsV1beta1().StatefulSets(c.cluster.Namespace).Create(set)
 	if err != nil {
-		if !k8sutil.IsKubernetesResourceNotFoundError(err) {
-			return err
-		}
+		return err
 	}
+	c.cluster.UID = createdSet.UID
 	return nil
 }
 

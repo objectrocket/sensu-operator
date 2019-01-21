@@ -135,10 +135,7 @@ func (c *Controller) handleClusterEvent(event *Event) (bool, error) {
 			return false, fmt.Errorf("unsafe state. cluster (%s) was created before but we received event (%s)", clus.Name, event.Type)
 		}
 
-		nc := cluster.New(c.makeClusterConfig(), clus)
-
-		c.clusters[clus.Name] = nc
-
+		c.clusters[clus.Name] = cluster.New(c.makeClusterConfig(), clus)
 		clustersCreated.Inc()
 		clustersTotal.Inc()
 
