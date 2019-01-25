@@ -126,7 +126,6 @@ func (c *Controller) addInformer(namespace string, resourcePlural string, objTyp
 	finalizer := cache.NewIndexer(cache.DeletionHandlingMetaNamespaceKeyFunc, cache.Indexers{})
 	informer.indexer, informer.controller = cache.NewIndexerInformer(source, objType, c.ResyncPeriod, cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			c.logger.Warnf("Adding %v to the queue", obj)
 			key, err := cache.MetaNamespaceKeyFunc(obj)
 			if err == nil {
 				informer.queue.Add(key)
