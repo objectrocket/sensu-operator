@@ -10,16 +10,12 @@ DOCKER := $(shell command -v docker)
 IMAGE ?= objectrocket/sensu-operator:v0.0.1
 DOCKER_IMAGE = objectrocket/sensu-operator
 # allow circle to run builds even without a tag
-CIRCLE_TAG ?= latest
+IMAGE_VERSION ?= latest
 
 # Test if the dependencies we need to run this Makefile are installed
 deps-development:
 ifndef DOCKER
 	@echo "Docker is not available. Please install docker"
-	@exit 1
-endif
-ifndef IMAGE_VERSION
-	@echo "Variable IMAGE_VERSION is required"
 	@exit 1
 endif
 
@@ -47,4 +43,3 @@ docker-build: deps-development
 
 docker-push: docker-build
 	docker push $(DOCKER_IMAGE):$(IMAGE_VERSION)
-
