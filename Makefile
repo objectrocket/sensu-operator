@@ -13,14 +13,12 @@ DOCKER_IMAGE = objectrocket/sensu-operator
 # allow builds without tags
 IMAGE_VERSION := $(or $(IMAGE_VERSION ),latest)
 
-
 # Test if the dependencies we need to run this Makefile are installed
 deps-development:
 ifndef DOCKER
 	@echo "Docker is not available. Please install docker"
 	@exit 1
 endif
-
 
 .PHONY: all
 all: build container
@@ -42,6 +40,8 @@ clean:
 	@go clean
 
 docker-build: deps-development
+	echo ${CIRCLE_TAG}
+	echo ${IMAGE_VERSION}
 	docker build -t $(DOCKER_IMAGE):$(IMAGE_VERSION) .
 
 docker-push: docker-build
