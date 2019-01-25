@@ -16,10 +16,10 @@ ifndef DOCKER
 	@echo "Docker is not available. Please install docker"
 	@exit 1
 endif
-ifndef IMAGE_VERSION
-	@echo "Variable IMAGE_VERSION is required"
-	@exit 1
-endif
+# ifndef IMAGE_VERSION
+# 	@echo "Variable IMAGE_VERSION is required"
+# 	@exit 1
+# endif
 # allow circle to run builds even without a tag
 ifeq ($(IMAGE_VERSION),)
 	IMAGE_VERSION := latest
