@@ -9,9 +9,8 @@ DOCKER := $(shell command -v docker)
 
 IMAGE ?= objectrocket/sensu-operator:v0.0.1
 DOCKER_IMAGE = objectrocket/sensu-operator
-
 # allow builds without tags
-IMAGE_VERSION := $(or $(IMAGE_VERSION ),latest)
+IMAGE_VERSION ?= latest
 
 # Test if the dependencies we need to run this Makefile are installed
 deps-development:
@@ -40,8 +39,6 @@ clean:
 	@go clean
 
 docker-build: deps-development
-	echo ${CIRCLE_TAG}
-	echo ${IMAGE_VERSION}
 	docker build -t $(DOCKER_IMAGE):$(IMAGE_VERSION) .
 
 docker-push: docker-build
