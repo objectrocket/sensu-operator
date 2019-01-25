@@ -22,7 +22,7 @@ jobs:
       - setup_remote_docker
       - run:
           name: Build the server binary and docker image
-          command: make docker-build IMAGE_VERSION=${CIRCLE_TAG}
+          command: make docker-build IMAGE_VERSION=latest
   unit_test:
     working_directory: /go/src/github.com/objectrocket/sensu-operator
     docker:
@@ -66,6 +66,7 @@ workflows:
   # runs on all commits
   build_and_test:
     jobs:
+      - build
       - unit_test
       - markdownlint
   test_build_deploy:
