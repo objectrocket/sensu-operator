@@ -7,8 +7,10 @@ export SHELL := /bin/bash
 # Get docker path or an empty string
 DOCKER := $(shell command -v docker)
 
-IMAGE?=objectrocket/sensu-operator:v0.0.1
+IMAGE ?= objectrocket/sensu-operator:v0.0.1
 DOCKER_IMAGE = objectrocket/sensu-operator
+# allow circle to run builds even without a tag
+CIRCLE_TAG ?= latest
 
 # Test if the dependencies we need to run this Makefile are installed
 deps-development:
