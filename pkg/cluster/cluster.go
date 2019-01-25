@@ -29,8 +29,10 @@ import (
 	"github.com/objectrocket/sensu-operator/pkg/util/k8sutil"
 	"github.com/objectrocket/sensu-operator/pkg/util/retryutil"
 
+	"github.com/onrik/logrus/filename"
 	"github.com/pborman/uuid"
 	"github.com/sirupsen/logrus"
+	appsv1beta1 "k8s.io/api/apps/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -79,11 +81,13 @@ type Cluster struct {
 
 	tlsConfig *tls.Config
 
-	eventsCli corev1.EventInterface
+	eventsCli   corev1.EventInterface
+	statefulSet *appsv1beta1.StatefulSet
 }
 
 // New makes a new cluster
 func New(config Config, cl *api.SensuCluster) *Cluster {
+	logrus.AddHook(filename.NewHook())
 	lg := logrus.WithField("pkg", "cluster").WithField("cluster-name", cl.Name)
 
 	c := &Cluster{
@@ -363,10 +367,11 @@ func (c *Cluster) isPodPVEnabled() bool {
 }
 
 func (c *Cluster) createStatefulSet(m *etcdutil.MemberConfig) error {
+	var err error
 	set := k8sutil.NewSensuStatefulSet(m, c.cluster.Name, uuid.New(), c.cluster.Spec, c.cluster.AsOwner())
 	if c.isPodPVEnabled() {
 		pvc := k8sutil.NewSensuPodPVC(m, *c.cluster.Spec.Pod.PersistentVolumeClaimSpec, c.cluster.Name, c.cluster.Namespace, c.cluster.AsOwner())
-		_, err := c.config.KubeCli.CoreV1().PersistentVolumeClaims(c.cluster.Namespace).Create(pvc)
+		_, err = c.config.KubeCli.CoreV1().PersistentVolumeClaims(c.cluster.Namespace).Create(pvc)
 		if err != nil {
 			return fmt.Errorf("failed to create PVC for member (%s): %v", c.cluster.Name, err)
 		}
@@ -374,11 +379,10 @@ func (c *Cluster) createStatefulSet(m *etcdutil.MemberConfig) error {
 	} else {
 		k8sutil.AddEtcdVolumeToPod(&set.Spec.Template, nil)
 	}
-	createdSet, err := c.config.KubeCli.AppsV1beta1().StatefulSets(c.cluster.Namespace).Create(set)
+	c.statefulSet, err = c.config.KubeCli.AppsV1beta1().StatefulSets(c.cluster.Namespace).Create(set)
 	if err != nil {
 		return err
 	}
-	c.cluster.UID = createdSet.UID
 	return nil
 }
 
@@ -399,9 +403,9 @@ func (c *Cluster) pollPods() (running, pending []*v1.Pod, err error) {
 			c.logger.Warningf("pollPods: ignore pod %v: no owner", pod.Name)
 			continue
 		}
-		if pod.OwnerReferences[0].UID != c.cluster.UID {
+		if pod.OwnerReferences[0].UID != c.statefulSet.UID {
 			c.logger.Warningf("pollPods: ignore pod %v: owner (%v) is not %v",
-				pod.Name, pod.OwnerReferences[0].UID, c.cluster.UID)
+				pod.Name, pod.OwnerReferences[0].UID, c.statefulSet.UID)
 			continue
 		}
 		switch pod.Status.Phase {
@@ -435,9 +439,12 @@ func (c *Cluster) updateCRStatus() error {
 		return nil
 	}
 
-	newCluster := c.cluster
+	newCluster, err := c.config.SensuCRCli.ObjectrocketV1beta1().SensuClusters(c.cluster.GetNamespace()).Get(c.cluster.GetName(), metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("Failed to fetch cluster for status update: %v", err)
+	}
 	newCluster.Status = c.status
-	newCluster, err := c.config.SensuCRCli.ObjectrocketV1beta1().SensuClusters(c.cluster.Namespace).Update(c.cluster)
+	newCluster, err = c.config.SensuCRCli.ObjectrocketV1beta1().SensuClusters(newCluster.GetNamespace()).Update(newCluster)
 	if err != nil {
 		return fmt.Errorf("failed to update CR status: %v", err)
 	}
