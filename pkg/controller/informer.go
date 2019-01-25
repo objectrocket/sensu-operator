@@ -397,6 +397,7 @@ func (c *Controller) onDeleteSensuClus(obj interface{}) {
 }
 
 func (c *Controller) syncSensuClus(clus *api.SensuCluster) {
+	var err error
 	ev := &Event{
 		Type:   kwatch.Added,
 		Object: clus,
@@ -407,9 +408,18 @@ func (c *Controller) syncSensuClus(clus *api.SensuCluster) {
 	if _, ok := c.clusters[clus.Name]; ok {
 		ev.Type = kwatch.Modified
 	}
-
+	// Ensure that the finalizer exists, failing if it can't be added at this time
+	if len(clus.Finalizers) == 0 && clus.DeletionTimestamp == nil {
+		copy := clus.DeepCopy()
+		copy.Finalizers = append(copy.Finalizers, "cluster.finalizer.objectrocket.com")
+		if clus, err = c.SensuCRCli.ObjectrocketV1beta1().SensuClusters(copy.GetNamespace()).Update(copy); err != nil {
+			msg := fmt.Sprintf("failed to update clusters's finalizer during sync event: %v", err)
+			c.logger.Warningf(msg)
+			return
+		}
+	}
 	pt.start()
-	_, err := c.handleClusterEvent(ev)
+	_, err = c.handleClusterEvent(ev)
 	if err != nil {
 		c.logger.Warningf("fail to handle event: %v", err)
 	}
