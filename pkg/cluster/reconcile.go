@@ -30,7 +30,17 @@ var ErrLostQuorum = errors.New("lost quorum")
 // - it tries to reconcile the cluster to desired size.
 // - if the cluster needs for upgrade, it tries to upgrade old member one by one.
 func (c *Cluster) reconcile(pods []*v1.Pod) error {
-	if c.cluster.Spec.Size != c.statefulSet.Size() {
+	if c.statefulSet.Spec.Replicas == nil {
+		c.logger.Infof("StatefulSet for cluster %s has nil Replicas.  Fetching new StatefulSet", c.name())
+		set, err := c.config.KubeCli.AppsV1beta1().StatefulSets(c.statefulSet.GetNamespace()).Get(c.statefulSet.GetName(), metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("Failed to fetch new StatefulSet: %v", err)
+		}
+		c.statefulSet = set
+		// Return here since reconcile will be called again and we can do this check again if necessary
+		return nil
+	}
+	if c.cluster.Spec.Size != int(*c.statefulSet.Spec.Replicas) {
 		set, err := c.config.KubeCli.AppsV1beta1().StatefulSets(c.statefulSet.GetNamespace()).Get(c.statefulSet.GetName(), metav1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("Error getting StatefulSet %s for size update: %v", c.statefulSet.GetName(), err)
@@ -40,7 +50,7 @@ func (c *Cluster) reconcile(pods []*v1.Pod) error {
 			return fmt.Errorf("Error updating StatefulSet %s size: %v", c.statefulSet.GetName(), err)
 		}
 		c.statefulSet = set
-		c.logger.Infof("Update StatefulSet %s size to %d", c.statefulSet.GetName(), c.statefulSet.Size())
+		c.logger.Infof("Update StatefulSet %s size to %d", c.statefulSet.GetName(), *c.statefulSet.Spec.Replicas)
 		return nil
 	}
 	var oldPod *v1.Pod
