@@ -392,6 +392,12 @@ func (c *Cluster) pollPods() (running, pending []*v1.Pod, err error) {
 		return nil, nil, fmt.Errorf("failed to list running pods: %v", err)
 	}
 
+	set, err := c.config.KubeCli.AppsV1beta1().StatefulSets(c.cluster.Namespace).Get(c.cluster.Name, metav1.GetOptions{})
+	if err != nil {
+		return nil, nil, fmt.Errorf("Failed to fetch new StatefulSet: %v", err)
+	}
+	c.statefulSet = set
+
 	for i := range podList.Items {
 		pod := &podList.Items[i]
 		// Avoid polling deleted pods. k8s issue where deleted pods would sometimes show the status Pending
