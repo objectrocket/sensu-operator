@@ -21,7 +21,7 @@ package v1beta1
 import (
 	time "time"
 
-	objectrocketv1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
+	objectrocket_v1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
 	versioned "github.com/objectrocket/sensu-operator/pkg/generated/clientset/versioned"
 	internalinterfaces "github.com/objectrocket/sensu-operator/pkg/generated/informers/externalversions/internalinterfaces"
 	v1beta1 "github.com/objectrocket/sensu-operator/pkg/generated/listers/objectrocket/v1beta1"
@@ -70,7 +70,7 @@ func NewFilteredSensuCheckConfigInformer(client versioned.Interface, namespace s
 				return client.ObjectrocketV1beta1().SensuCheckConfigs(namespace).Watch(options)
 			},
 		},
-		&objectrocketv1beta1.SensuCheckConfig{},
+		&objectrocket_v1beta1.SensuCheckConfig{},
 		resyncPeriod,
 		indexers,
 	)
@@ -81,7 +81,7 @@ func (f *sensuCheckConfigInformer) defaultInformer(client versioned.Interface, r
 }
 
 func (f *sensuCheckConfigInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&objectrocketv1beta1.SensuCheckConfig{}, f.defaultInformer)
+	return f.factory.InformerFor(&objectrocket_v1beta1.SensuCheckConfig{}, f.defaultInformer)
 }
 
 func (f *sensuCheckConfigInformer) Lister() v1beta1.SensuCheckConfigLister {

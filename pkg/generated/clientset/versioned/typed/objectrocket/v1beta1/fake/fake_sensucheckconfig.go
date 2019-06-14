@@ -62,7 +62,7 @@ func (c *FakeSensuCheckConfigs) List(opts v1.ListOptions) (result *v1beta1.Sensu
 	if label == nil {
 		label = labels.Everything()
 	}
-	list := &v1beta1.SensuCheckConfigList{ListMeta: obj.(*v1beta1.SensuCheckConfigList).ListMeta}
+	list := &v1beta1.SensuCheckConfigList{}
 	for _, item := range obj.(*v1beta1.SensuCheckConfigList).Items {
 		if label.Matches(labels.Set(item.Labels)) {
 			list.Items = append(list.Items, item)

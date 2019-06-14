@@ -78,13 +78,21 @@ func (in *BackupSource) DeepCopyInto(out *BackupSource) {
 	*out = *in
 	if in.S3 != nil {
 		in, out := &in.S3, &out.S3
-		*out = new(S3BackupSource)
-		**out = **in
+		if *in == nil {
+			*out = nil
+		} else {
+			*out = new(S3BackupSource)
+			**out = **in
+		}
 	}
 	if in.ABS != nil {
 		in, out := &in.ABS, &out.ABS
-		*out = new(ABSBackupSource)
-		**out = **in
+		if *in == nil {
+			*out = nil
+		} else {
+			*out = new(ABSBackupSource)
+			**out = **in
+		}
 	}
 	return
 }
@@ -109,8 +117,12 @@ func (in *BackupSpec) DeepCopyInto(out *BackupSpec) {
 	}
 	if in.BackupPolicy != nil {
 		in, out := &in.BackupPolicy, &out.BackupPolicy
-		*out = new(BackupPolicy)
-		**out = **in
+		if *in == nil {
+			*out = nil
+		} else {
+			*out = new(BackupPolicy)
+			**out = **in
+		}
 	}
 	in.BackupSource.DeepCopyInto(&out.BackupSource)
 	return
@@ -163,13 +175,21 @@ func (in *ClusterSpec) DeepCopyInto(out *ClusterSpec) {
 	*out = *in
 	if in.Pod != nil {
 		in, out := &in.Pod, &out.Pod
-		*out = new(PodPolicy)
-		(*in).DeepCopyInto(*out)
+		if *in == nil {
+			*out = nil
+		} else {
+			*out = new(PodPolicy)
+			(*in).DeepCopyInto(*out)
+		}
 	}
 	if in.TLS != nil {
 		in, out := &in.TLS, &out.TLS
-		*out = new(TLSPolicy)
-		(*in).DeepCopyInto(*out)
+		if *in == nil {
+			*out = nil
+		} else {
+			*out = new(TLSPolicy)
+			(*in).DeepCopyInto(*out)
+		}
 	}
 	return
 }
@@ -334,8 +354,12 @@ func (in *PodPolicy) DeepCopyInto(out *PodPolicy) {
 	}
 	if in.Affinity != nil {
 		in, out := &in.Affinity, &out.Affinity
-		*out = new(v1.Affinity)
-		(*in).DeepCopyInto(*out)
+		if *in == nil {
+			*out = nil
+		} else {
+			*out = new(v1.Affinity)
+			(*in).DeepCopyInto(*out)
+		}
 	}
 	in.Resources.DeepCopyInto(&out.Resources)
 	if in.Tolerations != nil {
@@ -354,8 +378,12 @@ func (in *PodPolicy) DeepCopyInto(out *PodPolicy) {
 	}
 	if in.PersistentVolumeClaimSpec != nil {
 		in, out := &in.PersistentVolumeClaimSpec, &out.PersistentVolumeClaimSpec
-		*out = new(v1.PersistentVolumeClaimSpec)
-		(*in).DeepCopyInto(*out)
+		if *in == nil {
+			*out = nil
+		} else {
+			*out = new(v1.PersistentVolumeClaimSpec)
+			(*in).DeepCopyInto(*out)
+		}
 	}
 	if in.Annotations != nil {
 		in, out := &in.Annotations, &out.Annotations
@@ -366,8 +394,12 @@ func (in *PodPolicy) DeepCopyInto(out *PodPolicy) {
 	}
 	if in.SecurityContext != nil {
 		in, out := &in.SecurityContext, &out.SecurityContext
-		*out = new(v1.PodSecurityContext)
-		(*in).DeepCopyInto(*out)
+		if *in == nil {
+			*out = nil
+		} else {
+			*out = new(v1.PodSecurityContext)
+			(*in).DeepCopyInto(*out)
+		}
 	}
 	return
 }
@@ -408,13 +440,21 @@ func (in *RestoreSource) DeepCopyInto(out *RestoreSource) {
 	*out = *in
 	if in.S3 != nil {
 		in, out := &in.S3, &out.S3
-		*out = new(S3RestoreSource)
-		**out = **in
+		if *in == nil {
+			*out = nil
+		} else {
+			*out = new(S3RestoreSource)
+			**out = **in
+		}
 	}
 	if in.ABS != nil {
 		in, out := &in.ABS, &out.ABS
-		*out = new(ABSRestoreSource)
-		**out = **in
+		if *in == nil {
+			*out = nil
+		} else {
+			*out = new(ABSRestoreSource)
+			**out = **in
+		}
 	}
 	return
 }
@@ -748,13 +788,21 @@ func (in *SensuCheckConfigSpec) DeepCopyInto(out *SensuCheckConfigSpec) {
 	}
 	if in.Subdue != nil {
 		in, out := &in.Subdue, &out.Subdue
-		*out = new(TimeWindowWhen)
-		(*in).DeepCopyInto(*out)
+		if *in == nil {
+			*out = nil
+		} else {
+			*out = new(TimeWindowWhen)
+			(*in).DeepCopyInto(*out)
+		}
 	}
 	if in.ProxyRequests != nil {
 		in, out := &in.ProxyRequests, &out.ProxyRequests
-		*out = new(ProxyRequests)
-		(*in).DeepCopyInto(*out)
+		if *in == nil {
+			*out = nil
+		} else {
+			*out = new(ProxyRequests)
+			(*in).DeepCopyInto(*out)
+		}
 	}
 	if in.OutputMetricHandlers != nil {
 		in, out := &in.OutputMetricHandlers, &out.OutputMetricHandlers
@@ -1160,8 +1208,12 @@ func (in *StaticTLS) DeepCopyInto(out *StaticTLS) {
 	*out = *in
 	if in.Member != nil {
 		in, out := &in.Member, &out.Member
-		*out = new(MemberSecret)
-		**out = **in
+		if *in == nil {
+			*out = nil
+		} else {
+			*out = new(MemberSecret)
+			**out = **in
+		}
 	}
 	return
 }
@@ -1181,8 +1233,12 @@ func (in *TLSPolicy) DeepCopyInto(out *TLSPolicy) {
 	*out = *in
 	if in.Static != nil {
 		in, out := &in.Static, &out.Static
-		*out = new(StaticTLS)
-		(*in).DeepCopyInto(*out)
+		if *in == nil {
+			*out = nil
+		} else {
+			*out = new(StaticTLS)
+			(*in).DeepCopyInto(*out)
+		}
 	}
 	return
 }
@@ -1204,10 +1260,11 @@ func (in *TimeWindowDays) DeepCopyInto(out *TimeWindowDays) {
 		in, out := &in.All, &out.All
 		*out = make([]*TimeWindowTimeRange, len(*in))
 		for i := range *in {
-			if (*in)[i] != nil {
-				in, out := &(*in)[i], &(*out)[i]
-				*out = new(TimeWindowTimeRange)
-				**out = **in
+			if (*in)[i] == nil {
+				(*out)[i] = nil
+			} else {
+				(*out)[i] = new(TimeWindowTimeRange)
+				(*in)[i].DeepCopyInto((*out)[i])
 			}
 		}
 	}
@@ -1215,10 +1272,11 @@ func (in *TimeWindowDays) DeepCopyInto(out *TimeWindowDays) {
 		in, out := &in.Sunday, &out.Sunday
 		*out = make([]*TimeWindowTimeRange, len(*in))
 		for i := range *in {
-			if (*in)[i] != nil {
-				in, out := &(*in)[i], &(*out)[i]
-				*out = new(TimeWindowTimeRange)
-				**out = **in
+			if (*in)[i] == nil {
+				(*out)[i] = nil
+			} else {
+				(*out)[i] = new(TimeWindowTimeRange)
+				(*in)[i].DeepCopyInto((*out)[i])
 			}
 		}
 	}
@@ -1226,10 +1284,11 @@ func (in *TimeWindowDays) DeepCopyInto(out *TimeWindowDays) {
 		in, out := &in.Monday, &out.Monday
 		*out = make([]*TimeWindowTimeRange, len(*in))
 		for i := range *in {
-			if (*in)[i] != nil {
-				in, out := &(*in)[i], &(*out)[i]
-				*out = new(TimeWindowTimeRange)
-				**out = **in
+			if (*in)[i] == nil {
+				(*out)[i] = nil
+			} else {
+				(*out)[i] = new(TimeWindowTimeRange)
+				(*in)[i].DeepCopyInto((*out)[i])
 			}
 		}
 	}
@@ -1237,10 +1296,11 @@ func (in *TimeWindowDays) DeepCopyInto(out *TimeWindowDays) {
 		in, out := &in.Tuesday, &out.Tuesday
 		*out = make([]*TimeWindowTimeRange, len(*in))
 		for i := range *in {
-			if (*in)[i] != nil {
-				in, out := &(*in)[i], &(*out)[i]
-				*out = new(TimeWindowTimeRange)
-				**out = **in
+			if (*in)[i] == nil {
+				(*out)[i] = nil
+			} else {
+				(*out)[i] = new(TimeWindowTimeRange)
+				(*in)[i].DeepCopyInto((*out)[i])
 			}
 		}
 	}
@@ -1248,10 +1308,11 @@ func (in *TimeWindowDays) DeepCopyInto(out *TimeWindowDays) {
 		in, out := &in.Wednesday, &out.Wednesday
 		*out = make([]*TimeWindowTimeRange, len(*in))
 		for i := range *in {
-			if (*in)[i] != nil {
-				in, out := &(*in)[i], &(*out)[i]
-				*out = new(TimeWindowTimeRange)
-				**out = **in
+			if (*in)[i] == nil {
+				(*out)[i] = nil
+			} else {
+				(*out)[i] = new(TimeWindowTimeRange)
+				(*in)[i].DeepCopyInto((*out)[i])
 			}
 		}
 	}
@@ -1259,10 +1320,11 @@ func (in *TimeWindowDays) DeepCopyInto(out *TimeWindowDays) {
 		in, out := &in.Thursday, &out.Thursday
 		*out = make([]*TimeWindowTimeRange, len(*in))
 		for i := range *in {
-			if (*in)[i] != nil {
-				in, out := &(*in)[i], &(*out)[i]
-				*out = new(TimeWindowTimeRange)
-				**out = **in
+			if (*in)[i] == nil {
+				(*out)[i] = nil
+			} else {
+				(*out)[i] = new(TimeWindowTimeRange)
+				(*in)[i].DeepCopyInto((*out)[i])
 			}
 		}
 	}
@@ -1270,10 +1332,11 @@ func (in *TimeWindowDays) DeepCopyInto(out *TimeWindowDays) {
 		in, out := &in.Friday, &out.Friday
 		*out = make([]*TimeWindowTimeRange, len(*in))
 		for i := range *in {
-			if (*in)[i] != nil {
-				in, out := &(*in)[i], &(*out)[i]
-				*out = new(TimeWindowTimeRange)
-				**out = **in
+			if (*in)[i] == nil {
+				(*out)[i] = nil
+			} else {
+				(*out)[i] = new(TimeWindowTimeRange)
+				(*in)[i].DeepCopyInto((*out)[i])
 			}
 		}
 	}
@@ -1281,10 +1344,11 @@ func (in *TimeWindowDays) DeepCopyInto(out *TimeWindowDays) {
 		in, out := &in.Saturday, &out.Saturday
 		*out = make([]*TimeWindowTimeRange, len(*in))
 		for i := range *in {
-			if (*in)[i] != nil {
-				in, out := &(*in)[i], &(*out)[i]
-				*out = new(TimeWindowTimeRange)
-				**out = **in
+			if (*in)[i] == nil {
+				(*out)[i] = nil
+			} else {
+				(*out)[i] = new(TimeWindowTimeRange)
+				(*in)[i].DeepCopyInto((*out)[i])
 			}
 		}
 	}
