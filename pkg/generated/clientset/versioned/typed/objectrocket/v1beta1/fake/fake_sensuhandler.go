@@ -62,7 +62,7 @@ func (c *FakeSensuHandlers) List(opts v1.ListOptions) (result *v1beta1.SensuHand
 	if label == nil {
 		label = labels.Everything()
 	}
-	list := &v1beta1.SensuHandlerList{}
+	list := &v1beta1.SensuHandlerList{ListMeta: obj.(*v1beta1.SensuHandlerList).ListMeta}
 	for _, item := range obj.(*v1beta1.SensuHandlerList).Items {
 		if label.Matches(labels.Set(item.Labels)) {
 			list.Items = append(list.Items, item)
@@ -131,7 +131,7 @@ func (c *FakeSensuHandlers) DeleteCollection(options *v1.DeleteOptions, listOpti
 // Patch applies the patch and returns the patched sensuHandler.
 func (c *FakeSensuHandlers) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.SensuHandler, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(sensuhandlersResource, c.ns, name, data, subresources...), &v1beta1.SensuHandler{})
+		Invokes(testing.NewPatchSubresourceAction(sensuhandlersResource, c.ns, name, pt, data, subresources...), &v1beta1.SensuHandler{})
 
 	if obj == nil {
 		return nil, err

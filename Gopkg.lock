@@ -1073,8 +1073,8 @@
   version = "kubernetes-1.13.1"
 
 [[projects]]
-  branch = "release-1.11"
-  digest = "1:7320216e50843bfc1092d20b535a20683abc967e0eba38441c85c3265da10a34"
+  branch = "release-1.13"
+  digest = "1:dc1ae99dcab96913d81ae970b1f7a7411a54199b14bfb17a7e86f9a56979c720"
   name = "k8s.io/code-generator"
   packages = [
     "cmd/client-gen",
@@ -1101,7 +1101,7 @@
     "pkg/util",
   ]
   pruneopts = "T"
-  revision = "f8cba74510f397bac80157a6c4ccb0ffbc31b9d0"
+  revision = "c2090bec4d9b1fb25de3812f868accc2bc9ecbae"
 
 [[projects]]
   branch = "master"
@@ -1165,6 +1165,7 @@
     "github.com/coreos/etcd/pkg/transport",
     "github.com/ghodss/yaml",
     "github.com/go-openapi/spec",
+    "github.com/golang/glog",
     "github.com/json-iterator/go",
     "github.com/onrik/logrus/filename",
     "github.com/pborman/uuid",

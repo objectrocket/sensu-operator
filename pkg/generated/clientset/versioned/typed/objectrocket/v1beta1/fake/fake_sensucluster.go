@@ -62,7 +62,7 @@ func (c *FakeSensuClusters) List(opts v1.ListOptions) (result *v1beta1.SensuClus
 	if label == nil {
 		label = labels.Everything()
 	}
-	list := &v1beta1.SensuClusterList{}
+	list := &v1beta1.SensuClusterList{ListMeta: obj.(*v1beta1.SensuClusterList).ListMeta}
 	for _, item := range obj.(*v1beta1.SensuClusterList).Items {
 		if label.Matches(labels.Set(item.Labels)) {
 			list.Items = append(list.Items, item)
@@ -131,7 +131,7 @@ func (c *FakeSensuClusters) DeleteCollection(options *v1.DeleteOptions, listOpti
 // Patch applies the patch and returns the patched sensuCluster.
 func (c *FakeSensuClusters) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.SensuCluster, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(sensuclustersResource, c.ns, name, data, subresources...), &v1beta1.SensuCluster{})
+		Invokes(testing.NewPatchSubresourceAction(sensuclustersResource, c.ns, name, pt, data, subresources...), &v1beta1.SensuCluster{})
 
 	if obj == nil {
 		return nil, err

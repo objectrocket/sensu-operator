@@ -62,7 +62,7 @@ func (c *FakeSensuBackups) List(opts v1.ListOptions) (result *v1beta1.SensuBacku
 	if label == nil {
 		label = labels.Everything()
 	}
-	list := &v1beta1.SensuBackupList{}
+	list := &v1beta1.SensuBackupList{ListMeta: obj.(*v1beta1.SensuBackupList).ListMeta}
 	for _, item := range obj.(*v1beta1.SensuBackupList).Items {
 		if label.Matches(labels.Set(item.Labels)) {
 			list.Items = append(list.Items, item)
@@ -131,7 +131,7 @@ func (c *FakeSensuBackups) DeleteCollection(options *v1.DeleteOptions, listOptio
 // Patch applies the patch and returns the patched sensuBackup.
 func (c *FakeSensuBackups) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.SensuBackup, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(sensubackupsResource, c.ns, name, data, subresources...), &v1beta1.SensuBackup{})
+		Invokes(testing.NewPatchSubresourceAction(sensubackupsResource, c.ns, name, pt, data, subresources...), &v1beta1.SensuBackup{})
 
 	if obj == nil {
 		return nil, err

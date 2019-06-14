@@ -62,7 +62,7 @@ func (c *FakeSensuRestores) List(opts v1.ListOptions) (result *v1beta1.SensuRest
 	if label == nil {
 		label = labels.Everything()
 	}
-	list := &v1beta1.SensuRestoreList{}
+	list := &v1beta1.SensuRestoreList{ListMeta: obj.(*v1beta1.SensuRestoreList).ListMeta}
 	for _, item := range obj.(*v1beta1.SensuRestoreList).Items {
 		if label.Matches(labels.Set(item.Labels)) {
 			list.Items = append(list.Items, item)
@@ -131,7 +131,7 @@ func (c *FakeSensuRestores) DeleteCollection(options *v1.DeleteOptions, listOpti
 // Patch applies the patch and returns the patched sensuRestore.
 func (c *FakeSensuRestores) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.SensuRestore, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(sensurestoresResource, c.ns, name, data, subresources...), &v1beta1.SensuRestore{})
+		Invokes(testing.NewPatchSubresourceAction(sensurestoresResource, c.ns, name, pt, data, subresources...), &v1beta1.SensuRestore{})
 
 	if obj == nil {
 		return nil, err
