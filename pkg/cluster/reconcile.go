@@ -32,7 +32,7 @@ var ErrLostQuorum = errors.New("lost quorum")
 func (c *Cluster) reconcile(pods []*v1.Pod) error {
 	if c.statefulSet.Spec.Replicas == nil {
 		c.logger.Infof("StatefulSet for cluster %s has nil Replicas.  Fetching new StatefulSet", c.name())
-		set, err := c.config.KubeCli.AppsV1beta1().StatefulSets(c.cluster.Namespace).Get(c.cluster.Name, metav1.GetOptions{})
+		set, err := c.config.KubeCli.AppsV1().StatefulSets(c.cluster.Namespace).Get(c.cluster.Name, metav1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("Failed to fetch new StatefulSet: %v", err)
 		}
@@ -41,12 +41,12 @@ func (c *Cluster) reconcile(pods []*v1.Pod) error {
 		return nil
 	}
 	if c.cluster.Spec.Size != int(*c.statefulSet.Spec.Replicas) {
-		set, err := c.config.KubeCli.AppsV1beta1().StatefulSets(c.cluster.Namespace).Get(c.cluster.Name, metav1.GetOptions{})
+		set, err := c.config.KubeCli.AppsV1().StatefulSets(c.cluster.Namespace).Get(c.cluster.Name, metav1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("Error getting StatefulSet %s for size update: %v", c.statefulSet.GetName(), err)
 		}
 		*set.Spec.Replicas = int32(c.cluster.Spec.Size)
-		set, err = c.config.KubeCli.AppsV1beta1().StatefulSets(c.cluster.Namespace).Update(set)
+		set, err = c.config.KubeCli.AppsV1().StatefulSets(c.cluster.Namespace).Update(set)
 		if err != nil {
 			return fmt.Errorf("Error updating StatefulSet %s size: %v", c.statefulSet.GetName(), err)
 		}

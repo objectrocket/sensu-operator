@@ -26,7 +26,7 @@ import (
 	"github.com/objectrocket/sensu-operator/pkg/util/etcdutil"
 	"github.com/objectrocket/sensu-operator/pkg/util/retryutil"
 
-	appsv1beta1 "k8s.io/api/apps/v1beta1"
+	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -228,16 +228,16 @@ func CreateAndWaitPod(kubecli kubernetes.Interface, ns string, pod *v1.Pod, time
 
 // CreateAndWaitDeployment creates a deployment and waits until the defined
 // number of replicas is reached
-func CreateAndWaitDeployment(kubecli kubernetes.Interface, ns string, deployment *appsv1beta1.Deployment, timeout time.Duration) (*appsv1beta1.Deployment, error) {
-	deployment, err := kubecli.AppsV1beta1().Deployments(ns).Create(deployment)
+func CreateAndWaitDeployment(kubecli kubernetes.Interface, ns string, deployment *appsv1.Deployment, timeout time.Duration) (*appsv1.Deployment, error) {
+	deployment, err := kubecli.AppsV1().Deployments(ns).Create(deployment)
 	if err != nil {
 		return nil, err
 	}
 
 	interval := 5 * time.Second
-	var retDeployment *appsv1beta1.Deployment
+	var retDeployment *appsv1.Deployment
 	err = retryutil.Retry(interval, int(timeout/(interval)), func() (bool, error) {
-		retDeployment, err = kubecli.AppsV1beta1().Deployments(ns).Get(deployment.Name, metav1.GetOptions{})
+		retDeployment, err = kubecli.AppsV1().Deployments(ns).Get(deployment.Name, metav1.GetOptions{})
 		if err != nil {
 			return false, err
 		}
@@ -628,15 +628,15 @@ func podSecurityContext(podPolicy *api.PodPolicy) *v1.PodSecurityContext {
 }
 
 // NewSensuStatefulSet creates a new StatefulSet for a Sensu cluster
-func NewSensuStatefulSet(m *etcdutil.MemberConfig, clusterName, token string, cs api.ClusterSpec, owner metav1.OwnerReference) *appsv1beta1.StatefulSet {
+func NewSensuStatefulSet(m *etcdutil.MemberConfig, clusterName, token string, cs api.ClusterSpec, owner metav1.OwnerReference) *appsv1.StatefulSet {
 	podTemplate := newSensuPodTemplate(m, clusterName, token, cs)
 	applyPodPolicy(clusterName, podTemplate, cs.Pod)
 	addOwnerRefToObject(podTemplate.GetObjectMeta(), owner)
-	statefulSet := &appsv1beta1.StatefulSet{
+	statefulSet := &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterName,
 		},
-		Spec: appsv1beta1.StatefulSetSpec{
+		Spec: appsv1.StatefulSetSpec{
 			Selector: &metav1.LabelSelector{
 				MatchLabels: podTemplate.ObjectMeta.Labels,
 			},

@@ -32,7 +32,7 @@ import (
 	"github.com/onrik/logrus/filename"
 	"github.com/pborman/uuid"
 	"github.com/sirupsen/logrus"
-	appsv1beta1 "k8s.io/api/apps/v1beta1"
+	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -82,7 +82,7 @@ type Cluster struct {
 	tlsConfig *tls.Config
 
 	eventsCli   corev1.EventInterface
-	statefulSet *appsv1beta1.StatefulSet
+	statefulSet *appsv1.StatefulSet
 }
 
 // New makes a new cluster
@@ -382,7 +382,7 @@ func (c *Cluster) createStatefulSet(m *etcdutil.MemberConfig) error {
 	} else {
 		k8sutil.AddEtcdVolumeToPod(&set.Spec.Template, nil)
 	}
-	c.statefulSet, err = c.config.KubeCli.AppsV1beta1().StatefulSets(c.cluster.Namespace).Create(set)
+	c.statefulSet, err = c.config.KubeCli.AppsV1().StatefulSets(c.cluster.Namespace).Create(set)
 	if err != nil {
 		return err
 	}
@@ -395,7 +395,7 @@ func (c *Cluster) pollPods() (running, pending []*v1.Pod, err error) {
 		return nil, nil, fmt.Errorf("failed to list running pods: %v", err)
 	}
 
-	set, err := c.config.KubeCli.AppsV1beta1().StatefulSets(c.cluster.Namespace).Get(c.cluster.Name, metav1.GetOptions{})
+	set, err := c.config.KubeCli.AppsV1().StatefulSets(c.cluster.Namespace).Get(c.cluster.Name, metav1.GetOptions{})
 	if err != nil {
 		return nil, nil, fmt.Errorf("Failed to fetch new StatefulSet: %v", err)
 	}
