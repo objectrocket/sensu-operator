@@ -438,7 +438,7 @@ func CreateNetPolicy(kubecli kubernetes.Interface, clusterName, namespace string
 func NewSensuPodPVC(m *etcdutil.MemberConfig, pvcSpec v1.PersistentVolumeClaimSpec, clusterName, namespace string, owner metav1.OwnerReference) *v1.PersistentVolumeClaim {
 	pvc := &v1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      clusterName,
+			Name:      "etcd-data",
 			Namespace: namespace,
 			Labels:    LabelsForCluster(clusterName),
 		},
@@ -456,6 +456,7 @@ etcd-name: "$HOSTNAME"
 etcd-initial-advertise-peer-urls: "http://${LOCAL_HOSTNAME}:2380"
 etcd-listen-peer-urls: "%s"
 etcd-listen-client-urls: "%s"
+etcd-advertise-client-urls: "http://${LOCAL_HOSTNAME}:2379"
 etcd-initial-cluster: "${INITIAL_CLUSTER}"
 etcd-initial-cluster-state: "${STATE}"
 `, stateDir, m.ListenPeerURL(), m.ListenClientURL())
@@ -572,18 +573,24 @@ etcd-key-file: %[1]s/server.key
 					Image: imageNameBusybox(cs.Pod),
 					Name:  "make-sensu-config",
 					Command: []string{"/bin/sh", "-c", fmt.Sprintf(`HOSTNAME=$(hostname)
+ORDINAL=${HOSTNAME##*-}
 TOKEN=%s
 SUBDOMAIN=%s
 NAMESPACE=%s
 LOCAL_HOSTNAME=${HOSTNAME}.${SUBDOMAIN}.${NAMESPACE}.svc
 SEED_NAME=${SUBDOMAIN}-0
 SEED_HOSTNAME=${SEED_NAME}.${SUBDOMAIN}.${NAMESPACE}.svc
-INITIAL_CLUSTER="${HOSTNAME}=http://${LOCAL_HOSTNAME}:2380"
+INITIAL_CLUSTER="${SEED_NAME}=http://${SEED_HOSTNAME}:2380"
 STATE="new"
-if [[ $(expr match "${HOSTNAME}" ".*-0") -eq 0 ]]
+if [[ "$ORDINAL" == "0" ]]
 then
-    STATE="existing"
-	INITIAL_CLUSTER="${SEED_NAME}=${INITIAL_CLUSTER},http://${SEED_HOSTNAME}:2380"
+	STATE="new"
+else
+	STATE="existing"
+	for i in $(seq 1 $ORDINAL)
+	do
+		INITIAL_CLUSTER=${INITIAL_CLUSTER},${SUBDOMAIN}-${i}=http://${SUBDOMAIN}-${i}.${SUBDOMAIN}.${NAMESPACE}.svc:2380
+	done
 fi
 if [[ "${STATE}" == "new" ]]
 then

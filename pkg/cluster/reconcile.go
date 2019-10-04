@@ -45,6 +45,7 @@ func (c *Cluster) reconcile(pods []*v1.Pod) error {
 		if err != nil {
 			return fmt.Errorf("Error getting StatefulSet %s for size update: %v", c.statefulSet.GetName(), err)
 		}
+		*set.Spec.Replicas = int32(c.cluster.Spec.Size)
 		set, err = c.config.KubeCli.AppsV1beta1().StatefulSets(c.cluster.Namespace).Update(set)
 		if err != nil {
 			return fmt.Errorf("Error updating StatefulSet %s size: %v", c.statefulSet.GetName(), err)
