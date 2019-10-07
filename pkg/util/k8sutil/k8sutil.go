@@ -642,6 +642,7 @@ func NewSensuStatefulSet(m *etcdutil.MemberConfig, clusterName, token string, cs
 			},
 			Template:    *podTemplate,
 			ServiceName: clusterName,
+			Replicas:    newInt32(1),
 		},
 	}
 	return statefulSet
@@ -732,4 +733,9 @@ func UniqueMemberName(clusterName string) string {
 		clusterName = clusterName[:maxNameLength]
 	}
 	return clusterName + "-" + suffix
+}
+
+func newInt32(i int) *int32 {
+	var newI int32 = int32(i)
+	return &newI
 }

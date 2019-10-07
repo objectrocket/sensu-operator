@@ -15,9 +15,13 @@
 package cluster
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
+	"github.com/coreos/etcd/clientv3"
+	"github.com/objectrocket/sensu-operator/pkg/util/constants"
+	"github.com/objectrocket/sensu-operator/pkg/util/etcdutil"
 	"github.com/objectrocket/sensu-operator/pkg/util/k8sutil"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,6 +33,7 @@ var ErrLostQuorum = errors.New("lost quorum")
 // reconcile reconciles cluster current state to desired state specified by spec.
 // - it tries to reconcile the cluster to desired size.
 // - if the cluster needs for upgrade, it tries to upgrade old member one by one.
+// TODO(tvoran): at least one of these statements is not true
 func (c *Cluster) reconcile(pods []*v1.Pod) error {
 	if c.statefulSet.Spec.Replicas == nil {
 		c.logger.Infof("StatefulSet for cluster %s has nil Replicas.  Fetching new StatefulSet", c.name())
@@ -45,12 +50,27 @@ func (c *Cluster) reconcile(pods []*v1.Pod) error {
 		if err != nil {
 			return fmt.Errorf("Error getting StatefulSet %s for size update: %v", c.statefulSet.GetName(), err)
 		}
-		*set.Spec.Replicas = int32(c.cluster.Spec.Size)
+		var affectedMember int
+		if int(*set.Spec.Replicas) < c.cluster.Spec.Size {
+			*set.Spec.Replicas++
+			affectedMember = int(*set.Spec.Replicas - 1)
+			if err = c.addOneMember(affectedMember); err != nil {
+				return err
+			}
+		} else {
+			affectedMember = int(*set.Spec.Replicas - 1)
+			*set.Spec.Replicas--
+			if err = c.removeOneMember(affectedMember); err != nil {
+				return err
+			}
+		}
 		set, err = c.config.KubeCli.AppsV1().StatefulSets(c.cluster.Namespace).Update(set)
 		if err != nil {
 			return fmt.Errorf("Error updating StatefulSet %s size: %v", c.statefulSet.GetName(), err)
 		}
 		c.statefulSet = set
+		c.status.Size = int(*set.Spec.Replicas)
+
 		c.logger.Infof("Update StatefulSet %s size from %d to %d", c.statefulSet.GetName(), *c.statefulSet.Spec.Replicas, c.cluster.Spec.Size)
 		return nil
 	}
@@ -71,5 +91,92 @@ func pickOneOldMember(pods []*v1.Pod, newVersion string) *v1.Pod {
 		}
 		return pod
 	}
+	return nil
+}
+
+func (c *Cluster) addOneMember(ordinalID int) error {
+	// c.status.SetScalingUpCondition(c.members.Size(), c.cluster.Spec.Size)
+	m := &etcdutil.MemberConfig{
+		Namespace:    c.cluster.Namespace,
+		SecurePeer:   c.isSecurePeer(),
+		SecureClient: c.isSecureClient(),
+	}
+
+	cfg := clientv3.Config{
+		Endpoints:   c.ClientURLs(m),
+		DialTimeout: constants.DefaultDialTimeout,
+		TLS:         c.tlsConfig,
+	}
+	etcdcli, err := clientv3.New(cfg)
+	if err != nil {
+		return fmt.Errorf("add one member failed: creating etcd client failed %v", err)
+	}
+	defer etcdcli.Close()
+
+	// newMember := c.newMember()
+	ctx, cancel := context.WithTimeout(context.Background(), constants.DefaultRequestTimeout)
+	resp, err := etcdcli.MemberAdd(ctx, []string{c.PeerURL(m, ordinalID)})
+	cancel()
+	if err != nil {
+		return fmt.Errorf("fail to add new member (%s): %v", c.memberName(ordinalID), err)
+	}
+	c.logger.Debugf("resp from memberadd was %+v", resp)
+	// newMember.ID = resp.Member.ID
+	// c.members.Add(newMember)
+
+	// if err := c.createPod(c.members, newMember, "existing"); err != nil {
+	// 	return fmt.Errorf("fail to create member's pod (%s): %v", newMember.Name, err)
+	// }
+	c.logger.Infof("added member (%s)", c.memberName(ordinalID))
+	// _, err = c.eventsCli.Create(k8sutil.NewMemberAddEvent(c.memberName(ordinalID), c.cluster))
+	// if err != nil {
+	// 	c.logger.Errorf("failed to create new member add event: %v", err)
+	// }
+	return nil
+}
+
+func (c *Cluster) removeOneMember(ordinalID int) error {
+	m := &etcdutil.MemberConfig{
+		Namespace:    c.cluster.Namespace,
+		SecurePeer:   c.isSecurePeer(),
+		SecureClient: c.isSecureClient(),
+	}
+
+	cfg := clientv3.Config{
+		Endpoints:   c.ClientURLs(m),
+		DialTimeout: constants.DefaultDialTimeout,
+		TLS:         c.tlsConfig,
+	}
+	etcdcli, err := clientv3.New(cfg)
+	if err != nil {
+		return fmt.Errorf("add one member failed: creating etcd client failed %v", err)
+	}
+	defer etcdcli.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), constants.DefaultRequestTimeout)
+	defer cancel()
+
+	mList, err := etcdcli.MemberList(ctx)
+	if err != nil {
+		return err
+	}
+	var id uint64
+	memberName := fmt.Sprintf("%s-%d", c.name(), ordinalID)
+	for _, m := range mList.Members {
+		if m.Name == memberName {
+			id = m.ID
+		}
+	}
+	if id == 0 {
+		return fmt.Errorf("Could not find %s in etcd member list", memberName)
+	}
+
+	resp, err := etcdcli.MemberRemove(ctx, id)
+	// cancel()
+	if err != nil {
+		return fmt.Errorf("fail to add new member (%s): %v", c.memberName(ordinalID), err)
+	}
+	c.logger.Debugf("resp from memberadd was %+v", resp)
+
 	return nil
 }

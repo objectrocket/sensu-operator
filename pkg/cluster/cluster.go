@@ -535,3 +535,23 @@ func (c *Cluster) logSpecUpdate(oldSpec, newSpec api.ClusterSpec) {
 	}
 
 }
+
+func (c *Cluster) memberName(num int) string {
+	return fmt.Sprintf("%s-%d", c.name(), num)
+}
+
+func (c *Cluster) ClientURLs(m *etcdutil.MemberConfig) (urls []string) {
+	for i := 0; i < c.status.Size; i++ {
+		urls = append(urls, c.PeerURL(m, i))
+	}
+	return
+}
+
+func (c *Cluster) PeerURL(m *etcdutil.MemberConfig, ordinalID int) string {
+	return fmt.Sprintf("%s://%s.%s.%s.svc:2380",
+		m.PeerScheme(),
+		c.memberName(ordinalID),
+		c.name(),
+		c.cluster.Namespace,
+	)
+}
