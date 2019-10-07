@@ -136,6 +136,8 @@ func (c *Cluster) addOneMember(ordinalID int) error {
 }
 
 func (c *Cluster) removeOneMember(ordinalID int) error {
+	// TODO(tvoran): do the etcd setup in etcdutil, call etcdutil.RemoveMember
+	// like in the old sensu-operator
 	m := &etcdutil.MemberConfig{
 		Namespace:    c.cluster.Namespace,
 		SecurePeer:   c.isSecurePeer(),
@@ -174,9 +176,28 @@ func (c *Cluster) removeOneMember(ordinalID int) error {
 	resp, err := etcdcli.MemberRemove(ctx, id)
 	// cancel()
 	if err != nil {
-		return fmt.Errorf("fail to add new member (%s): %v", c.memberName(ordinalID), err)
+		return fmt.Errorf("fail to remove member (%s): %v", c.memberName(ordinalID), err)
 	}
-	c.logger.Debugf("resp from memberadd was %+v", resp)
+	c.logger.Debugf("resp from MemberRemove was %+v", resp)
 
+	if c.isPodPVEnabled() {
+		err = c.removePVC(c.pvcName(ordinalID))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (c *Cluster) pvcName(ordinalID int) string {
+	return fmt.Sprintf("etcd-data-%s-%d", c.name(), ordinalID)
+}
+
+func (c *Cluster) removePVC(pvcName string) error {
+	err := c.config.KubeCli.Core().PersistentVolumeClaims(c.cluster.Namespace).Delete(pvcName, nil)
+	if err != nil && !k8sutil.IsKubernetesResourceNotFoundError(err) {
+		return fmt.Errorf("remove pvc (%s) failed: %v", pvcName, err)
+	}
 	return nil
 }
