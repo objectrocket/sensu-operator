@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"github.com/coreos/etcd/clientv3"
+	api "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
 	"github.com/objectrocket/sensu-operator/pkg/util/constants"
 	"github.com/objectrocket/sensu-operator/pkg/util/etcdutil"
 	"github.com/objectrocket/sensu-operator/pkg/util/k8sutil"
@@ -33,7 +34,6 @@ var ErrLostQuorum = errors.New("lost quorum")
 // reconcile reconciles cluster current state to desired state specified by spec.
 // - it tries to reconcile the cluster to desired size.
 // - if the cluster needs for upgrade, it tries to upgrade old member one by one.
-// TODO(tvoran): at least one of these statements is not true
 func (c *Cluster) reconcile(pods []*v1.Pod) error {
 	if c.statefulSet.Spec.Replicas == nil {
 		c.logger.Infof("StatefulSet for cluster %s has nil Replicas.  Fetching new StatefulSet", c.name())
@@ -74,14 +74,22 @@ func (c *Cluster) reconcile(pods []*v1.Pod) error {
 		c.logger.Infof("Update StatefulSet %s size from %d to %d", c.statefulSet.GetName(), *c.statefulSet.Spec.Replicas, c.cluster.Spec.Size)
 		return nil
 	}
-	var oldPod *v1.Pod
-	oldPod = pickOneOldMember(pods, c.cluster.Spec.Version)
-	if oldPod != nil {
-		// This needs to be handled once the etcd cluster is either external or has multiple nodes
-		c.logger.Warnf("Pod %s needs upgraded from version %s to %s", oldPod.GetName(), k8sutil.GetSensuVersion(oldPod), c.cluster.Spec.Version)
-		return nil
+	c.status.ClearCondition(api.ClusterConditionScaling)
+
+	sp := c.cluster.Spec
+	if needUpgrade(pods, sp) {
+		c.status.UpgradeVersionTo(sp.Version)
+		return c.upgradeStatefulSet()
 	}
+	c.status.ClearCondition(api.ClusterConditionUpgrading)
+
+	c.status.SetVersion(sp.Version)
+	c.status.SetReadyCondition()
 	return nil
+}
+
+func needUpgrade(pods []*v1.Pod, cs api.ClusterSpec) bool {
+	return pickOneOldMember(pods, cs.Version) != nil
 }
 
 func pickOneOldMember(pods []*v1.Pod, newVersion string) *v1.Pod {
@@ -95,7 +103,7 @@ func pickOneOldMember(pods []*v1.Pod, newVersion string) *v1.Pod {
 }
 
 func (c *Cluster) addOneMember(ordinalID int) error {
-	// c.status.SetScalingUpCondition(c.members.Size(), c.cluster.Spec.Size)
+	c.status.SetScalingUpCondition(ordinalID, ordinalID+1)
 	m := &etcdutil.MemberConfig{
 		Namespace:    c.cluster.Namespace,
 		SecurePeer:   c.isSecurePeer(),
@@ -113,7 +121,6 @@ func (c *Cluster) addOneMember(ordinalID int) error {
 	}
 	defer etcdcli.Close()
 
-	// newMember := c.newMember()
 	ctx, cancel := context.WithTimeout(context.Background(), constants.DefaultRequestTimeout)
 	resp, err := etcdcli.MemberAdd(ctx, []string{c.PeerURL(m, ordinalID)})
 	cancel()
@@ -121,17 +128,8 @@ func (c *Cluster) addOneMember(ordinalID int) error {
 		return fmt.Errorf("fail to add new member (%s): %v", c.memberName(ordinalID), err)
 	}
 	c.logger.Debugf("resp from memberadd was %+v", resp)
-	// newMember.ID = resp.Member.ID
-	// c.members.Add(newMember)
 
-	// if err := c.createPod(c.members, newMember, "existing"); err != nil {
-	// 	return fmt.Errorf("fail to create member's pod (%s): %v", newMember.Name, err)
-	// }
 	c.logger.Infof("added member (%s)", c.memberName(ordinalID))
-	// _, err = c.eventsCli.Create(k8sutil.NewMemberAddEvent(c.memberName(ordinalID), c.cluster))
-	// if err != nil {
-	// 	c.logger.Errorf("failed to create new member add event: %v", err)
-	// }
 	return nil
 }
 
@@ -174,7 +172,6 @@ func (c *Cluster) removeOneMember(ordinalID int) error {
 	}
 
 	resp, err := etcdcli.MemberRemove(ctx, id)
-	// cancel()
 	if err != nil {
 		return fmt.Errorf("fail to remove member (%s): %v", c.memberName(ordinalID), err)
 	}

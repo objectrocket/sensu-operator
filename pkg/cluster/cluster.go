@@ -240,31 +240,31 @@ func (c *Cluster) run() {
 				c.status.Control()
 			}
 
-			running, pending, err := c.pollPods()
+			ready, notready, err := c.pollPods()
 			if err != nil {
 				c.logger.Errorf("fail to poll pods: %v", err)
 				reconcileFailed.WithLabelValues("failed to poll pods").Inc()
 				continue
 			}
 
-			if len(pending) > 0 {
+			if len(notready) > 0 {
 				// Pod startup might take long, e.g. pulling image. It would deterministically become running or succeeded/failed later.
-				c.logger.Infof("skip reconciliation: running (%v), pending (%v)", k8sutil.GetPodNames(running), k8sutil.GetPodNames(pending))
+				c.logger.Infof("skip reconciliation: running (%v), pending (%v)", k8sutil.GetPodNames(ready), k8sutil.GetPodNames(notready))
 				reconcileFailed.WithLabelValues("not all pods are running").Inc()
 				continue
 			}
-			if len(running) == 0 {
+			if len(ready) == 0 {
 				// TODO: how to handle this case?
 				c.logger.Warningf("all etcd pods are dead.")
 				break
 			}
 
-			rerr = c.reconcile(running)
+			rerr = c.reconcile(ready)
 			if rerr != nil {
 				c.logger.Errorf("failed to reconcile: %v", rerr)
 				break
 			}
-			c.updateMemberStatus(running)
+			c.updateMemberStatus(ready)
 			if err := c.updateCRStatus(); err != nil {
 				c.logger.Warningf("periodic update CR status failed: %v", err)
 			}
@@ -389,7 +389,7 @@ func (c *Cluster) createStatefulSet(m *etcdutil.MemberConfig) error {
 	return nil
 }
 
-func (c *Cluster) pollPods() (running, pending []*v1.Pod, err error) {
+func (c *Cluster) pollPods() (ready, notready []*v1.Pod, err error) {
 	podList, err := c.config.KubeCli.Core().Pods(c.cluster.Namespace).List(k8sutil.ClusterListOpt(c.cluster.Name))
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to list running pods: %v", err)
@@ -416,16 +416,25 @@ func (c *Cluster) pollPods() (running, pending []*v1.Pod, err error) {
 			c.logger.Warningf("pollPods: ignore pod %v: owner (%v) is not %v",
 				pod.Name, pod.OwnerReferences[0].UID, c.statefulSet.UID)
 			continue
+
 		}
-		switch pod.Status.Phase {
-		case v1.PodRunning:
-			running = append(running, pod)
-		case v1.PodPending:
-			pending = append(pending, pod)
+		if allReady(pod.Status.ContainerStatuses) {
+			ready = append(ready, pod)
+		} else {
+			notready = append(notready, pod)
 		}
 	}
 
-	return running, pending, nil
+	return
+}
+
+func allReady(statuses []v1.ContainerStatus) bool {
+	for _, s := range statuses {
+		if !s.Ready {
+			return false
+		}
+	}
+	return true
 }
 
 func (c *Cluster) updateMemberStatus(running []*v1.Pod) {
