@@ -67,6 +67,7 @@ func (c *Cluster) upgradeStatefulSet() error {
 		return nil
 	}
 	c.statefulSet.Spec.Template.Spec.Containers[0].Image = k8sutil.ImageName(c.cluster.Spec.Repository, c.cluster.Spec.Version)
+	k8sutil.SetPodTemplateSensuVersion(&c.statefulSet.Spec.Template, c.cluster.Spec.Version)
 	set, err := c.config.KubeCli.AppsV1().StatefulSets(c.cluster.Namespace).Update(c.statefulSet)
 	if err != nil {
 		return fmt.Errorf("failed to update sensu version in statefulset spec: %s", err)
