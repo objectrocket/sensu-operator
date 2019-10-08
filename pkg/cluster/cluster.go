@@ -249,8 +249,8 @@ func (c *Cluster) run() {
 
 			if len(notready) > 0 {
 				// Pod startup might take long, e.g. pulling image. It would deterministically become running or succeeded/failed later.
-				c.logger.Infof("skip reconciliation: running (%v), pending (%v)", k8sutil.GetPodNames(ready), k8sutil.GetPodNames(notready))
-				reconcileFailed.WithLabelValues("not all pods are running").Inc()
+				c.logger.Infof("skip reconciliation: ready (%v), not ready (%v)", k8sutil.GetPodNames(ready), k8sutil.GetPodNames(notready))
+				reconcileFailed.WithLabelValues("not all pods are ready").Inc()
 				continue
 			}
 			if len(ready) == 0 {
@@ -319,7 +319,7 @@ func (c *Cluster) startStatefulSet() error {
 		return fmt.Errorf("failed to create statefulset (%s): %v", c.cluster.Name, err)
 	}
 
-	c.logger.Infof("cluster created with seed member (%s)", c.cluster.Name)
+	c.logger.Infof("cluster created with seed member (%s-0)", c.cluster.Name)
 	_, err := c.eventsCli.Create(k8sutil.NewMemberAddEvent(c.cluster))
 	if err != nil {
 		c.logger.Errorf("failed to create new member add event: %v", err)

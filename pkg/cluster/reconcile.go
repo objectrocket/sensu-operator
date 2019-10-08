@@ -71,7 +71,7 @@ func (c *Cluster) reconcile(pods []*v1.Pod) error {
 		c.statefulSet = set
 		c.status.Size = int(*set.Spec.Replicas)
 
-		c.logger.Infof("Update StatefulSet %s size from %d to %d", c.statefulSet.GetName(), *c.statefulSet.Spec.Replicas, c.cluster.Spec.Size)
+		c.logger.Infof("Updated StatefulSet size to %d", *c.statefulSet.Spec.Replicas)
 		return nil
 	}
 	c.status.ClearCondition(api.ClusterConditionScaling)
@@ -134,33 +134,19 @@ func (c *Cluster) addOneMember(ordinalID int) error {
 }
 
 func (c *Cluster) removeOneMember(ordinalID int) error {
-	// TODO(tvoran): do the etcd setup in etcdutil, call etcdutil.RemoveMember
-	// like in the old sensu-operator
+	var (
+		id uint64
+	)
+	c.status.SetScalingDownCondition(ordinalID+1, ordinalID)
 	m := &etcdutil.MemberConfig{
 		Namespace:    c.cluster.Namespace,
 		SecurePeer:   c.isSecurePeer(),
 		SecureClient: c.isSecureClient(),
 	}
-
-	cfg := clientv3.Config{
-		Endpoints:   c.ClientURLs(m),
-		DialTimeout: constants.DefaultDialTimeout,
-		TLS:         c.tlsConfig,
-	}
-	etcdcli, err := clientv3.New(cfg)
-	if err != nil {
-		return fmt.Errorf("add one member failed: creating etcd client failed %v", err)
-	}
-	defer etcdcli.Close()
-
-	ctx, cancel := context.WithTimeout(context.Background(), constants.DefaultRequestTimeout)
-	defer cancel()
-
-	mList, err := etcdcli.MemberList(ctx)
+	mList, err := etcdutil.ListMembers(c.ClientURLs(m), c.tlsConfig)
 	if err != nil {
 		return err
 	}
-	var id uint64
 	memberName := fmt.Sprintf("%s-%d", c.name(), ordinalID)
 	for _, m := range mList.Members {
 		if m.Name == memberName {
@@ -171,11 +157,10 @@ func (c *Cluster) removeOneMember(ordinalID int) error {
 		return fmt.Errorf("Could not find %s in etcd member list", memberName)
 	}
 
-	resp, err := etcdcli.MemberRemove(ctx, id)
+	err = etcdutil.RemoveMember(c.ClientURLs(m), c.tlsConfig, id)
 	if err != nil {
 		return fmt.Errorf("fail to remove member (%s): %v", c.memberName(ordinalID), err)
 	}
-	c.logger.Debugf("resp from MemberRemove was %+v", resp)
 
 	if c.isPodPVEnabled() {
 		err = c.removePVC(c.pvcName(ordinalID))
