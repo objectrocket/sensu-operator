@@ -371,13 +371,6 @@ func (c *Cluster) createStatefulSet(m *etcdutil.MemberConfig) error {
 	set := k8sutil.NewSensuStatefulSet(m, c.cluster.Name, uuid.New(), c.cluster.Spec, c.cluster.AsOwner())
 	if c.isPodPVEnabled() {
 		pvc := k8sutil.NewSensuPodPVC(m, *c.cluster.Spec.Pod.PersistentVolumeClaimSpec, c.cluster.Name, c.cluster.Namespace, c.cluster.AsOwner())
-		// _, err = c.config.KubeCli.CoreV1().PersistentVolumeClaims(c.cluster.Namespace).Create(pvc)
-		// if err != nil {
-		// 	return fmt.Errorf("failed to create PVC for member (%s): %v", c.cluster.Name, err)
-		// }
-		// k8sutil.AddEtcdVolumeToPod(&set.Spec.Template, pvc)
-		// pvcTemplate := k8sutil.NewSenuPVCTemplate()
-		// k8sutil.AddEtcdVolumeTemplate(&set, pvcTemplate)
 		set.Spec.VolumeClaimTemplates = append(set.Spec.VolumeClaimTemplates, *pvc)
 	} else {
 		k8sutil.AddEtcdVolumeToPod(&set.Spec.Template, nil)
