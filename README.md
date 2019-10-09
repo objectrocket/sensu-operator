@@ -79,7 +79,7 @@ ws://example-sensu-cluster-agent.sensu.svc.cluster.local:8081
 If needed, login into the sensu backend UI:
 
 ```bash
-$ kubectl -n sensu port-forward pod/platdev0-0 3000:3000
+$ kubectl -n sensu port-forward service/platdev0-dashboard 3000:3000
 Forwarding from 127.0.0.1:3000 -> 3000
 Forwarding from [::1]:3000 -> 3000
 ```

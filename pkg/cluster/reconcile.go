@@ -76,14 +76,13 @@ func (c *Cluster) reconcile(pods []*v1.Pod) error {
 	}
 	c.status.ClearCondition(api.ClusterConditionScaling)
 
-	sp := c.cluster.Spec
-	if needUpgrade(pods, sp) {
-		c.status.UpgradeVersionTo(sp.Version)
+	if needUpgrade(pods, c.cluster.Spec) {
+		c.status.UpgradeVersionTo(c.cluster.Spec.Version)
 		return c.upgradeStatefulSet()
 	}
 	c.status.ClearCondition(api.ClusterConditionUpgrading)
 
-	c.status.SetVersion(sp.Version)
+	c.status.SetVersion(c.cluster.Spec.Version)
 	c.status.SetReadyCondition()
 	return nil
 }
