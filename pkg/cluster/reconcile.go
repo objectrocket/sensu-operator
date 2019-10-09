@@ -57,7 +57,7 @@ func (c *Cluster) reconcile(pods []*v1.Pod) error {
 			if err = c.addOneMember(affectedMember); err != nil {
 				return err
 			}
-		} else {
+		} else if int(*set.Spec.Replicas) > c.cluster.Spec.Size {
 			affectedMember = int(*set.Spec.Replicas - 1)
 			*set.Spec.Replicas--
 			if err = c.removeOneMember(affectedMember); err != nil {
