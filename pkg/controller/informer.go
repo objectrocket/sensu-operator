@@ -24,11 +24,14 @@ import (
 	"github.com/objectrocket/sensu-operator/pkg/util/k8sutil"
 	"github.com/objectrocket/sensu-operator/pkg/util/probe"
 
+	corev1 "k8s.io/api/core/v1"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	kwatch "k8s.io/apimachinery/pkg/watch"
+
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 )
@@ -67,6 +70,7 @@ func (c *Controller) Start(ctx context.Context) {
 	c.addInformer(ns, api.SensuCheckConfigResourcePlural, &api.SensuCheckConfig{})
 	c.addInformer(ns, api.SensuHandlerResourcePlural, &api.SensuHandler{})
 	c.addInformer(ns, api.SensuEventFilterResourcePlural, &api.SensuEventFilter{})
+	c.addInformer(ns, "nodes", &corev1.Node{})
 	c.startProcessing(ctx)
 }
 
@@ -77,17 +81,20 @@ func (c *Controller) startProcessing(ctx context.Context) {
 		checkconfigController hasSynced
 		handlerController     hasSynced
 		eventFilterController hasSynced
+		nodeController        hasSynced
 	)
 	clusterController = c.informers[api.SensuClusterResourcePlural].controller
 	assetController = c.informers[api.SensuAssetResourcePlural].controller
 	checkconfigController = c.informers[api.SensuCheckConfigResourcePlural].controller
 	handlerController = c.informers[api.SensuHandlerResourcePlural].controller
 	eventFilterController = c.informers[api.SensuEventFilterResourcePlural].controller
+	nodeController = c.informers["nodes"].controller
 	go clusterController.Run(ctx.Done())
 	go assetController.Run(ctx.Done())
 	go checkconfigController.Run(ctx.Done())
 	go handlerController.Run(ctx.Done())
 	go eventFilterController.Run(ctx.Done())
+	go nodeController.Run(ctx.Done())
 	if !cache.WaitForCacheSync(ctx.Done(), clusterController.HasSynced) {
 		c.logger.Fatal("Timed out waiting for cluster caches to sync")
 	}
@@ -102,6 +109,9 @@ func (c *Controller) startProcessing(ctx context.Context) {
 	}
 	if !cache.WaitForCacheSync(ctx.Done(), eventFilterController.HasSynced) {
 		c.logger.Fatal("Timed out waiting for event filter caches to sync")
+	}
+	if !cache.WaitForCacheSync(ctx.Done(), nodeController.HasSynced) {
+		c.logger.Fatal("Timed out waiting for node caches to sync")
 	}
 	for i := 0; i < c.Config.WorkerThreads; i++ {
 		go wait.Until(c.run, time.Second, ctx.Done())
@@ -154,7 +164,7 @@ func (c *Controller) addInformer(namespace string, resourcePlural string, objTyp
 
 func (c *Controller) run() {
 	var wg sync.WaitGroup
-	wg.Add(4)
+	wg.Add(5)
 	go func() {
 		defer wg.Done()
 		defer c.informers[api.SensuClusterResourcePlural].queue.ShutDown()
@@ -183,6 +193,12 @@ func (c *Controller) run() {
 		defer wg.Done()
 		defer c.informers[api.SensuEventFilterResourcePlural].queue.ShutDown()
 		for c.processNextEventFilterItem() {
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		defer c.informers["nodes"].queue.ShutDown()
+		for c.processNextNodeItem() {
 		}
 	}()
 	wg.Wait()
@@ -354,6 +370,35 @@ func (c *Controller) processNextEventFilterItem() bool {
 		}
 	}
 	eventFilterInformer.queue.Forget(key)
+	return true
+}
+
+func (c *Controller) processNextNodeItem() bool {
+	var nodesInformer = c.informers["nodes"]
+	key, quit := nodesInformer.queue.Get()
+	if quit {
+		return false
+	}
+	defer nodesInformer.queue.Done(key)
+	obj, exists, err := nodesInformer.indexer.GetByKey(key.(string))
+	if err != nil {
+		if nodesInformer.queue.NumRequeues(key) < c.Config.ProcessingRetries {
+			nodesInformer.queue.AddRateLimited(key)
+			return true
+		}
+	} else {
+		if exists {
+			if obj != nil {
+				c.onUpdateNode(obj.(*corev1.Node))
+				node := obj.(*corev1.Node)
+				// If filter deletion has been initiated, also delete filter from sensu cluster
+				if node.DeletionTimestamp != nil {
+					c.onDeleteNode(obj)
+				}
+			}
+		}
+	}
+	nodesInformer.queue.Forget(key)
 	return true
 }
 
