@@ -70,7 +70,7 @@ func (c *Controller) Start(ctx context.Context) {
 	c.addInformer(ns, api.SensuCheckConfigResourcePlural, &api.SensuCheckConfig{})
 	c.addInformer(ns, api.SensuHandlerResourcePlural, &api.SensuHandler{})
 	c.addInformer(ns, api.SensuEventFilterResourcePlural, &api.SensuEventFilter{})
-	c.addInformer(ns, "nodes", &corev1.Node{})
+	c.addInformerWithCacheGetter(c.Config.KubeCli.CoreV1().RESTClient(), ns, "nodes", &corev1.Node{})
 	c.startProcessing(ctx)
 }
 
@@ -121,14 +121,14 @@ func (c *Controller) startProcessing(ctx context.Context) {
 	}
 }
 
-func (c *Controller) addInformer(namespace string, resourcePlural string, objType runtime.Object) {
+func (c *Controller) addInformerWithCacheGetter(getter cache.Getter, namespace, resourcePlural string, objType runtime.Object) {
 	var (
 		informer Informer
 		source   *cache.ListWatch
 	)
 	informer.queue = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 	source = cache.NewListWatchFromClient(
-		c.Config.SensuCRCli.ObjectrocketV1beta1().RESTClient(),
+		getter,
 		resourcePlural,
 		namespace,
 		fields.Everything())
@@ -160,6 +160,10 @@ func (c *Controller) addInformer(namespace string, resourcePlural string, objTyp
 	}, cache.Indexers{})
 	c.informers[resourcePlural] = &informer
 	c.finalizers[resourcePlural] = finalizer
+}
+
+func (c *Controller) addInformer(namespace string, resourcePlural string, objType runtime.Object) {
+	c.addInformerWithCacheGetter(c.Config.SensuCRCli.ObjectrocketV1beta1().RESTClient(), namespace, resourcePlural, objType)
 }
 
 func (c *Controller) run() {
