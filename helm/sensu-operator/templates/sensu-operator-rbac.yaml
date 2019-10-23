@@ -34,6 +34,7 @@ rules:
   - sensucheckconfigs
   - sensuhandlers
   - sensueventfilters
+  - nodes
   verbs:
   - "*"
 - apiGroups:
