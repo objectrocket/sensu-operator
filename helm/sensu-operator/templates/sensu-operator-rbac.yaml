@@ -64,6 +64,7 @@ rules:
   - ""
   resources:
   - secrets
+  - nodes
   verbs:
   - get
 - apiGroups:
