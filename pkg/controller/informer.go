@@ -480,8 +480,8 @@ func (c *Controller) processNextNodeItem() bool {
 				c.onUpdateNode(obj.(*corev1.Node))
 			}
 		} else {
-			c.logger.Debugf("node %+v appears to have been deleted, so calling onDeleteNode", obj)
-			c.onDeleteNode(obj)
+			c.logger.Debugf("node %s appears to have been deleted, so calling onDeleteNode", key.(string))
+			c.onDeleteNode(key.(string))
 		}
 	}
 	nodesInformer.queue.Forget(key)

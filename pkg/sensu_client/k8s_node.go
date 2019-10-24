@@ -34,8 +34,8 @@ func (s *SensuClient) UpdateNode(node *corev1.Node) error {
 }
 
 // DeleteNode will ensure that sensu entities associated with this k8s node are cleaned up
-func (s *SensuClient) DeleteNode(node *corev1.Node) error {
-	return s.ensureDeleteNode(node)
+func (s *SensuClient) DeleteNode(nodeName string) error {
+	return s.ensureDeleteNode(nodeName)
 }
 
 // ensureNode left here for future use, as we potentially want to cleanup any dangling entities
@@ -43,13 +43,13 @@ func (s *SensuClient) ensureNode(node *corev1.Node) error {
 	return nil
 }
 
-func (s *SensuClient) ensureDeleteNode(node *corev1.Node) error {
-	entity, err := s.fetchEntity(node.GetName())
+func (s *SensuClient) ensureDeleteNode(nodeName string) error {
+	entity, err := s.fetchEntity(nodeName)
 	if err != nil {
-		return errors.Wrapf(err, "failed to find entity from node name %s", node.GetName())
+		return errors.Wrapf(err, "failed to find entity from node name %s", nodeName)
 	}
 	if entity == nil {
-		return errors.New(fmt.Sprintf("failed to find entity from node name %s; empty entity", node.GetName()))
+		return errors.New(fmt.Sprintf("failed to find entity from node name %s; empty entity", nodeName))
 	}
 	err = s.sensuCli.Client.DeleteEntity(entity.GetNamespace(), entity.GetName())
 	if err != nil {
