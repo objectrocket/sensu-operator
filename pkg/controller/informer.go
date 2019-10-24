@@ -478,13 +478,10 @@ func (c *Controller) processNextNodeItem() bool {
 				c.logger.Debugf("object ! nil while getting object bby key from index informer")
 				c.logger.Debugf("calling onUpdateNode for node %+v", obj)
 				c.onUpdateNode(obj.(*corev1.Node))
-				node := obj.(*corev1.Node)
-				// If filter deletion has been initiated, also delete filter from sensu cluster
-				if node.DeletionTimestamp != nil {
-					c.logger.Debugf("node %+v has deletion timestamp !nil, so calling onDeleteNode", node)
-					c.onDeleteNode(obj)
-				}
 			}
+		} else {
+			c.logger.Debugf("node %+v appears to have been deleted, so calling onDeleteNode", obj)
+			c.onDeleteNode(obj)
 		}
 	}
 	nodesInformer.queue.Forget(key)
