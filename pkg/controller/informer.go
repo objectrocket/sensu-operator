@@ -72,8 +72,8 @@ func (c *Controller) Start(ctx context.Context) {
 	c.addInformer(ns, api.SensuCheckConfigResourcePlural, &api.SensuCheckConfig{})
 	c.addInformer(ns, api.SensuHandlerResourcePlural, &api.SensuHandler{})
 	c.addInformer(ns, api.SensuEventFilterResourcePlural, &api.SensuEventFilter{})
-	// c.addInformerWithCacheGetter(c.Config.KubeCli.CoreV1().RESTClient(), metav1.NamespaceAll, "nodes", &corev1.Node{})
-	c.addNodeInformer()
+	c.addInformerWithCacheGetter(c.Config.KubeCli.CoreV1().RESTClient(), metav1.NamespaceAll, "nodes", &corev1.Node{})
+	// c.addNodeInformer()
 	c.startProcessing(ctx)
 }
 
