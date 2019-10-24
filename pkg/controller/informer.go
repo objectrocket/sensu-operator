@@ -33,7 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	kwatch "k8s.io/apimachinery/pkg/watch"
 
-	informers_corev1 "k8s.io/client-go/informers/core/v1"
+	// informers_corev1 "k8s.io/client-go/informers/core/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 )
@@ -142,7 +142,20 @@ func (c *Controller) addNodeInformer() {
 	c.logger.Debugf("getting new rate limiting queue")
 	informer.queue = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 	c.logger.Debugf("getting new node shared index informer")
-	sharedInformer := informers_corev1.NewNodeInformer(c.Config.KubeCli, c.Config.ResyncPeriod, cache.Indexers{})
+	sharedInformer := cache.NewSharedIndexInformer(
+		&cache.ListWatch{
+			ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+				return c.KubeCli.CoreV1().Nodes().List(options)
+			},
+			WatchFunc: func(options metav1.ListOptions) (kwatch.Interface, error) {
+				return c.KubeCli.CoreV1().Nodes().Watch(options)
+			},
+		},
+		&corev1.Node{},
+		c.Config.ResyncPeriod,
+		cache.Indexers{},
+	)
+	// sharedInformer := informers_corev1.NewNodeInformer(c.Config.KubeCli, c.Config.ResyncPeriod, cache.Indexers{})
 	c.logger.Debugf("got new node shared index informer: %+v", sharedInformer)
 	c.logger.Debugf("adding event handlers to node shared index informer")
 	sharedInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
