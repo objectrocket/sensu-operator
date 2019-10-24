@@ -26,12 +26,14 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 
+	// "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	kwatch "k8s.io/apimachinery/pkg/watch"
 
+	informers_corev1 "k8s.io/client-go/informers/core/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 )
@@ -70,7 +72,8 @@ func (c *Controller) Start(ctx context.Context) {
 	c.addInformer(ns, api.SensuCheckConfigResourcePlural, &api.SensuCheckConfig{})
 	c.addInformer(ns, api.SensuHandlerResourcePlural, &api.SensuHandler{})
 	c.addInformer(ns, api.SensuEventFilterResourcePlural, &api.SensuEventFilter{})
-	c.addInformerWithCacheGetter(c.Config.KubeCli.CoreV1().RESTClient(), metav1.NamespaceAll, "nodes", &corev1.Node{})
+	// c.addInformerWithCacheGetter(c.Config.KubeCli.CoreV1().RESTClient(), metav1.NamespaceAll, "nodes", &corev1.Node{})
+	c.addNodeInformer()
 	c.startProcessing(ctx)
 }
 
@@ -119,6 +122,39 @@ func (c *Controller) startProcessing(ctx context.Context) {
 	select {
 	case <-ctx.Done():
 	}
+}
+
+func (c *Controller) addNodeInformer() {
+	var (
+		informer Informer
+	)
+	informer.queue = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
+	sharedInformer := informers_corev1.NewNodeInformer(c.Config.KubeCli, c.Config.ResyncPeriod, cache.Indexers{})
+	sharedInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			key, err := cache.MetaNamespaceKeyFunc(obj)
+			if err == nil {
+				informer.queue.Add(key)
+			}
+		},
+		UpdateFunc: func(old interface{}, new interface{}) {
+			key, err := cache.MetaNamespaceKeyFunc(new)
+			if err == nil {
+				informer.queue.Add(key)
+			}
+		},
+		DeleteFunc: func(obj interface{}) {
+			// IndexerInformer uses a delta queue, therefore for deletes we have to use this
+			// key function.
+			key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
+			if err == nil {
+				informer.queue.Add(key)
+			}
+		},
+	})
+	informer.controller = sharedInformer.GetController()
+	informer.indexer = sharedInformer.GetIndexer()
+	c.informers["nodes"] = &informer
 }
 
 func (c *Controller) addInformerWithCacheGetter(getter cache.Getter, namespace, resourcePlural string, objType runtime.Object) {
