@@ -141,16 +141,14 @@ func (c *Controller) addNodeInformer() {
 	c.logger.Debugf("starting adding node informer")
 	c.logger.Debugf("getting new rate limiting queue")
 	informer.queue = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
+	source := cache.NewListWatchFromClient(
+		c.KubeCli.CoreV1().RESTClient(),
+		"nodes",
+		"",
+		fields.Everything())
 	c.logger.Debugf("getting new node shared index informer")
 	sharedInformer := cache.NewSharedIndexInformer(
-		&cache.ListWatch{
-			ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
-				return c.KubeCli.CoreV1().Nodes().List(options)
-			},
-			WatchFunc: func(options metav1.ListOptions) (kwatch.Interface, error) {
-				return c.KubeCli.CoreV1().Nodes().Watch(options)
-			},
-		},
+		source,
 		&corev1.Node{},
 		c.Config.ResyncPeriod,
 		cache.Indexers{},
