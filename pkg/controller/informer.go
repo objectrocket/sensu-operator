@@ -97,6 +97,7 @@ func (c *Controller) startProcessing(ctx context.Context) {
 	go checkconfigController.Run(ctx.Done())
 	go handlerController.Run(ctx.Done())
 	go eventFilterController.Run(ctx.Done())
+	c.logger.Debugf("about to call run on node Controller %+v", nodeController)
 	go nodeController.Run(ctx.Done())
 	if !cache.WaitForCacheSync(ctx.Done(), clusterController.HasSynced) {
 		c.logger.Fatal("Timed out waiting for cluster caches to sync")
