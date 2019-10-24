@@ -128,8 +128,13 @@ func (c *Controller) addNodeInformer() {
 	var (
 		informer Informer
 	)
+	c.logger.Debugf("starting adding node informer")
+	c.logger.Debugf("getting new rate limiting queue")
 	informer.queue = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
+	c.logger.Debugf("getting new node shared index informer")
 	sharedInformer := informers_corev1.NewNodeInformer(c.Config.KubeCli, c.Config.ResyncPeriod, cache.Indexers{})
+	c.logger.Debugf("got new node shared index informer: %+v", sharedInformer)
+	c.logger.Debugf("adding event handlers to node shared index informer")
 	sharedInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			key, err := cache.MetaNamespaceKeyFunc(obj)
@@ -154,7 +159,9 @@ func (c *Controller) addNodeInformer() {
 	})
 	informer.controller = sharedInformer.GetController()
 	informer.indexer = sharedInformer.GetIndexer()
+	c.logger.Debugf("setting informers map for nodes")
 	c.informers["nodes"] = &informer
+	c.logger.Debugf("done setting up node shared index informer")
 }
 
 func (c *Controller) addInformerWithCacheGetter(getter cache.Getter, namespace, resourcePlural string, objType runtime.Object) {
@@ -238,6 +245,7 @@ func (c *Controller) run() {
 	go func() {
 		defer wg.Done()
 		defer c.informers["nodes"].queue.ShutDown()
+		c.logger.Debugf("starting processing of node items")
 		for c.processNextNodeItem() {
 		}
 	}()
@@ -415,24 +423,36 @@ func (c *Controller) processNextEventFilterItem() bool {
 
 func (c *Controller) processNextNodeItem() bool {
 	var nodesInformer = c.informers["nodes"]
+	c.logger.Debugf("in processNextNodeItem: getting key from queue")
 	key, quit := nodesInformer.queue.Get()
+	c.logger.Debugf("got key '%s', quit '%t' from queue", key, quit)
 	if quit {
+		c.logger.Debugf("got quit while processing next node item, returning")
 		return false
 	}
 	defer nodesInformer.queue.Done(key)
+	c.logger.Debugf("getting object by key from index informer")
 	obj, exists, err := nodesInformer.indexer.GetByKey(key.(string))
+	c.logger.Debugf("got object %+v, exists %t, err %+v from index informer", obj, exists, err)
 	if err != nil {
+		c.logger.Debugf("got error while getting object by key from index informer")
 		if nodesInformer.queue.NumRequeues(key) < c.Config.ProcessingRetries {
+			c.logger.Debugf("retries left, so re-queueing item")
 			nodesInformer.queue.AddRateLimited(key)
 			return true
 		}
 	} else {
+		c.logger.Debugf("no error while getting object by key from index informer")
 		if exists {
+			c.logger.Debugf("object exists while getting object bby key from index informer")
 			if obj != nil {
+				c.logger.Debugf("object ! nil while getting object bby key from index informer")
+				c.logger.Debugf("calling onUpdateNode for node %+v", obj)
 				c.onUpdateNode(obj.(*corev1.Node))
 				node := obj.(*corev1.Node)
 				// If filter deletion has been initiated, also delete filter from sensu cluster
 				if node.DeletionTimestamp != nil {
+					c.logger.Debugf("node %+v has deletion timestamp !nil, so calling onDeleteNode", node)
 					c.onDeleteNode(obj)
 				}
 			}
