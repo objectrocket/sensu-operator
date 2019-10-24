@@ -35,6 +35,9 @@ func (s *SensuClient) UpdateNode(node *corev1.Node) error {
 
 // DeleteNode will ensure that sensu entities associated with this k8s node are cleaned up
 func (s *SensuClient) DeleteNode(nodeName string) error {
+	if err := s.ensureCredentials(); err != nil {
+		return errors.Wrap(err, "failed to ensure credentials for sensu client")
+	}
 	return s.ensureDeleteNode(nodeName)
 }
 
