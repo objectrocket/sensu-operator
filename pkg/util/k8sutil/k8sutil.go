@@ -531,10 +531,10 @@ etcd-key-file: %[1]s/server.key
 		},
 	})
 
-	DNSTimeout := defaultDNSTimeout
-	if cs.Pod != nil {
-		DNSTimeout = cs.Pod.DNSTimeoutInSecond
-	}
+	// DNSTimeout := defaultDNSTimeout
+	// if cs.Pod != nil {
+	// 	DNSTimeout = cs.Pod.DNSTimeoutInSecond
+	// }
 	podTemplateSpec := v1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        clusterName,
@@ -543,32 +543,32 @@ etcd-key-file: %[1]s/server.key
 		},
 		Spec: v1.PodSpec{
 			InitContainers: []v1.Container{
-				{
-					// busybox:latest uses uclibc which contains a bug that sometimes prevents name resolution
-					// More info: https://github.com/docker-library/busybox/issues/27
-					//Image default: "busybox:1.28.0-glibc",
-					Image: imageNameBusybox(cs.Pod),
-					Name:  "check-dns",
-					// In etcd 3.2, TLS listener will do a reverse-DNS lookup for pod IP -> hostname.
-					// If DNS entry is not warmed up, it will return empty result and peer connection will be rejected.
-					// In some cases the DNS is not created correctly so we need to time out after a given period.
-					Command: []string{"/bin/sh", "-c", fmt.Sprintf(`
-					TIMEOUT_READY=%d
-					SUBDOMAIN=%s
-					NAMESPACE=%s
-					LOCAL_HOSTNAME=$(hostname).${SUBDOMAIN}.${NAMESPACE}.svc
-					while ( ! nslookup $LOCAL_HOSTNAME )
-					do
-						# If TIMEOUT_READY is 0 we should never time out and exit
-						TIMEOUT_READY=$(( TIMEOUT_READY-1 ))
-                        if [ $TIMEOUT_READY -eq 0 ];
-				        then
-				            echo "Timed out waiting for DNS entry"
-				            exit 1
-				        fi
-						sleep 1
-					done`, DNSTimeout, clusterName, m.Namespace)},
-				},
+				// {
+				// 	// busybox:latest uses uclibc which contains a bug that sometimes prevents name resolution
+				// 	// More info: https://github.com/docker-library/busybox/issues/27
+				// 	//Image default: "busybox:1.28.0-glibc",
+				// 	Image: imageNameBusybox(cs.Pod),
+				// 	Name:  "check-dns",
+				// 	// In etcd 3.2, TLS listener will do a reverse-DNS lookup for pod IP -> hostname.
+				// 	// If DNS entry is not warmed up, it will return empty result and peer connection will be rejected.
+				// 	// In some cases the DNS is not created correctly so we need to time out after a given period.
+				// 	Command: []string{"/bin/sh", "-c", fmt.Sprintf(`
+				// 	TIMEOUT_READY=%d
+				// 	SUBDOMAIN=%s
+				// 	NAMESPACE=%s
+				// 	LOCAL_HOSTNAME=$(hostname).${SUBDOMAIN}.${NAMESPACE}.svc
+				// 	while ( ! nslookup $LOCAL_HOSTNAME )
+				// 	do
+				// 		# If TIMEOUT_READY is 0 we should never time out and exit
+				// 		TIMEOUT_READY=$(( TIMEOUT_READY-1 ))
+				//         if [ $TIMEOUT_READY -eq 0 ];
+				//         then
+				//             echo "Timed out waiting for DNS entry"
+				//             exit 1
+				//         fi
+				// 		sleep 1
+				// 	done`, DNSTimeout, clusterName, m.Namespace)},
+				// },
 				{
 					Image: imageNameBusybox(cs.Pod),
 					Name:  "make-sensu-config",
