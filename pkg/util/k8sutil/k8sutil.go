@@ -493,6 +493,10 @@ etcd-key-file: %[1]s/server.key
 		Name:      "etcsensu",
 		MountPath: "/etc/sensu",
 	}
+	etcdVolumeMount := v1.VolumeMount{
+		Name:      etcdVolumeName,
+		MountPath: "/var/lib/sensu/etcd",
+	}
 	container := containerWithProbes(
 		sensuContainer(strings.Split(commands, " "), cs.Repository, cs.Version),
 		livenessProbe,
@@ -602,6 +606,12 @@ EOL
 cat /etc/sensu/backend.yml
 `, token, clusterName, m.Namespace, options)},
 					VolumeMounts: []v1.VolumeMount{configVolumeMount},
+				},
+				{
+					Image:        imageNameBusybox(cs.Pod),
+					Name:         "fix-sensu-permissions",
+					Command:      []string{"/bin/sh", "-c", "chmod -R g+rwX /var/lib/sensu/etcd"},
+					VolumeMounts: []v1.VolumeMount{etcdVolumeMount},
 				},
 			},
 			Containers:    []v1.Container{container},
