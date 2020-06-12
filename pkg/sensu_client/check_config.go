@@ -10,6 +10,8 @@ import (
 	"github.com/sensu/sensu-go/types"
 
 	"github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
+
+	k8s_errors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 type fetchCheckResponse struct {
@@ -41,7 +43,7 @@ func (s *SensuClient) DeleteCheckConfig(c *v1beta1.SensuCheckConfig) error {
 
 	go func() {
 		var err error
-		if err = s.sensuCli.Client.DeleteCheck(c.Spec.SensuMetadata.Namespace, c.Spec.SensuMetadata.Name); err != nil {
+		if err = s.sensuCli.Client.DeleteCheck(c.Spec.SensuMetadata.Namespace, c.Spec.SensuMetadata.Name); err != nil && !k8s_errors.IsNotFound(err) {
 			s.logger.Errorf("failed to delete checkconfig: %+v", err)
 		}
 		c1 <- err

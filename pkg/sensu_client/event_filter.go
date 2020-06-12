@@ -8,6 +8,8 @@ import (
 	"github.com/sensu/sensu-go/types"
 
 	"github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
+
+	k8s_errors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 type fetchEventFilterResponse struct {
@@ -35,7 +37,7 @@ func (s *SensuClient) DeleteEventFilter(filter *v1beta1.SensuEventFilter) error 
 
 	go func() {
 		var err error
-		if err = s.sensuCli.Client.DeleteFilter(filter.Spec.SensuMetadata.Namespace, filter.Spec.SensuMetadata.Name); err != nil {
+		if err = s.sensuCli.Client.DeleteFilter(filter.Spec.SensuMetadata.Namespace, filter.Spec.SensuMetadata.Name); err != nil && !k8s_errors.IsNotFound(err) {
 			s.logger.Errorf("failed to delete filter: %+v", err)
 		}
 		c1 <- err

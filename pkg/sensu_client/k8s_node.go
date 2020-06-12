@@ -10,6 +10,8 @@ import (
 
 	sensuclient "github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/types"
+
+	k8s_errors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 const (
@@ -81,7 +83,7 @@ func (s *SensuClient) ensureDeleteNode(nodeName string) error {
 		return errors.New(fmt.Sprintf("failed to find entity from node name %s; empty entity", nodeName))
 	}
 	err = s.sensuCli.Client.DeleteEntity(entity.GetNamespace(), entity.GetName())
-	if err != nil {
+	if err != nil && !k8s_errors.IsNotFound(err) {
 		s.logger.Warnf("failed to delete entity %+v from namespace %s, err: %+v", entity, entity.GetNamespace(), err)
 		return errors.Wrapf(err, "failed to delete entity %+v from namespace %s", entity, entity.GetNamespace())
 	}
