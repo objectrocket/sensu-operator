@@ -21,6 +21,9 @@ references:
           name: update update-clusters
           command: ~/ci-scripts/update-clusters.sh
 
+orbs:
+  slack: circleci/slack@3.4.2
+
 jobs:
   markdownlint:
     docker:
