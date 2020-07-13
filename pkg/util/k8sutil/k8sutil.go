@@ -625,6 +625,8 @@ cat /etc/sensu/backend.yml
 			Containers:    []v1.Container{container},
 			RestartPolicy: v1.RestartPolicyAlways,
 			Volumes:       volumes,
+			// This is a hack, this likely should be exposed in the sensucluster rbac specification
+			ServiceAccountName: "sensu-operator",
 			// DNS A record: `[m.Name].[clusterName].Namespace.svc`
 			// For example, etcd-795649v9kq in default namesapce will have DNS name
 			// `etcd-795649v9kq.etcd.default.svc`.
