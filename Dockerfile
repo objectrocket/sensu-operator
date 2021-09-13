@@ -1,5 +1,5 @@
 # build stage
-FROM golang:1.10 AS build-env
+FROM golang:1.16 AS build-env
 ARG APPVERSION=latest
 WORKDIR /usr/local/src/sensu-operator
 COPY . .
