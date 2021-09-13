@@ -176,7 +176,8 @@ workflows:
   deploy:
     jobs:
     - build_deploy:
-        context: platform-eng
+        context:
+          - docker-push
         filters:
           tags:
             only:
@@ -185,7 +186,8 @@ workflows:
           branches:
             ignore: /.*/
     - helm_push:
-        context: platform-eng
+        context:
+          - helm-s3-push
         requires:
         - build_deploy
         filters:
