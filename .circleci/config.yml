@@ -186,9 +186,10 @@ workflows:
           branches:
             ignore: /.*/
     - helm_push:
-        context:
-          - docker-readonly
+        context: 
           - helm-s3-push
+          - docker-readonly
+          - github-read
         requires:
         - build_deploy
         filters:
