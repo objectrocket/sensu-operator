@@ -10,6 +10,7 @@ DOCKER := $(shell command -v docker)
 DOCKER_IMAGE = objectrocket/sensu-operator
 # allow builds without tags
 IMAGE_VERSION ?= latest
+VERSION ?= $(shell git describe --tags || git symbolic-ref -q --short HEAD)
 
 # Test if the dependencies we need to run this Makefile are installed
 deps-development:
@@ -23,7 +24,7 @@ all: build container
 
 .PHONY: build
 build:
-	@hack/build/operator/build
+	@go build -ldflags="-X github.com/objectrocket/sensu-operator/version.Version=$VERSION" -ldflags="-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn" -o _output/sensu-operator cmd/operator/main.go
 
 .PHONY: test
 test:
@@ -36,6 +37,11 @@ unittest:
 .PHONY: clean
 clean:
 	@go clean
+
+.PHONY: dep
+dep:
+	@go mod download
+	@go mod tidy
 
 docker-build: deps-development
 	docker build --build-arg APPVERSION=$(IMAGE_VERSION) -t $(DOCKER_IMAGE):$(IMAGE_VERSION) .

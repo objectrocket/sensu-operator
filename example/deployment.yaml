@@ -12,22 +12,28 @@ metadata:
   namespace: sensu
 
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: sensu-operator
   namespace: sensu
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      name: sensu-operator
   template:
     metadata:
       labels:
         name: sensu-operator
     spec:
+      serviceAccountName: sensu-operator
+      imagePullSecrets:
+        - name: or-docker-secret
       containers:
       - name: sensu-operator
         image: objectrocket/sensu-operator:latest
-        imagePullPolicy: Never
+        imagePullPolicy: IfNotPresent
         env:
         - name: MY_POD_NAMESPACE
           valueFrom:
@@ -49,3 +55,89 @@ spec:
           value: "4"
         - name: SENSUOP_PROCESSING_RETRIES
           value: "5"
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sensu-operator
+  namespace: sensu
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: sensu-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: sensu
+subjects:
+- kind: ServiceAccount
+  name: sensu-operator
+  namespace: sensu
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: sensu
+rules:
+- apiGroups:
+  - objectrocket.com
+  resources:
+  - sensuclusters
+  - sensubackups
+  - sensurestores
+  - sensuassets
+  - sensucheckconfigs
+  - sensuhandlers
+  - sensueventfilters
+  verbs:
+  - "*"
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - "*"
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - services
+  - endpoints
+  - persistentvolumeclaims
+  - events
+  verbs:
+  - "*"
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - statefulsets
+  verbs:
+  - "*"
+# The following permissions can be removed if not using S3 backup and TLS
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  - nodes
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - networkpolicies
+  verbs:
+  - "*"
+# For using pod security policies
+- apiGroups:
+  - policy
+  resources:
+  - podsecuritypolicies
+  verbs:
+  - use
+  resourceNames:
+  - default

@@ -18,4 +18,4 @@ spec:
     port: 8081
     protocol: TCP
   selector:
-    sensu_cluster: example-sensu-cluster
+    sensu_cluster: sensu

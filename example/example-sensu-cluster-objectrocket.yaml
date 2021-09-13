@@ -3,7 +3,7 @@ kind: SensuCluster
 metadata:
   annotations:
     objectrocket.com/scope: clusterwide
-  name: platdev0
+  name: sensu
   namespace: sensu
 spec:
   pod:
@@ -15,6 +15,8 @@ spec:
         requests:
           storage: 8Gi
       storageClassName: standard
-  repository: sensu/sensu
+  repository: objectrocket/sensu-backend
   size: 1
-  version: 5.14.0
+  version: 5.20.2_or1
+  clusteradminusername: "admin"
+  clusteradminpassword: "P@ssw0rd!"
