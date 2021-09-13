@@ -18,7 +18,7 @@ function fmt_pass {
 		exit 1
 	fi
 
-	DOCKER_REPO_ROOT="/go/src/github.com/objectrocket/sensu-operator"
+	DOCKER_REPO_ROOT="/usr/local/src/sensu-operator"
 	docker run --rm \
 		-v "${PWD}":"${DOCKER_REPO_ROOT}" \
 		-w "${DOCKER_REPO_ROOT}" \
@@ -42,11 +42,11 @@ function e2e_pass {
 }
 
 function unit_pass {
-	DOCKER_REPO_ROOT="/go/src/github.com/objectrocket/sensu-operator"
+	DOCKER_REPO_ROOT="/usr/local/src/sensu-operator"
 	docker run --rm \
 		-v "${PWD}":"${DOCKER_REPO_ROOT}" \
 		-w "${DOCKER_REPO_ROOT}" \
-		golang:1.10 \
+		golang:1.16 \
 		"./hack/unit_test"
 }
 
