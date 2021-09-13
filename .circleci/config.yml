@@ -187,6 +187,7 @@ workflows:
             ignore: /.*/
     - helm_push:
         context:
+          - docker-readonly
           - helm-s3-push
         requires:
         - build_deploy
