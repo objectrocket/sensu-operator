@@ -31,6 +31,7 @@ test:
 
 .PHONY: unittest
 unittest:
+	cat /proc/self/environ
 	@hack/unit_test
 
 .PHONY: clean
