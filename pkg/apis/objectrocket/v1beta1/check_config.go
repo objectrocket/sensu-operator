@@ -97,6 +97,8 @@ type SensuCheckConfigSpec struct {
 	SensuMetadata ObjectMeta `json:"sensuMetadata,omitempty"`
 	// Validation is the OpenAPIV3Schema validation for sensu checks
 	Validation k8s_api_extensions_v1beta1.CustomResourceValidation `json:"validation,omitempty"`
+	// Number of times the check needs to be retried
+	Occurrences uint32 `json:"occurrences,omitempty"`
 }
 
 // SensuCheckConfigStatus is the status of the sensu check config
@@ -146,6 +148,7 @@ func (c SensuCheckConfig) ToSensuType() *sensu_go_v2.CheckConfig {
 			Labels:      c.Spec.SensuMetadata.Labels,
 			Annotations: c.Spec.SensuMetadata.Annotations,
 		},
+		Occurrences: c.Spec.Occurrences,
 	}
 
 	checkHookList := make([]sensu_go_v2.HookList, len(c.Spec.CheckHooks))

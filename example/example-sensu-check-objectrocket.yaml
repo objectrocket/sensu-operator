@@ -46,3 +46,4 @@ spec:
     namespace: platform
   subscriptions:
   - common
+  occurrences: 3

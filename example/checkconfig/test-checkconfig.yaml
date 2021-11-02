@@ -18,3 +18,4 @@ spec:
     name: sensu-checkconfig-google
     clusterName: platdev0
     namespace: default
+  occurrences: 3
