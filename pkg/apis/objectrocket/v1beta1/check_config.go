@@ -142,7 +142,6 @@ func (c SensuCheckConfig) ToSensuType() *sensu_go_v2.CheckConfig {
 		OutputMetricFormat:   c.Spec.OutputMetricFormat,
 		OutputMetricHandlers: c.Spec.OutputMetricHandlers,
 		EnvVars:              c.Spec.EnvVars,
-		Occurrences:          c.Spec.Occurrences,
 		ObjectMeta: sensu_go_v2.ObjectMeta{
 			Name:        c.Spec.SensuMetadata.Name,
 			Namespace:   c.Spec.SensuMetadata.Namespace,
