@@ -93,12 +93,12 @@ type SensuCheckConfigSpec struct {
 	// EnvVars is the list of environment variables to set for the check's
 	// execution environment.
 	EnvVars []string `json:"envVars,omitempty"`
+	// Number of times the check needs to be retried
+	Occurrences uint32 `json:"occurrences,omitempty"`
 	// Metadata contains the sensu name, sensu clusterName, sensu namespace, sensu labels and sensu annotations of the check
 	SensuMetadata ObjectMeta `json:"sensuMetadata,omitempty"`
 	// Validation is the OpenAPIV3Schema validation for sensu checks
 	Validation k8s_api_extensions_v1beta1.CustomResourceValidation `json:"validation,omitempty"`
-	// Number of times the check needs to be retried
-	Occurrences uint32 `json:"occurrences,omitempty"`
 }
 
 // SensuCheckConfigStatus is the status of the sensu check config
@@ -142,13 +142,13 @@ func (c SensuCheckConfig) ToSensuType() *sensu_go_v2.CheckConfig {
 		OutputMetricFormat:   c.Spec.OutputMetricFormat,
 		OutputMetricHandlers: c.Spec.OutputMetricHandlers,
 		EnvVars:              c.Spec.EnvVars,
+		Occurrences:          c.Spec.Occurrences,
 		ObjectMeta: sensu_go_v2.ObjectMeta{
 			Name:        c.Spec.SensuMetadata.Name,
 			Namespace:   c.Spec.SensuMetadata.Namespace,
 			Labels:      c.Spec.SensuMetadata.Labels,
 			Annotations: c.Spec.SensuMetadata.Annotations,
 		},
-		Occurrences: c.Spec.Occurrences,
 	}
 
 	checkHookList := make([]sensu_go_v2.HookList, len(c.Spec.CheckHooks))
