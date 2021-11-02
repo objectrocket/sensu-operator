@@ -149,7 +149,6 @@ func equal(c1, c2 *sensu_api_core_v2.CheckConfig) bool {
 		c1.Timeout != c2.Timeout ||
 		c1.RoundRobin != c2.RoundRobin ||
 		c1.OutputMetricFormat != c2.OutputMetricFormat ||
-		c1.Occurrences != c2.Occurrences ||
 		!reflect.DeepEqual(c1.ObjectMeta, c2.ObjectMeta) {
 		return false
 	}
