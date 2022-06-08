@@ -80,7 +80,7 @@ func (s *SensuClient) SetTimeout(t time.Duration) {
 }
 
 func (s *SensuClient) makeFullyQualifiedSensuClientURL() string {
-	return fmt.Sprintf("%s.%s.svc", k8sutil.APIServiceName(s.clusterName), s.namespace)
+	return fmt.Sprintf("%s.%s.svc.cluster.local", k8sutil.APIServiceName(s.clusterName), s.namespace)
 }
 
 func (s *SensuClient) ensureCredentials() (err error) {

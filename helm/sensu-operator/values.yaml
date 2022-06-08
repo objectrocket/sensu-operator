@@ -27,14 +27,14 @@ resourceSettings:
 
 logLevel: info
 
-nodeSelector:
-  node-role.kubernetes.io/platform_worker: "true"
+# nodeSelector:
+#   node-role.kubernetes.io/platform_worker: "true"
 
 tolerations:
   - effect: NoSchedule
     key: node_role
     operator: Equal
-    value: platform_worker
+    value: product_worker
 
 rbac:
   clusterRole: sensu-operator
@@ -53,4 +53,4 @@ sensu:
   processingRetries: 5
 
 prometheus:
-  enabled: true
+  enabled: false

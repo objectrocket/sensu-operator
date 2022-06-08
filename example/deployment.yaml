@@ -12,22 +12,28 @@ metadata:
   namespace: sensu
 
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: sensu-operator
   namespace: sensu
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: sensu-operator
+      release: sensu-operator
   template:
     metadata:
       labels:
         name: sensu-operator
+        release: sensu-operator
+        app: sensu-operator
     spec:
       containers:
       - name: sensu-operator
-        image: objectrocket/sensu-operator:latest
-        imagePullPolicy: Never
+        image: objectrocket/sensu-operator:0.12.0-rc1
+        imagePullPolicy: Always
         env:
         - name: MY_POD_NAMESPACE
           valueFrom:
@@ -49,3 +55,5 @@ spec:
           value: "4"
         - name: SENSUOP_PROCESSING_RETRIES
           value: "5"
+      imagePullSecrets:
+        - name: 'or-docker-secret'
