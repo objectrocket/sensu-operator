@@ -32,7 +32,7 @@ orbs:
 jobs:
   markdownlint:
     docker:
-    - image: circleci/node:10.14.2
+    - image: circleci/node:16.15.0
       auth:
         username: ${DOCKER_USERNAME}
         password: ${DOCKER_PASSWORD}
