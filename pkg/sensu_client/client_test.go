@@ -36,7 +36,7 @@ func (c *sensuAPITestClient) CreateNamespace(ns *types.Namespace) error {
 func TestNew(t *testing.T) {
 	conf := basic.Config{
 		Cluster: basic.Cluster{
-			APIUrl: "http://testCluster-api.testnamespace.svc:8080",
+			APIUrl: "http://testCluster-api.testnamespace.svc.cluster.local:8080",
 		},
 		Profile: basic.Profile{
 			Format:    "json",
