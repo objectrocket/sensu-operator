@@ -556,7 +556,7 @@ func (c *Cluster) ClientURLs(m *etcdutil.MemberConfig) (urls []string) {
 }
 
 func (c *Cluster) PeerURL(m *etcdutil.MemberConfig, ordinalID int) string {
-	return fmt.Sprintf("%s://%s.%s.%s.svc:2380",
+	return fmt.Sprintf("%s://%s.%s.%s.svc.cluster.local:2380",
 		m.PeerScheme(),
 		c.memberName(ordinalID),
 		c.name(),

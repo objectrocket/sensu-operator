@@ -1,3 +1,4 @@
+apiversion: v2
 name: sensu-operator
 version: 0.0.0
 description: ObjectRocket Sensu Operator
