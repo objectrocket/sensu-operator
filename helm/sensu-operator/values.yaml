@@ -37,7 +37,7 @@ tolerations:
     value: product_worker
 
 rbac:
-  clusterRole: sensu
+  clusterRole: sensu-operator
 
 sensu:
   logLevel: info

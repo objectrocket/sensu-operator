@@ -693,7 +693,7 @@ func InClusterConfig() (*rest.Config, error) {
 	// Work around https://github.com/kubernetes/kubernetes/issues/40973
 	// See https://github.com/sensu/sensu-operator/issues/731#issuecomment-283804819
 	if len(os.Getenv("KUBERNETES_SERVICE_HOST")) == 0 {
-		addrs, err := net.LookupHost("kubernetes.default.svc")
+		addrs, err := net.LookupHost("kubernetes.default.svc.cluster.local")
 		if err != nil {
 			panic(err)
 		}
