@@ -1,6 +1,6 @@
 apiVersion: v1
 name: sensu-operator
-version: 0.0.0
+version: 0.10.2-rc9
 description: ObjectRocket Sensu Operator
 keywords:
   - ObjectRocket
@@ -16,4 +16,4 @@ maintainers: # (optional)
     url: objectrocket.com
 engine: gotpl # The name of the template engine (optional, defaults to gotpl)
 deprecated: false
-appVersion: 0.0.0
+appVersion: 0.10.2-rc9

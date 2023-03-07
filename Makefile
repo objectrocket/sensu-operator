@@ -9,7 +9,7 @@ DOCKER := $(shell command -v docker)
 
 DOCKER_IMAGE = objectrocket/sensu-operator
 # allow builds without tags
-IMAGE_VERSION ?= latest
+IMAGE_VERSION ?= 0.10.2-rc9
 
 # Test if the dependencies we need to run this Makefile are installed
 deps-development:

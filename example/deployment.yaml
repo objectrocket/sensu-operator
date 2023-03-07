@@ -22,7 +22,7 @@ spec:
   selector:
     matchLabels:
       app: sensu-operator
-      release: sensu-operato
+      release: sensu-operator
   template:
     metadata:
       labels:
@@ -32,8 +32,8 @@ spec:
     spec:
       containers:
       - name: sensu-operator
-        image: objectrocket/sensu-operator:latest
-        imagePullPolicy: Never
+        image: objectrocket/sensu-operator:0.10.2-rc9
+        imagePullPolicy: Always
         env:
         - name: MY_POD_NAMESPACE
           valueFrom:
