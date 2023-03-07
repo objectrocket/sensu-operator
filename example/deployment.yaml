@@ -32,7 +32,7 @@ spec:
     spec:
       containers:
       - name: sensu-operator
-        image: objectrocket/sensu-operator:0.10.2-rc9
+        image: objectrocket/sensu-operator:0.10.2-rc10
         imagePullPolicy: Always
         env:
         - name: MY_POD_NAMESPACE
