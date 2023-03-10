@@ -16,4 +16,4 @@ maintainers: # (optional)
     url: objectrocket.com
 engine: gotpl # The name of the template engine (optional, defaults to gotpl)
 deprecated: false
-appVersion: 0.10.2-rc10
+appVersion: 0.0.0
