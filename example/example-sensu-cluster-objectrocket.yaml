@@ -3,7 +3,7 @@ kind: SensuCluster
 metadata:
   annotations:
     objectrocket.com/scope: clusterwide
-  name: orsensu
+  name: sensu
   namespace: sensu
 spec:
   pod:
