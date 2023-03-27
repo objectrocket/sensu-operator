@@ -625,13 +625,7 @@ EOL
 cat /etc/sensu/backend.yml
 `, token, clusterName, m.Namespace, options)},
 					VolumeMounts: []v1.VolumeMount{configVolumeMount},
-				},
-				{
-					Image: imageNameBusybox(cs.Pod),
-					Name:  "volume-mount-hack",
-					Command: []string{"sh", "-c", "chown -R 1000:1000  /var/lib/sensu/etcd;"},
-					VolumeMounts: []v1.VolumeMount{configVolumeMountData},
-				},
+				}
 			},
 			Containers:    []v1.Container{container},
 			RestartPolicy: v1.RestartPolicyAlways,
