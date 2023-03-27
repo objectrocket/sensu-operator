@@ -625,7 +625,8 @@ EOL
 cat /etc/sensu/backend.yml
 `, token, clusterName, m.Namespace, options)},
 					VolumeMounts: []v1.VolumeMount{configVolumeMount},
-				}
+				},
+
 			},
 			Containers:    []v1.Container{container},
 			RestartPolicy: v1.RestartPolicyAlways,
