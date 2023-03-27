@@ -501,10 +501,10 @@ etcd-key-file: %[1]s/server.key
 		Name:      "etcsensu",
 		MountPath: "/etc/sensu",
 	}
-	configVolumeMountData := v1.VolumeMount{
+	/*configVolumeMountData := v1.VolumeMount{
 		Name:				"etcd-data",
 		MountPath:	"/var/lib/sensu/etcd",
-	}
+	}*/
 
 	container := containerWithProbes(
 		sensuContainer(strings.Split(commands, " "), cs.Repository, cs.Version, cs.ClusterAdminUsername, cs.ClusterAdminPassword),
