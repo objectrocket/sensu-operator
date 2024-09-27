@@ -1,4 +1,3 @@
-# build stage
 FROM golang:1.10 AS build-env
 ARG APPVERSION=latest
 WORKDIR /go/src/github.com/objectrocket/sensu-operator
