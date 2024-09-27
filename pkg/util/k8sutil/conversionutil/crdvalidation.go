@@ -12,7 +12,7 @@ import (
 // CustomResourceDefinitionTypeMeta set the default kind/apiversion of CRD
 var CustomResourceDefinitionTypeMeta = metav1.TypeMeta{
 	Kind:       "CustomResourceDefinition",
-	APIVersion: "apiextensions.k8s.io/v1beta1",
+	APIVersion: "apiextensions.k8s.io/v1",
 }
 
 // OpenAPIRefCallBack returns a jsonref using the input string without modification
