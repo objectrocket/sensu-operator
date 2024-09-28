@@ -93,7 +93,7 @@ require (
 	k8s.io/apiextensions-apiserver v0.0.0-20190918161926-8f644eb6e783
 	k8s.io/apimachinery v0.0.0-20181127025237-2b1284ed4c93
 	k8s.io/client-go v0.0.0-20181213151034-8d9ed539ba31
-	k8s.io/code-generator v0.0.0-20181117043124-c2090bec4d9b
+	k8s.io/code-generator v0.16.16-rc.0
 	k8s.io/gengo v0.0.0-20181113154421-fd15ee9cc2f7
 	k8s.io/klog v0.1.0
 	k8s.io/kube-openapi v0.0.0-20190115222348-ced9eb3070a5

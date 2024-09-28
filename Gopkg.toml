@@ -75,7 +75,7 @@ required = [
   version = "5.9.0"
 
 [[constraint]]
-  branch = "release-1.16"
+  branch = "release-1.13"
   name = "k8s.io/code-generator"
 
 [[constraint]]
