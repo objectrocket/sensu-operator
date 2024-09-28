@@ -6,7 +6,7 @@ import (
 	"io"
 
 	"github.com/sensu/sensu-go/types"
-	yaml "gopkg.in/yaml.v2"
+	yaml "github.com/sensu/yaml"
 )
 
 // wrapper is used to get the precise yaml encoding behaviour we want
