@@ -617,12 +617,6 @@
   revision = "078f6253fcc7b1b937274c7cb14b26b8db52fc4a"
   version = "5.9.0"
 
-[[projects]]
-  digest = "1:4d2e5a73dc1500038e504a8d78b986630e3626dc027bc030ba5c75da257cdb96"
-  name = "github.com/sensu/yaml"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "704b36ea12f40d32ffe6bd109c2ddc894af28dde"
 
 [[projects]]
   digest = "1:87c2e02fb01c27060ccc5ba7c5a407cc91147726f8f40b70cceeedbc52b1f3a8"
