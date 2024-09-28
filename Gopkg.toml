@@ -47,7 +47,7 @@ required = [
   version = "kubernetes-1.13.1"
 
 [[constraint]]
-  version = "kubernetes-1.13.1"
+  version = "kubernetes-1.16.0"
   name = "k8s.io/apiextensions-apiserver"
 
 [[constraint]]

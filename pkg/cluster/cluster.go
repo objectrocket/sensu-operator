@@ -97,7 +97,7 @@ func New(config Config, cl *api.SensuCluster) *Cluster {
 		eventCh:   make(chan *clusterEvent, 100),
 		stopCh:    make(chan struct{}),
 		status:    *(cl.Status.DeepCopy()),
-		eventsCli: config.KubeCli.Core().Events(cl.Namespace),
+		eventsCli: config.KubeCli.CoreV1().Events(cl.Namespace),
 	}
 
 	go func() {
@@ -383,7 +383,7 @@ func (c *Cluster) createStatefulSet(m *etcdutil.MemberConfig) error {
 }
 
 func (c *Cluster) pollPods() (ready, notready []*v1.Pod, err error) {
-	podList, err := c.config.KubeCli.Core().Pods(c.cluster.Namespace).List(k8sutil.ClusterListOpt(c.cluster.Name))
+	podList, err := c.config.KubeCli.CoreV1().Pods(c.cluster.Namespace).List(k8sutil.ClusterListOpt(c.cluster.Name))
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to list running pods: %v", err)
 	}
@@ -556,7 +556,7 @@ func (c *Cluster) ClientURLs(m *etcdutil.MemberConfig) (urls []string) {
 }
 
 func (c *Cluster) PeerURL(m *etcdutil.MemberConfig, ordinalID int) string {
-	return fmt.Sprintf("%s://%s.%s.%s.svc:2380",
+	return fmt.Sprintf("%s://%s.%s.%s.svc.cluster.local:2380",
 		m.PeerScheme(),
 		c.memberName(ordinalID),
 		c.name(),
