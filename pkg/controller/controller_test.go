@@ -307,12 +307,10 @@ func (s *InformerTestSuite) TestInformerWithOneCluster() {
 	controller.Config.SensuCRCli.ObjectrocketV1beta1()
 	source = cache.NewListWatchFromClient(
 		&fakerest.RESTClient{
-			Client: fakerest.CreateHTTPClient(roundTripper),
-			NegotiatedSerializer: serializer.DirectCodecFactory{
-				CodecFactory: serializer.NewCodecFactory(sensuscheme.Scheme),
-			},
-			GroupVersion:     schema.GroupVersion{},
-			VersionedAPIPath: "/not/a/real/path",
+			Client:               fakerest.CreateHTTPClient(roundTripper),
+			NegotiatedSerializer: serializer.NewCodecFactory(sensuscheme.Scheme),
+			GroupVersion:         schema.GroupVersion{},
+			VersionedAPIPath:     "/not/a/real/path",
 		},
 		api.SensuClusterResourcePlural,
 		controller.Config.Namespace,
