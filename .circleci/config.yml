@@ -47,9 +47,9 @@ jobs:
         name: lint README.md
         command: markdownlint --config .markdownlint.json README.md
   build:
-    working_directory: /go/src/github.com/objectrocket/sensu-operator
+    working_directory: go/src/github.com/objectrocket/sensu-operator
     docker:
-    - image: cimg/go:1.18
+    - image: circleci/golang:1.18
       auth:
         username: ${DOCKER_USERNAME}
         password: ${DOCKER_PASSWORD}
@@ -61,9 +61,9 @@ jobs:
         name: Build the server binary and docker image
         command: make docker-build IMAGE_VERSION=latest
   unit_test:
-    working_directory: /go/src/github.com/objectrocket/sensu-operator
+    working_directory: go/src/github.com/objectrocket/sensu-operator
     docker:
-    - image: cimg/go:1.18
+    - image: circleci/golang:1.18
       auth:
         username: ${DOCKER_USERNAME}
         password: ${DOCKER_PASSWORD}
@@ -73,9 +73,9 @@ jobs:
         name: go tests
         command: make unittest
   build_deploy:
-    working_directory: /go/src/github.com/objectrocket/sensu-operator
+    working_directory: go/src/github.com/objectrocket/sensu-operator
     docker:
-    - image: cimg/go:1.18
+    - image: circleci/golang:1.18
       auth:
         username: ${DOCKER_USERNAME}
         password: ${DOCKER_PASSWORD}
