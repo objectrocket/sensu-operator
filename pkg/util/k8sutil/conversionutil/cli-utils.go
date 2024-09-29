@@ -88,42 +88,6 @@ func (labels *Labels) Set(value string) error {
 }
 
 func NewCustomResourceDefinition(config Config) *extensionsobj.CustomResourceDefinition {
-
-	crd := &extensionsobj.CustomResourceDefinition{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        config.Plural + "." + config.Group,
-			Labels:      config.Labels.LabelsMap,
-			Annotations: config.Annotations.LabelsMap,
-		},
-		TypeMeta: CustomResourceDefinitionTypeMeta,
-		Spec: extensionsobj.CustomResourceDefinitionSpec{
-			Group:   config.Group,
-			Version: config.Version,
-			Scope:   extensionsobj.ResourceScope(config.ResourceScope),
-			Names: extensionsobj.CustomResourceDefinitionNames{
-				Plural:     config.Plural,
-				Kind:       config.Kind,
-				Categories: config.Categories,
-				ShortNames: config.ShortNames,
-			},
-			Subresources: &extensionsobj.CustomResourceSubresources{
-				Status: &extensionsobj.CustomResourceSubresourceStatus{},
-				Scale: &extensionsobj.CustomResourceSubresourceScale{
-					SpecReplicasPath:   config.SpecReplicasPath,
-					StatusReplicasPath: config.StatusReplicasPath,
-					LabelSelectorPath:  &config.LabelSelectorPath,
-				},
-			},
-		},
-	}
-
-	if config.SpecDefinitionName != "" && config.EnableValidation == true {
-		crd.Spec.Validation = GetCustomResourceValidation(config.SpecDefinitionName, config.GetOpenAPIDefinitions)
-	}
-
-	return crd
-}
-func NewCustomResourceDefinition(config Config) *extensionsobj.CustomResourceDefinition {
 	crd := &extensionsobj.CustomResourceDefinition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        config.Plural + "." + config.Group,
