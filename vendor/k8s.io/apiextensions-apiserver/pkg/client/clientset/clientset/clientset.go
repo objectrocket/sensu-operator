@@ -44,10 +44,7 @@ func (c *Clientset) ApiextensionsV1() apiextensionsv1.ApiextensionsV1Interface {
 	return c.apiextensionsV1
 }
 
-// ApiextensionsV1 retrieves the ApiextensionsV1Client
-func (c *Clientset) ApiextensionsV1() apiextensionsv1.ApiextensionsV1Interface {
-	return c.apiextensionsV1
-}
+
 
 // Discovery retrieves the DiscoveryClient
 func (c *Clientset) Discovery() discovery.DiscoveryInterface {
