@@ -38,6 +38,7 @@ func GetCustomResourceValidations(fn GetAPIDefinitions) map[string]*extensionsob
 }
 
 // GetCustomResourceValidation returns the validation definition for a CRD name
+/*
 func GetCustomResourceValidation(name string, fn func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition) *extensionsobj.CustomResourceValidation {
 	openapiSpec := fn(OpenAPIRefCallBack)
 	fixKnownTypes(openapiSpec)
@@ -48,6 +49,12 @@ func GetCustomResourceValidation(name string, fn func(ref common.ReferenceCallba
 	crv.OpenAPIV3Schema.Description = ""
 	crv.OpenAPIV3Schema.Required = nil
 	return crv
+}*/
+func GetCustomResourceValidation(name string, fn func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition) *extensionsobj.JSONSchemaProps {
+	openapiSpec := fn(OpenAPIRefCallBack)
+	fixKnownTypes(openapiSpec)
+	schema := openapiSpec[name].Schema
+	return SchemaPropsToJSONProps(&schema, openapiSpec, true)
 }
 
 // ref: https://github.com/kubernetes/kubernetes/issues/62329

@@ -110,7 +110,7 @@ func NewCustomResourceDefinition(config Config) *extensionsobj.CustomResourceDef
 					Served:  true,
 					Storage: true,
 					Schema: &extensionsobj.CustomResourceValidation{
-						OpenAPIV3Schema: GetCustomResourceValidation(config.SpecDefinitionName, config.GetOpenAPIDefinitions),
+						OpenAPIV3Schema: GetCustomResourceValidation(config.SpecDefinitionName, config.GetOpenAPIDefinitions()),
 					},
 					Subresources: &extensionsobj.CustomResourceSubresources{
 						Status: &extensionsobj.CustomResourceSubresourceStatus{},
@@ -127,7 +127,7 @@ func NewCustomResourceDefinition(config Config) *extensionsobj.CustomResourceDef
 
 	if config.SpecDefinitionName != "" && config.EnableValidation {
 		crd.Spec.Versions[0].Schema = &extensionsobj.CustomResourceValidation{
-			OpenAPIV3Schema: GetCustomResourceValidation(config.SpecDefinitionName, config.GetOpenAPIDefinitions),
+			OpenAPIV3Schema: GetCustomResourceValidation(config.SpecDefinitionName, config.GetOpenAPIDefinitions()),
 		}
 	}
 
