@@ -12,9 +12,8 @@ CODEGEN_PKG=${CODEGEN_PKG:-$(cd ${SCRIPT_ROOT}; ls -d -1 ./vendor/k8s.io/code-ge
 #                  k8s.io/kubernetes. The output-base is needed for the generators to output into the vendor dir
 #                  instead of the $GOPATH directly. For normal projects this can be dropped.
 ${CODEGEN_PKG}/kube_codegen.sh all \
-#${CODEGEN_PKG}/generate-groups.sh all \
-  github.com/objectrocket/sensu-operator/pkg/generated \
-  github.com/objectrocket/sensu-operator/pkg/apis \
+  pkg/generated \
+  pkg/apis \
   objectrocket:v1beta1 \
   --go-header-file ${SCRIPT_ROOT}/hack/k8s/codegen/boilerplate.go.txt \
   "$@"
