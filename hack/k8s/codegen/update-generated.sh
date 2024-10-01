@@ -9,8 +9,7 @@ SCRIPT_ROOT=$(realpath $(dirname ${BASH_SOURCE})/../../..)
 CODEGEN_PKG=${CODEGEN_PKG:-$(cd ${SCRIPT_ROOT}; ls -d -1 ./vendor/k8s.io/code-generator 2>/dev/null || echo ../code-generator)}
 
 
-#${CODEGEN_PKG}/generate-groups.sh all \
-${CODEGEN_PKG}/kube_codegen.sh all \
+${CODEGEN_PKG}/generate-groups.sh all \
 github.com/objectrocket/sensu-operator/pkg/generated \
   github.com/objectrocket/sensu-operator/pkg/apis \
   objectrocket:v1beta1 \
