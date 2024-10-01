@@ -152,7 +152,7 @@ func (s *InformerTestSuite) TestInformerWithNoEvents() {
 		&fakerest.RESTClient{
 			Client:               fakerest.CreateHTTPClient(roundTripper),
 			NegotiatedSerializer: serializer.NewCodecFactory(sensuscheme.Scheme),
-			GroupVersion:         schema.GroupVersion{},
+			GroupVersion:         schema.GroupVersion{Group: "objectrocket.com", Version: "v1beta1"},
 			VersionedAPIPath:     "/not/a/real/path",
 		},
 		api.SensuClusterResourcePlural,
@@ -309,7 +309,7 @@ func (s *InformerTestSuite) TestInformerWithOneCluster() {
 		&fakerest.RESTClient{
 			Client:               fakerest.CreateHTTPClient(roundTripper),
 			NegotiatedSerializer: serializer.NewCodecFactory(sensuscheme.Scheme),
-			GroupVersion:         schema.GroupVersion{},
+			GroupVersion:         schema.GroupVersion{Group: "objectrocket.com", Version: "v1beta1"},
 			VersionedAPIPath:     "/not/a/real/path",
 		},
 		api.SensuClusterResourcePlural,
