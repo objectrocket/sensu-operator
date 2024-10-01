@@ -752,7 +752,7 @@ func init() {
 }
 
 func init() {
-	proto.RegisterFile("k8s.io/kubernetes/vendor/k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1/generated.proto", fileDescriptor_98a4cc6918394e53)
+	proto.RegisterFile("k8s.io/kubernetes/vendor/k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1/generated.proto", fileDescriptor_98a4cc6918394e53)
 }
 
 var fileDescriptor_98a4cc6918394e53 = []byte{

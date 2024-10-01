@@ -10,6 +10,7 @@ CODEGEN_PKG=${CODEGEN_PKG:-$(cd ${SCRIPT_ROOT}; ls -d -1 ./vendor/k8s.io/code-ge
 
 
 ${CODEGEN_PKG}/generate-groups.sh all \
+#${CODEGEN_PKG}/kube_codegen.sh all \
 github.com/objectrocket/sensu-operator/pkg/generated \
   github.com/objectrocket/sensu-operator/pkg/apis \
   objectrocket:v1beta1 \
