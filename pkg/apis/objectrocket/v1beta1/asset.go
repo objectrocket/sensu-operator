@@ -87,6 +87,12 @@ func (a SensuAsset) ToAPISensuAsset() *sensutypes.Asset {
 
 // GetCustomResourceValidation returns the asset's resource validation
 func (a SensuAsset) GetCustomResourceValidation() *k8s_api_extensions_v1beta1.CustomResourceValidation {
-	return crdutil.GetCustomResourceValidation("github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.SensuAsset", GetOpenAPIDefinitions)
+	schemaProps := crdutil.GetCustomResourceValidation(
+		"github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.SensuAsset",
+		GetOpenAPIDefinitions,
+	)
 
+	return &k8s_api_extensions_v1beta1.CustomResourceValidation{
+		OpenAPIV3Schema: schemaProps,
+	}
 }
