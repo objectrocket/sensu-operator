@@ -21,7 +21,7 @@ package v1beta1
 import (
 	"time"
 
-	v1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	v1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	scheme "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
