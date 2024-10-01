@@ -17,7 +17,7 @@ package v1beta1
 import (
 	crdutil "github.com/objectrocket/sensu-operator/pkg/util/k8sutil/conversionutil"
 	sensu_go_v2 "github.com/sensu/sensu-go/api/core/v2"
-	k8s_api_extensions_v1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	k8s_api_extensions_v1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -257,5 +257,12 @@ func (c SensuCheckConfig) ToSensuType() *sensu_go_v2.CheckConfig {
 
 // GetCustomResourceValidation returns the asset's resource validation
 func (c SensuCheckConfig) GetCustomResourceValidation() *k8s_api_extensions_v1beta1.CustomResourceValidation {
-	return crdutil.GetCustomResourceValidation("github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.SensuCheckConfig", GetOpenAPIDefinitions)
+	schemaProps := crdutil.GetCustomResourceValidation(
+		"github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.SensuCheckConfig",
+		GetOpenAPIDefinitions,
+	)
+
+	return &k8s_api_extensions_v1beta1.CustomResourceValidation{
+		OpenAPIV3Schema: schemaProps,
+	}
 }

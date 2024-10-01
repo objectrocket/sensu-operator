@@ -99,5 +99,12 @@ func (a SensuHandler) ToSensuType() *sensutypes.Handler {
 
 // GetCustomResourceValidation rreturns the handlers's resource validation
 func (a SensuHandler) GetCustomResourceValidation() *k8s_api_extensions_v1beta1.CustomResourceValidation {
-	return crdutil.GetCustomResourceValidation("github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.SensuHandler", GetOpenAPIDefinitions)
+	schemaProps := crdutil.GetCustomResourceValidation(
+		"github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.SensuHandler",
+		GetOpenAPIDefinitions,
+	)
+
+	return &k8s_api_extensions_v1beta1.CustomResourceValidation{
+		OpenAPIV3Schema: schemaProps,
+	}
 }
