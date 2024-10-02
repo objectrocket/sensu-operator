@@ -24,7 +24,9 @@ import (
 	"github.com/objectrocket/sensu-operator/pkg/util/k8sutil"
 	sensucli "github.com/sensu/sensu-go/cli"
 	"github.com/sirupsen/logrus"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1" // Import for CustomResourceValidation
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kwatch "k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
@@ -182,47 +184,32 @@ func (c *Controller) makeClusterConfig() cluster.Config {
 }
 
 func (c *Controller) initCRD() (err error) {
-	if err = k8sutil.CreateCRD(c.KubeExtCli, api.SensuClusterCRDName, api.SensuClusterResourceKind, api.SensuClusterResourcePlural, "sensu", nil); err != nil {
-		err = fmt.Errorf("failed to create %s CRD: %v", api.SensuClusterCRDName, err)
-		return
+	crds := []struct {
+		name       string
+		kind       string
+		plural     string
+		shortName  string
+		validation *apiextensionsv1.CustomResourceValidation
+	}{
+		{api.SensuClusterCRDName, api.SensuClusterResourceKind, api.SensuClusterResourcePlural, "sensu", nil},
+		{api.SensuAssetCRDName, api.SensuAssetResourceKind, api.SensuAssetResourcePlural, "sensuasset", api.SensuAsset{}.GetCustomResourceValidation()},
+		{api.SensuCheckConfigCRDName, api.SensuCheckConfigResourceKind, api.SensuCheckConfigResourcePlural, "sensucheckconfig", api.SensuCheckConfig{}.GetCustomResourceValidation()},
+		{api.SensuHandlerCRDName, api.SensuHandlerResourceKind, api.SensuHandlerResourcePlural, "sensuhandler", api.SensuHandler{}.GetCustomResourceValidation()},
+		{api.SensuEventFilterCRDName, api.SensuEventFilterResourceKind, api.SensuEventFilterResourcePlural, "sensueventfilter", api.SensuEventFilter{}.GetCustomResourceValidation()},
+		// Add other CRDs here...
 	}
-	if err = k8sutil.WaitCRDReady(c.KubeExtCli, api.SensuClusterCRDName); err != nil {
-		err = fmt.Errorf("failed to create %s CRD: %v", api.SensuClusterCRDName, err)
-		return
+
+	for _, crd := range crds {
+		if err = k8sutil.CreateCRD(c.KubeExtCli, crd.name, crd.kind, crd.plural, crd.validation); err != nil {
+			c.logger.Errorf("Failed to create %s CRD: %v", crd.name, err)
+			return fmt.Errorf("failed to create %s CRD: %v", crd.name, err)
+		}
+		if err = k8sutil.WaitCRDReady(c.KubeExtCli, crd.name); err != nil {
+			c.logger.Errorf("Failed to wait for %s CRD to become ready: %v", crd.name, err)
+			return fmt.Errorf("failed to wait for %s CRD: %v", crd.name, err)
+		}
 	}
-	if err = k8sutil.CreateCRD(c.KubeExtCli, api.SensuAssetCRDName, api.SensuAssetResourceKind, api.SensuAssetResourcePlural, "sensuasset", api.SensuAsset{}.GetCustomResourceValidation()); err != nil {
-		err = fmt.Errorf("failed to create %s CRD: %v", api.SensuAssetCRDName, err)
-		return
-	}
-	if err = k8sutil.WaitCRDReady(c.KubeExtCli, api.SensuAssetCRDName); err != nil {
-		err = fmt.Errorf("failed to create %s CRD: %v", api.SensuAssetCRDName, err)
-		return
-	}
-	if err = k8sutil.CreateCRD(c.KubeExtCli, api.SensuCheckConfigCRDName, api.SensuCheckConfigResourceKind, api.SensuCheckConfigResourcePlural, "sensucheckconfig", api.SensuCheckConfig{}.GetCustomResourceValidation()); err != nil {
-		err = fmt.Errorf("failed to create %s CRD: %v", api.SensuCheckConfigCRDName, err)
-		return
-	}
-	if err = k8sutil.WaitCRDReady(c.KubeExtCli, api.SensuCheckConfigCRDName); err != nil {
-		err = fmt.Errorf("failed to create %s CRD: %v", api.SensuCheckConfigCRDName, err)
-		return
-	}
-	if err = k8sutil.CreateCRD(c.KubeExtCli, api.SensuHandlerCRDName, api.SensuHandlerResourceKind, api.SensuHandlerResourcePlural, "sensuhandler", api.SensuHandler{}.GetCustomResourceValidation()); err != nil {
-		err = fmt.Errorf("failed to create %s CRD: %v", api.SensuHandlerCRDName, err)
-		return
-	}
-	if err = k8sutil.WaitCRDReady(c.KubeExtCli, api.SensuHandlerCRDName); err != nil {
-		err = fmt.Errorf("failed to create %s CRD: %v", api.SensuHandlerCRDName, err)
-		return
-	}
-	if err = k8sutil.CreateCRD(c.KubeExtCli, api.SensuEventFilterCRDName, api.SensuEventFilterResourceKind, api.SensuEventFilterResourcePlural, "sensueventfilter", api.SensuEventFilter{}.GetCustomResourceValidation()); err != nil {
-		err = fmt.Errorf("failed to create %s CRD: %v", api.SensuEventFilterCRDName, err)
-		return
-	}
-	if err = k8sutil.WaitCRDReady(c.KubeExtCli, api.SensuEventFilterCRDName); err != nil {
-		err = fmt.Errorf("failed to create %s CRD: %v", api.SensuEventFilterCRDName, err)
-		return
-	}
-	return
+	return nil
 }
 
 func (c *Controller) clusterExists(clusterName string) (ok bool) {
