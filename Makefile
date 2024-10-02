@@ -42,3 +42,8 @@ docker-build: deps-development
 
 docker-push: docker-build
 	docker push $(DOCKER_IMAGE):$(IMAGE_VERSION)
+
+
+generate:
+    $(GO) generate ./...
+.PHONY: generate

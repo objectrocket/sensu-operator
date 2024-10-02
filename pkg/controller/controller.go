@@ -15,6 +15,7 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -111,6 +112,7 @@ func New(cfg Config) *Controller {
 
 // handleClusterEvent returns true if cluster is ignored (not managed) by this instance.
 func (c *Controller) handleClusterEvent(event *Event) (bool, error) {
+	ctx := context.Background()
 	var err error
 	clus := event.Object
 
@@ -156,7 +158,7 @@ func (c *Controller) handleClusterEvent(event *Event) (bool, error) {
 		}
 		c.clusters[clus.Name].Delete()
 		deletionPolicy := v1.DeletePropagationBackground
-		err = c.KubeCli.AppsV1().StatefulSets(clus.GetNamespace()).Delete(clus.GetName(), &v1.DeleteOptions{
+		err = c.KubeCli.AppsV1().StatefulSets(clus.GetNamespace()).Delete(ctx, clus.GetName(), v1.DeleteOptions{
 			PropagationPolicy: &deletionPolicy,
 		})
 		if err != nil {
@@ -182,7 +184,6 @@ func (c *Controller) makeClusterConfig() cluster.Config {
 		SensuCRCli:     c.Config.SensuCRCli,
 	}
 }
-
 func (c *Controller) initCRD() (err error) {
 	crds := []struct {
 		name       string
@@ -200,7 +201,8 @@ func (c *Controller) initCRD() (err error) {
 	}
 
 	for _, crd := range crds {
-		if err = k8sutil.CreateCRD(c.KubeExtCli, crd.name, crd.kind, crd.plural, crd.validation); err != nil {
+		// Call CreateCRD with the correct number of parameters
+		if err = k8sutil.CreateCRD(c.KubeExtCli, crd.name, crd.kind, crd.plural, crd.shortName, crd.validation); err != nil {
 			c.logger.Errorf("Failed to create %s CRD: %v", crd.name, err)
 			return fmt.Errorf("failed to create %s CRD: %v", crd.name, err)
 		}

@@ -20,6 +20,7 @@ package v1beta1
 
 import (
 	"time"
+	"context"
 
 	v1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
 	scheme "github.com/objectrocket/sensu-operator/pkg/generated/clientset/versioned/scheme"
@@ -66,18 +67,20 @@ func newSensuHandlers(c *ObjectrocketV1beta1Client, namespace string) *sensuHand
 // Get takes name of the sensuHandler, and returns the corresponding sensuHandler object, and an error if there is any.
 func (c *sensuHandlers) Get(name string, options v1.GetOptions) (result *v1beta1.SensuHandler, err error) {
 	result = &v1beta1.SensuHandler{}
+	ctx := context.Background()
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("sensuhandlers").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of SensuHandlers that match those selectors.
 func (c *sensuHandlers) List(opts v1.ListOptions) (result *v1beta1.SensuHandlerList, err error) {
+	ctx := context.Background()
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -88,13 +91,14 @@ func (c *sensuHandlers) List(opts v1.ListOptions) (result *v1beta1.SensuHandlerL
 		Resource("sensuhandlers").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested sensuHandlers.
 func (c *sensuHandlers) Watch(opts v1.ListOptions) (watch.Interface, error) {
+	ctx := context.Background()
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -105,30 +109,32 @@ func (c *sensuHandlers) Watch(opts v1.ListOptions) (watch.Interface, error) {
 		Resource("sensuhandlers").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a sensuHandler and creates it.  Returns the server's representation of the sensuHandler, and an error, if there is any.
 func (c *sensuHandlers) Create(sensuHandler *v1beta1.SensuHandler) (result *v1beta1.SensuHandler, err error) {
+	ctx := context.Background()
 	result = &v1beta1.SensuHandler{}
 	err = c.client.Post().
 		Namespace(c.ns).
 		Resource("sensuhandlers").
 		Body(sensuHandler).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a sensuHandler and updates it. Returns the server's representation of the sensuHandler, and an error, if there is any.
 func (c *sensuHandlers) Update(sensuHandler *v1beta1.SensuHandler) (result *v1beta1.SensuHandler, err error) {
+	ctx := context.Background()
 	result = &v1beta1.SensuHandler{}
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("sensuhandlers").
 		Name(sensuHandler.Name).
 		Body(sensuHandler).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
@@ -137,6 +143,7 @@ func (c *sensuHandlers) Update(sensuHandler *v1beta1.SensuHandler) (result *v1be
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
 
 func (c *sensuHandlers) UpdateStatus(sensuHandler *v1beta1.SensuHandler) (result *v1beta1.SensuHandler, err error) {
+	ctx := context.Background()
 	result = &v1beta1.SensuHandler{}
 	err = c.client.Put().
 		Namespace(c.ns).
@@ -144,24 +151,26 @@ func (c *sensuHandlers) UpdateStatus(sensuHandler *v1beta1.SensuHandler) (result
 		Name(sensuHandler.Name).
 		SubResource("status").
 		Body(sensuHandler).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the sensuHandler and deletes it. Returns an error if one occurs.
 func (c *sensuHandlers) Delete(name string, options *v1.DeleteOptions) error {
+	ctx := context.Background()
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("sensuhandlers").
 		Name(name).
 		Body(options).
-		Do().
+		Do(ctx).
 		Error()
 }
 
 // DeleteCollection deletes a collection of objects.
 func (c *sensuHandlers) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
+	ctx := context.Background()
 	var timeout time.Duration
 	if listOptions.TimeoutSeconds != nil {
 		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
@@ -172,12 +181,13 @@ func (c *sensuHandlers) DeleteCollection(options *v1.DeleteOptions, listOptions 
 		VersionedParams(&listOptions, scheme.ParameterCodec).
 		Timeout(timeout).
 		Body(options).
-		Do().
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched sensuHandler.
 func (c *sensuHandlers) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.SensuHandler, err error) {
+	ctx := context.Background()
 	result = &v1beta1.SensuHandler{}
 	err = c.client.Patch(pt).
 		Namespace(c.ns).
@@ -185,7 +195,7 @@ func (c *sensuHandlers) Patch(name string, pt types.PatchType, data []byte, subr
 		SubResource(subresources...).
 		Name(name).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
