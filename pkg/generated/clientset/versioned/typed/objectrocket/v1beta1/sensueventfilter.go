@@ -73,7 +73,7 @@ func (c *sensuEventFilters) Get(name string, options v1.GetOptions) (result *v1b
 		Resource("sensueventfilters").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
@@ -91,7 +91,7 @@ func (c *sensuEventFilters) List(opts v1.ListOptions) (result *v1beta1.SensuEven
 		Resource("sensueventfilters").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
@@ -109,7 +109,7 @@ func (c *sensuEventFilters) Watch(opts v1.ListOptions) (watch.Interface, error) 
 		Resource("sensueventfilters").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a sensuEventFilter and creates it.  Returns the server's representation of the sensuEventFilter, and an error, if there is any.
@@ -120,7 +120,7 @@ func (c *sensuEventFilters) Create(sensuEventFilter *v1beta1.SensuEventFilter) (
 		Namespace(c.ns).
 		Resource("sensueventfilters").
 		Body(sensuEventFilter).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
@@ -134,7 +134,7 @@ func (c *sensuEventFilters) Update(sensuEventFilter *v1beta1.SensuEventFilter) (
 		Resource("sensueventfilters").
 		Name(sensuEventFilter.Name).
 		Body(sensuEventFilter).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
@@ -151,7 +151,7 @@ func (c *sensuEventFilters) UpdateStatus(sensuEventFilter *v1beta1.SensuEventFil
 		Name(sensuEventFilter.Name).
 		SubResource("status").
 		Body(sensuEventFilter).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
@@ -164,7 +164,7 @@ func (c *sensuEventFilters) Delete(name string, options *v1.DeleteOptions) error
 		Resource("sensueventfilters").
 		Name(name).
 		Body(options).
-		Do().
+		Do(ctx).
 		Error()
 }
 
@@ -181,7 +181,7 @@ func (c *sensuEventFilters) DeleteCollection(options *v1.DeleteOptions, listOpti
 		VersionedParams(&listOptions, scheme.ParameterCodec).
 		Timeout(timeout).
 		Body(options).
-		Do().
+		Do(ctx).
 		Error()
 }
 
@@ -195,7 +195,7 @@ func (c *sensuEventFilters) Patch(name string, pt types.PatchType, data []byte, 
 		SubResource(subresources...).
 		Name(name).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
