@@ -19,7 +19,7 @@ require (
 	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.9.0
 	k8s.io/api v0.29.0-alpha.2
-	k8s.io/apiextensions-apiserver v0.0.0-20190918161926-8f644eb6e783
+	k8s.io/apiextensions-apiserver v0.25.0
 	k8s.io/apimachinery v0.29.0-alpha.2
 	k8s.io/client-go v0.29.0-alpha.2
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340
