@@ -1,9 +1,9 @@
 # build stage
-FROM golang:1.18 AS build-env
+FROM golang:1.20 AS build-env
 ARG APPVERSION=latest
 WORKDIR /go/src/github.com/objectrocket/sensu-operator
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-X github.com/objectrocket/sensu-operator/version.Version=$APPVERSION" -o _output/sensu-operator -i cmd/operator/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-X github.com/objectrocket/sensu-operator/version.Version=$APPVERSION" -o _output/sensu-operator cmd/operator/main.go
 
 FROM alpine:3.12
 ENV USER=sensu-operator

@@ -5,9 +5,8 @@ go 1.18
 require (
 	github.com/Azure/azure-sdk-for-go v11.3.0-beta+incompatible
 	github.com/aws/aws-sdk-go v1.13.8
-	//github.com/coreos/etcd v3.3.27+incompatible
+	github.com/coreos/etcd v3.3.10+incompatible
 	github.com/ghodss/yaml v1.0.0
-	github.com/go-openapi/spec v0.21.0
 	github.com/google/go-cmp v0.6.0
 	github.com/onrik/logrus v0.2.2-0.20181225141908-a09d5cdcdc62
 	github.com/pborman/uuid v1.2.0
@@ -24,8 +23,6 @@ require (
 	k8s.io/client-go v0.19.0
 	k8s.io/kube-openapi v0.0.0-20240903163716-9e1beecbcb38
 )
-
-require github.com/coreos/etcd v3.3.10+incompatible
 
 require (
 	cloud.google.com/go/compute/metadata v0.3.0 // indirect
