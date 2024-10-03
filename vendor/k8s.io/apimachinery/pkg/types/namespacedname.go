@@ -16,6 +16,10 @@ limitations under the License.
 
 package types
 
+import (
+	"fmt"
+)
+
 // NamespacedName comprises a resource name, with a mandatory namespace,
 // rendered as "<namespace>/<name>".  Being a type captures intent and
 // helps make sure that UIDs, namespaced names and non-namespaced names
@@ -35,16 +39,5 @@ const (
 
 // String returns the general purpose string representation
 func (n NamespacedName) String() string {
-	return n.Namespace + string(Separator) + n.Name
-}
-
-// MarshalLog emits a struct containing required key/value pair
-func (n NamespacedName) MarshalLog() interface{} {
-	return struct {
-		Name      string `json:"name"`
-		Namespace string `json:"namespace,omitempty"`
-	}{
-		Name:      n.Name,
-		Namespace: n.Namespace,
-	}
+	return fmt.Sprintf("%s%c%s", n.Namespace, Separator, n.Name)
 }
