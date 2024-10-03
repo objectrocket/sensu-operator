@@ -15,7 +15,6 @@
 package cluster
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
@@ -27,12 +26,12 @@ import (
 )
 
 func (c *Cluster) upgradeOneMember(memberName string) error {
-	ctx := context.Background()
+	//ctx := context.Background()
 	c.status.SetUpgradingCondition(c.cluster.Spec.Version)
 
 	ns := c.cluster.Namespace
 
-	pod, err := c.config.KubeCli.CoreV1().Pods(ns).Get(ctx, memberName, metav1.GetOptions{})
+	pod, err := c.config.KubeCli.CoreV1().Pods(ns).Get(memberName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("fail to get pod (%s): %v", memberName, err)
 	}
@@ -47,12 +46,12 @@ func (c *Cluster) upgradeOneMember(memberName string) error {
 		return fmt.Errorf("error creating patch: %v", err)
 	}
 
-	_, err = c.config.KubeCli.CoreV1().Pods(ns).Patch(ctx, pod.GetName(), types.StrategicMergePatchType, patchdata, metav1.PatchOptions{})
+	_, err = c.config.KubeCli.CoreV1().Pods(ns).Patch(pod.GetName(), types.StrategicMergePatchType, patchdata)
 	if err != nil {
 		return fmt.Errorf("fail to update the sensu member (%s): %v", memberName, err)
 	}
 	c.logger.Infof("finished upgrading the sensu member %v", memberName)
-	_, err = c.eventsCli.Create(ctx, k8sutil.MemberUpgradedEvent(memberName, k8sutil.GetSensuVersion(oldpod), c.cluster.Spec.Version, c.cluster), metav1.CreateOptions{})
+	_, err = c.eventsCli.Create(k8sutil.MemberUpgradedEvent(memberName, k8sutil.GetSensuVersion(oldpod), c.cluster.Spec.Version, c.cluster))
 	if err != nil {
 		c.logger.Errorf("failed to create member upgraded event: %v", err)
 	}
@@ -61,7 +60,7 @@ func (c *Cluster) upgradeOneMember(memberName string) error {
 }
 
 func (c *Cluster) upgradeStatefulSet() error {
-	ctx := context.Background()
+	//ctx := context.Background()
 
 	c.status.SetUpgradingCondition(c.cluster.Spec.Version)
 
@@ -72,7 +71,7 @@ func (c *Cluster) upgradeStatefulSet() error {
 	}
 	c.statefulSet.Spec.Template.Spec.Containers[0].Image = k8sutil.ImageName(c.cluster.Spec.Repository, c.cluster.Spec.Version)
 	k8sutil.SetPodTemplateSensuVersion(&c.statefulSet.Spec.Template, c.cluster.Spec.Version)
-	set, err := c.config.KubeCli.AppsV1().StatefulSets(c.cluster.Namespace).Update(ctx, c.statefulSet, metav1.UpdateOptions{})
+	set, err := c.config.KubeCli.AppsV1().StatefulSets(c.cluster.Namespace).Update(c.statefulSet)
 	if err != nil {
 		return fmt.Errorf("failed to update sensu version in statefulset spec: %s", err)
 	}

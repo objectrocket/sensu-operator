@@ -23,6 +23,7 @@ import (
 	"github.com/objectrocket/sensu-operator/pkg/util/k8sutil"
 	"github.com/objectrocket/sensu-operator/test/e2e/e2eutil"
 	"github.com/objectrocket/sensu-operator/test/e2e/framework"
+	"github.com/sensu/sensu-go/cli/client"
 )
 
 func TestCreateCluster(t *testing.T) {
@@ -80,7 +81,7 @@ func TestCreateCluster(t *testing.T) {
 		t.Fatalf("failed to initialize sensu client: %v", err)
 	}
 
-	entities, err := sensuClient.ListEntities("default")
+	entities, err := sensuClient.ListEntities("default", &client.ListOptions{})
 	if err != nil {
 		t.Fatalf("failed to list entities: %v", err)
 	}

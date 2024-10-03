@@ -19,7 +19,7 @@ limitations under the License.
 package v1beta1
 
 import (
-	"context"
+	//"context"
 	"time"
 
 	v1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
@@ -66,21 +66,21 @@ func newSensuAssets(c *ObjectrocketV1beta1Client, namespace string) *sensuAssets
 
 // Get takes name of the sensuAsset, and returns the corresponding sensuAsset object, and an error if there is any.
 func (c *sensuAssets) Get(name string, options v1.GetOptions) (result *v1beta1.SensuAsset, err error) {
-	ctx := context.Background()
+	//ctx := context.Background()
 	result = &v1beta1.SensuAsset{}
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("sensuassets").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do(ctx).
+		Do().
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of SensuAssets that match those selectors.
 func (c *sensuAssets) List(opts v1.ListOptions) (result *v1beta1.SensuAssetList, err error) {
-	ctx := context.Background()
+	//ctx := context.Background()
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -91,14 +91,14 @@ func (c *sensuAssets) List(opts v1.ListOptions) (result *v1beta1.SensuAssetList,
 		Resource("sensuassets").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do(ctx).
+		Do().
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested sensuAssets.
 func (c *sensuAssets) Watch(opts v1.ListOptions) (watch.Interface, error) {
-	ctx := context.Background()
+	//ctx := context.Background()
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -109,32 +109,32 @@ func (c *sensuAssets) Watch(opts v1.ListOptions) (watch.Interface, error) {
 		Resource("sensuassets").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch(ctx)
+		Watch()
 }
 
 // Create takes the representation of a sensuAsset and creates it.  Returns the server's representation of the sensuAsset, and an error, if there is any.
 func (c *sensuAssets) Create(sensuAsset *v1beta1.SensuAsset) (result *v1beta1.SensuAsset, err error) {
-	ctx := context.Background()
+	//ctx := context.Background()
 	result = &v1beta1.SensuAsset{}
 	err = c.client.Post().
 		Namespace(c.ns).
 		Resource("sensuassets").
 		Body(sensuAsset).
-		Do(ctx).
+		Do().
 		Into(result)
 	return
 }
 
 // Update takes the representation of a sensuAsset and updates it. Returns the server's representation of the sensuAsset, and an error, if there is any.
 func (c *sensuAssets) Update(sensuAsset *v1beta1.SensuAsset) (result *v1beta1.SensuAsset, err error) {
-	ctx := context.Background()
+	//ctx := context.Background()
 	result = &v1beta1.SensuAsset{}
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("sensuassets").
 		Name(sensuAsset.Name).
 		Body(sensuAsset).
-		Do(ctx).
+		Do().
 		Into(result)
 	return
 }
@@ -143,7 +143,7 @@ func (c *sensuAssets) Update(sensuAsset *v1beta1.SensuAsset) (result *v1beta1.Se
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
 
 func (c *sensuAssets) UpdateStatus(sensuAsset *v1beta1.SensuAsset) (result *v1beta1.SensuAsset, err error) {
-	ctx := context.Background()
+	//ctx := context.Background()
 	result = &v1beta1.SensuAsset{}
 	err = c.client.Put().
 		Namespace(c.ns).
@@ -151,26 +151,26 @@ func (c *sensuAssets) UpdateStatus(sensuAsset *v1beta1.SensuAsset) (result *v1be
 		Name(sensuAsset.Name).
 		SubResource("status").
 		Body(sensuAsset).
-		Do(ctx).
+		Do().
 		Into(result)
 	return
 }
 
 // Delete takes name of the sensuAsset and deletes it. Returns an error if one occurs.
 func (c *sensuAssets) Delete(name string, options *v1.DeleteOptions) error {
-	ctx := context.Background()
+	//ctx := context.Background()
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("sensuassets").
 		Name(name).
 		Body(options).
-		Do(ctx).
+		Do().
 		Error()
 }
 
 // DeleteCollection deletes a collection of objects.
 func (c *sensuAssets) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	ctx := context.Background()
+	//ctx := context.Background()
 	var timeout time.Duration
 	if listOptions.TimeoutSeconds != nil {
 		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
@@ -181,13 +181,13 @@ func (c *sensuAssets) DeleteCollection(options *v1.DeleteOptions, listOptions v1
 		VersionedParams(&listOptions, scheme.ParameterCodec).
 		Timeout(timeout).
 		Body(options).
-		Do(ctx).
+		Do().
 		Error()
 }
 
 // Patch applies the patch and returns the patched sensuAsset.
 func (c *sensuAssets) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.SensuAsset, err error) {
-	ctx := context.Background()
+	//ctx := context.Background()
 	result = &v1beta1.SensuAsset{}
 	err = c.client.Patch(pt).
 		Namespace(c.ns).
@@ -195,7 +195,7 @@ func (c *sensuAssets) Patch(name string, pt types.PatchType, data []byte, subres
 		SubResource(subresources...).
 		Name(name).
 		Body(data).
-		Do(ctx).
+		Do().
 		Into(result)
 	return
 }

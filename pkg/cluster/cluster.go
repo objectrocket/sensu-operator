@@ -15,7 +15,7 @@
 package cluster
 
 import (
-	"context"
+	//"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -102,9 +102,9 @@ func New(config Config, cl *api.SensuCluster) *Cluster {
 	}
 
 	go func() {
-		ctx := context.Background()
+		////ctx := context.Background()
 		c.logger.Infof("creating NetworkPolicy for cluster %s", c.cluster.Name)
-		if err := k8sutil.CreateNetPolicy(ctx, c.config.KubeCli, c.cluster.Name, c.cluster.Namespace, c.cluster.AsOwner()); err != nil {
+		if err := k8sutil.CreateNetPolicy(c.config.KubeCli, c.cluster.Name, c.cluster.Namespace, c.cluster.AsOwner()); err != nil {
 			c.logger.Warningf("failed to create network policies for cluster %s: %v", c.cluster.Name, err)
 		}
 		if err := c.setup(); err != nil {
@@ -125,7 +125,7 @@ func New(config Config, cl *api.SensuCluster) *Cluster {
 }
 
 func (c *Cluster) setup() error {
-	ctx := context.Background()
+	////ctx := context.Background()
 	var shouldCreateCluster bool
 	switch c.status.Phase {
 	case api.ClusterPhaseNone:
@@ -140,7 +140,7 @@ func (c *Cluster) setup() error {
 	}
 
 	if c.isSecureClient() {
-		d, err := k8sutil.GetTLSDataFromSecret(ctx, c.config.KubeCli, c.cluster.Namespace, c.cluster.Spec.TLS.Static.OperatorSecret)
+		d, err := k8sutil.GetTLSDataFromSecret(c.config.KubeCli, c.cluster.Namespace, c.cluster.Spec.TLS.Static.OperatorSecret)
 		if err != nil {
 			return err
 		}
@@ -313,7 +313,7 @@ func isSpecEqual(s1, s2 api.ClusterSpec) bool {
 }
 
 func (c *Cluster) startStatefulSet() error {
-	ctx := context.Background()
+	//ctx := context.Background()
 	m := &etcdutil.MemberConfig{
 		Namespace:    c.cluster.Namespace,
 		SecurePeer:   c.isSecurePeer(),
@@ -324,7 +324,7 @@ func (c *Cluster) startStatefulSet() error {
 	}
 
 	c.logger.Infof("cluster created with seed member (%s-0)", c.cluster.Name)
-	_, err := c.eventsCli.Create(ctx, k8sutil.NewMemberAddEvent(c.cluster), metav1.CreateOptions{})
+	_, err := c.eventsCli.Create(k8sutil.NewMemberAddEvent(c.cluster))
 	if err != nil {
 		c.logger.Errorf("failed to create new member add event: %v", err)
 	}
@@ -348,20 +348,20 @@ func (c *Cluster) Update(cl *api.SensuCluster) {
 }
 
 func (c *Cluster) setupServices() error {
-	ctx := context.Background()
-	if err := k8sutil.CreatePeerService(ctx, c.config.KubeCli, c.cluster.Name, c.cluster.Namespace, c.cluster.AsOwner()); err != nil {
+	//ctx := context.Background()
+	if err := k8sutil.CreatePeerService(c.config.KubeCli, c.cluster.Name, c.cluster.Namespace, c.cluster.AsOwner()); err != nil {
 		return err
 	}
 
-	if err := k8sutil.CreateAPIService(ctx, c.config.KubeCli, c.cluster.Name, c.cluster.Namespace, c.cluster.AsOwner()); err != nil {
+	if err := k8sutil.CreateAPIService(c.config.KubeCli, c.cluster.Name, c.cluster.Namespace, c.cluster.AsOwner()); err != nil {
 		return err
 	}
 
-	if err := k8sutil.CreateAgentService(ctx, c.config.KubeCli, c.cluster.Name, c.cluster.Namespace, c.cluster.AsOwner()); err != nil {
+	if err := k8sutil.CreateAgentService(c.config.KubeCli, c.cluster.Name, c.cluster.Namespace, c.cluster.AsOwner()); err != nil {
 		return err
 	}
 
-	return k8sutil.CreateDashboardService(ctx, c.config.KubeCli, c.cluster.Name, c.cluster.Namespace, c.cluster.AsOwner())
+	return k8sutil.CreateDashboardService(c.config.KubeCli, c.cluster.Name, c.cluster.Namespace, c.cluster.AsOwner())
 }
 
 func (c *Cluster) isPodPVEnabled() bool {
@@ -372,7 +372,7 @@ func (c *Cluster) isPodPVEnabled() bool {
 }
 
 func (c *Cluster) createStatefulSet(m *etcdutil.MemberConfig) error {
-	ctx := context.Background()
+	//ctx := context.Background()
 	var err error
 	set := k8sutil.NewSensuStatefulSet(m, c.cluster.Name, uuid.New(), c.cluster.Spec, c.cluster.AsOwner())
 	if c.isPodPVEnabled() {
@@ -381,7 +381,7 @@ func (c *Cluster) createStatefulSet(m *etcdutil.MemberConfig) error {
 	} else {
 		k8sutil.AddEtcdVolumeToPod(&set.Spec.Template, nil)
 	}
-	c.statefulSet, err = c.config.KubeCli.AppsV1().StatefulSets(c.cluster.Namespace).Create(ctx, set, metav1.CreateOptions{})
+	c.statefulSet, err = c.config.KubeCli.AppsV1().StatefulSets(c.cluster.Namespace).Create(set)
 	if err != nil {
 		return err
 	}
@@ -389,14 +389,14 @@ func (c *Cluster) createStatefulSet(m *etcdutil.MemberConfig) error {
 }
 
 func (c *Cluster) pollPods() (ready, notready []*v1.Pod, err error) {
-	ctx := context.Background()
+	//ctx := context.Background()
 
-	podList, err := c.config.KubeCli.CoreV1().Pods(c.cluster.Namespace).List(ctx, k8sutil.ClusterListOpt(c.cluster.Name))
+	podList, err := c.config.KubeCli.CoreV1().Pods(c.cluster.Namespace).List(k8sutil.ClusterListOpt(c.cluster.Name))
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to list running pods: %v", err)
 	}
 
-	set, err := c.config.KubeCli.AppsV1().StatefulSets(c.cluster.Namespace).Get(ctx, c.cluster.Name, metav1.GetOptions{})
+	set, err := c.config.KubeCli.AppsV1().StatefulSets(c.cluster.Namespace).Get(c.cluster.Name, metav1.GetOptions{})
 	if err != nil {
 		return nil, nil, fmt.Errorf("Failed to fetch new StatefulSet: %v", err)
 	}

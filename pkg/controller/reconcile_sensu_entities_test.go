@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"context"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -82,7 +81,7 @@ func Test_calculateSensuEntitiesForRemoval(t *testing.T) {
 }
 
 func Test_getK8sNodes(t *testing.T) {
-	ctx := context.Background()
+	//ctx := context.Background()
 
 	assetInformer, checkInformer, handlerInformer, eventFilterInformer, nodeInformer := initInformers()
 	type fields struct {
@@ -141,7 +140,7 @@ func Test_getK8sNodes(t *testing.T) {
 			c.informers[api.SensuHandlerResourcePlural] = &handlerInformer
 			c.informers[api.SensuEventFilterResourcePlural] = &eventFilterInformer
 			c.informers[CoreV1NodesPlural] = &nodeInformer
-			c.Config.KubeCli.CoreV1().Nodes().Create(ctx, tt.nodes, metav1.CreateOptions{})
+			c.Config.KubeCli.CoreV1().Nodes().Create(tt.nodes)
 			response, _ := c.getK8sNodes()
 			t.Logf("response: %v", response)
 			if got := cmp.Equal(response, tt.result); got != tt.want {

@@ -21,7 +21,7 @@ package v1beta1
 
 import (
 	"time"
-	"context"
+	//"context"
 
 	v1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
 	scheme "github.com/objectrocket/sensu-operator/pkg/generated/clientset/versioned/scheme"
@@ -67,21 +67,21 @@ func newSensuBackups(c *ObjectrocketV1beta1Client, namespace string) *sensuBacku
 
 // Get takes name of the sensuBackup, and returns the corresponding sensuBackup object, and an error if there is any.
 func (c *sensuBackups) Get(name string, options v1.GetOptions) (result *v1beta1.SensuBackup, err error) {
-	ctx := context.Background()
+	//ctx := context.Background()
 	result = &v1beta1.SensuBackup{}
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("sensubackups").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do(ctx).
+		Do().
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of SensuBackups that match those selectors.
 func (c *sensuBackups) List(opts v1.ListOptions) (result *v1beta1.SensuBackupList, err error) {
-	ctx := context.Background()
+	//ctx := context.Background()
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -92,14 +92,14 @@ func (c *sensuBackups) List(opts v1.ListOptions) (result *v1beta1.SensuBackupLis
 		Resource("sensubackups").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do(ctx).
+		Do().
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested sensuBackups.
 func (c *sensuBackups) Watch(opts v1.ListOptions) (watch.Interface, error) {
-	ctx := context.Background()
+	//ctx := context.Background()
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -110,32 +110,32 @@ func (c *sensuBackups) Watch(opts v1.ListOptions) (watch.Interface, error) {
 		Resource("sensubackups").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch(ctx)
+		Watch()
 }
 
 // Create takes the representation of a sensuBackup and creates it.  Returns the server's representation of the sensuBackup, and an error, if there is any.
 func (c *sensuBackups) Create(sensuBackup *v1beta1.SensuBackup) (result *v1beta1.SensuBackup, err error) {
-	ctx := context.Background()
+	//ctx := context.Background()
 	result = &v1beta1.SensuBackup{}
 	err = c.client.Post().
 		Namespace(c.ns).
 		Resource("sensubackups").
 		Body(sensuBackup).
-		Do(ctx).
+		Do().
 		Into(result)
 	return
 }
 
 // Update takes the representation of a sensuBackup and updates it. Returns the server's representation of the sensuBackup, and an error, if there is any.
 func (c *sensuBackups) Update(sensuBackup *v1beta1.SensuBackup) (result *v1beta1.SensuBackup, err error) {
-	ctx := context.Background()
+	//ctx := context.Background()
 	result = &v1beta1.SensuBackup{}
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("sensubackups").
 		Name(sensuBackup.Name).
 		Body(sensuBackup).
-		Do(ctx).
+		Do().
 		Into(result)
 	return
 }
@@ -144,7 +144,7 @@ func (c *sensuBackups) Update(sensuBackup *v1beta1.SensuBackup) (result *v1beta1
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
 
 func (c *sensuBackups) UpdateStatus(sensuBackup *v1beta1.SensuBackup) (result *v1beta1.SensuBackup, err error) {
-	ctx := context.Background()
+	//ctx := context.Background()
 	result = &v1beta1.SensuBackup{}
 	err = c.client.Put().
 		Namespace(c.ns).
@@ -152,26 +152,26 @@ func (c *sensuBackups) UpdateStatus(sensuBackup *v1beta1.SensuBackup) (result *v
 		Name(sensuBackup.Name).
 		SubResource("status").
 		Body(sensuBackup).
-		Do(ctx).
+		Do().
 		Into(result)
 	return
 }
 
 // Delete takes name of the sensuBackup and deletes it. Returns an error if one occurs.
 func (c *sensuBackups) Delete(name string, options *v1.DeleteOptions) error {
-	ctx := context.Background()
+	//ctx := context.Background()
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("sensubackups").
 		Name(name).
 		Body(options).
-		Do(ctx).
+		Do().
 		Error()
 }
 
 // DeleteCollection deletes a collection of objects.
 func (c *sensuBackups) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	ctx := context.Background()
+	//ctx := context.Background()
 	var timeout time.Duration
 	if listOptions.TimeoutSeconds != nil {
 		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
@@ -182,13 +182,13 @@ func (c *sensuBackups) DeleteCollection(options *v1.DeleteOptions, listOptions v
 		VersionedParams(&listOptions, scheme.ParameterCodec).
 		Timeout(timeout).
 		Body(options).
-		Do(ctx).
+		Do().
 		Error()
 }
 
 // Patch applies the patch and returns the patched sensuBackup.
 func (c *sensuBackups) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.SensuBackup, err error) {
-	ctx := context.Background()
+	//ctx := context.Background()
 	result = &v1beta1.SensuBackup{}
 	err = c.client.Patch(pt).
 		Namespace(c.ns).
@@ -196,7 +196,7 @@ func (c *sensuBackups) Patch(name string, pt types.PatchType, data []byte, subre
 		SubResource(subresources...).
 		Name(name).
 		Body(data).
-		Do(ctx).
+		Do().
 		Into(result)
 	return
 }

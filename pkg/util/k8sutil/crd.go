@@ -15,7 +15,6 @@
 package k8sutil
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -39,8 +38,8 @@ import (
 type SensuClusterCRUpdateFunc func(*api.SensuCluster)
 
 func GetClusterList(restcli rest.Interface, ns string) (*api.SensuClusterList, error) {
-	ctx := context.Background()
-	b, err := restcli.Get().RequestURI(listClustersURI(ns)).DoRaw(ctx)
+	// ctx := context.Background()
+	b, err := restcli.Get().RequestURI(listClustersURI(ns)).DoRaw()
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +61,7 @@ func CreateCRD(clientset apiextensionsclient.Interface,
 	rplural,
 	shortName string,
 	validation *apiextensionsv1.CustomResourceValidation) error {
-	ctx := context.Background()
+	//ctx := context.Background()
 	crd := &apiextensionsv1.CustomResourceDefinition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: crdName,
@@ -90,15 +89,15 @@ func CreateCRD(clientset apiextensionsclient.Interface,
 		crd.Spec.Names.ShortNames = []string{shortName}
 	}
 
-	existingCRD, err := clientset.ApiextensionsV1().CustomResourceDefinitions().Create(ctx, crd, metav1.CreateOptions{})
+	existingCRD, err := clientset.ApiextensionsV1().CustomResourceDefinitions().Create(crd)
 	if err != nil && IsKubernetesResourceAlreadyExistError(err) {
 		// Get the version from k8s, as the above version doesn't seem to have resourceversion
-		if existingCRD, err = clientset.ApiextensionsV1().CustomResourceDefinitions().Get(ctx, crd.GetName(), metav1.GetOptions{}); err != nil {
+		if existingCRD, err = clientset.ApiextensionsV1().CustomResourceDefinitions().Get(crd.GetName(), metav1.GetOptions{}); err != nil {
 			return err
 		}
 		if !crdEqual(existingCRD, crd) {
 			crd.ResourceVersion = existingCRD.ResourceVersion
-			if _, err := clientset.ApiextensionsV1().CustomResourceDefinitions().Update(ctx, crd, metav1.UpdateOptions{}); err != nil {
+			if _, err := clientset.ApiextensionsV1().CustomResourceDefinitions().Update(crd); err != nil {
 				return err
 			}
 		}
@@ -125,14 +124,14 @@ func WaitCRDReady(clientset apiextensionsclient.Interface, crdName string) error
 	// as they will never get status conditions in testing
 	//
 	// TODO: is there a better way to do this - mmontgomery
-	ctx := context.Background()
+	//ctx := context.Background()
 	switch clientset.Discovery().(type) {
 	case *fakediscovery.FakeDiscovery:
 		return nil
 	}
 
 	err := retryutil.Retry(5*time.Second, 20, func() (bool, error) {
-		crd, err := clientset.ApiextensionsV1().CustomResourceDefinitions().Get(ctx, crdName, metav1.GetOptions{})
+		crd, err := clientset.ApiextensionsV1().CustomResourceDefinitions().Get(crdName, metav1.GetOptions{})
 		if err != nil {
 			return false, err
 		}

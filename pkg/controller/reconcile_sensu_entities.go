@@ -1,11 +1,8 @@
 package controller
 
 import (
-	"context"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	sensu_client "github.com/objectrocket/sensu-operator/pkg/sensu_client"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Function to reconcile sensu entities
@@ -41,9 +38,9 @@ func (c *Controller) reconcileSensuEntities() {
 
 // getK8sNodes returns a slice of node names from kubernetes
 func (c *Controller) getK8sNodes() ([]string, error) {
-	ctx := context.Background()
+	//ctx := context.Background()
 	nodes := []string{}
-	k8sNodes, err := c.Config.KubeCli.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+	k8sNodes, err := c.Config.KubeCli.CoreV1().Nodes().List(v1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}

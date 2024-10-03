@@ -15,7 +15,6 @@
 package k8sutil
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -137,45 +136,45 @@ func DashboardServiceName(clusterName string) string {
 	return clusterName + "-dashboard"
 }
 
-func CreateDashboardService(ctx context.Context, kubecli kubernetes.Interface, clusterName, ns string, owner metav1.OwnerReference) error {
+func CreateDashboardService(kubecli kubernetes.Interface, clusterName, ns string, owner metav1.OwnerReference) error {
 	ports := []v1.ServicePort{{
 		Name:       "dashboard",
 		Port:       3000,
 		TargetPort: intstr.FromInt(3000),
 		Protocol:   v1.ProtocolTCP,
 	}}
-	return createService(ctx, kubecli, DashboardServiceName(clusterName), clusterName, ns, "", ports, owner)
+	return createService(kubecli, DashboardServiceName(clusterName), clusterName, ns, "", ports, owner)
 }
 
 func AgentServiceName(clusterName string) string {
 	return clusterName + "-agent"
 }
 
-func CreateAgentService(ctx context.Context, kubecli kubernetes.Interface, clusterName, ns string, owner metav1.OwnerReference) error {
+func CreateAgentService(kubecli kubernetes.Interface, clusterName, ns string, owner metav1.OwnerReference) error {
 	ports := []v1.ServicePort{{
 		Name:       "agent",
 		Port:       8081,
 		TargetPort: intstr.FromInt(8081),
 		Protocol:   v1.ProtocolTCP,
 	}}
-	return createService(ctx, kubecli, AgentServiceName(clusterName), clusterName, ns, "", ports, owner)
+	return createService(kubecli, AgentServiceName(clusterName), clusterName, ns, "", ports, owner)
 }
 
 func APIServiceName(clusterName string) string {
 	return fmt.Sprintf("%s-api", clusterName)
 }
 
-func CreateAPIService(ctx context.Context, kubecli kubernetes.Interface, clusterName, ns string, owner metav1.OwnerReference) error {
+func CreateAPIService(kubecli kubernetes.Interface, clusterName, ns string, owner metav1.OwnerReference) error {
 	ports := []v1.ServicePort{{
 		Name:       "api",
 		Port:       8080,
 		TargetPort: intstr.FromInt(8080),
 		Protocol:   v1.ProtocolTCP,
 	}}
-	return createService(ctx, kubecli, APIServiceName(clusterName), clusterName, ns, "", ports, owner)
+	return createService(kubecli, APIServiceName(clusterName), clusterName, ns, "", ports, owner)
 }
 
-func CreatePeerService(ctx context.Context, kubecli kubernetes.Interface, clusterName, ns string, owner metav1.OwnerReference) error {
+func CreatePeerService(kubecli kubernetes.Interface, clusterName, ns string, owner metav1.OwnerReference) error {
 	ports := []v1.ServicePort{{
 		Name:       "client",
 		Port:       EtcdClientPort,
@@ -188,13 +187,13 @@ func CreatePeerService(ctx context.Context, kubecli kubernetes.Interface, cluste
 		Protocol:   v1.ProtocolTCP,
 	}}
 
-	return createService(ctx, kubecli, clusterName, clusterName, ns, v1.ClusterIPNone, ports, owner)
+	return createService(kubecli, clusterName, clusterName, ns, v1.ClusterIPNone, ports, owner)
 }
 
-func createService(ctx context.Context, kubecli kubernetes.Interface, svcName, clusterName, ns, clusterIP string, ports []v1.ServicePort, owner metav1.OwnerReference) error {
+func createService(kubecli kubernetes.Interface, svcName, clusterName, ns, clusterIP string, ports []v1.ServicePort, owner metav1.OwnerReference) error {
 	svc := newSensuServiceManifest(svcName, clusterName, clusterIP, ports)
 	addOwnerRefToObject(svc.GetObjectMeta(), owner)
-	_, err := kubecli.CoreV1().Services(ns).Create(ctx, svc, metav1.CreateOptions{})
+	_, err := kubecli.CoreV1().Services(ns).Create(svc)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return err
 	}
@@ -202,8 +201,8 @@ func createService(ctx context.Context, kubecli kubernetes.Interface, svcName, c
 }
 
 // CreateAndWaitPod creates a pod and waits until it is running
-func CreateAndWaitPod(ctx context.Context, kubecli kubernetes.Interface, ns string, pod *v1.Pod, timeout time.Duration) (*v1.Pod, error) {
-	_, err := kubecli.CoreV1().Pods(ns).Create(ctx, pod, metav1.CreateOptions{})
+func CreateAndWaitPod(kubecli kubernetes.Interface, ns string, pod *v1.Pod, timeout time.Duration) (*v1.Pod, error) {
+	_, err := kubecli.CoreV1().Pods(ns).Create(pod)
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +210,7 @@ func CreateAndWaitPod(ctx context.Context, kubecli kubernetes.Interface, ns stri
 	interval := 5 * time.Second
 	var retPod *v1.Pod
 	err = retryutil.Retry(interval, int(timeout/(interval)), func() (bool, error) {
-		retPod, err = kubecli.CoreV1().Pods(ns).Get(ctx, pod.Name, metav1.GetOptions{})
+		retPod, err = kubecli.CoreV1().Pods(ns).Get(pod.Name, metav1.GetOptions{})
 		if err != nil {
 			return false, err
 		}
@@ -237,8 +236,8 @@ func CreateAndWaitPod(ctx context.Context, kubecli kubernetes.Interface, ns stri
 
 // CreateAndWaitDeployment creates a deployment and waits until the defined
 // number of replicas is reached
-func CreateAndWaitDeployment(ctx context.Context, kubecli kubernetes.Interface, ns string, deployment *appsv1.Deployment, timeout time.Duration) (*appsv1.Deployment, error) {
-	deployment, err := kubecli.AppsV1().Deployments(ns).Create(ctx, deployment, metav1.CreateOptions{})
+func CreateAndWaitDeployment(kubecli kubernetes.Interface, ns string, deployment *appsv1.Deployment, timeout time.Duration) (*appsv1.Deployment, error) {
+	deployment, err := kubecli.AppsV1().Deployments(ns).Create(deployment)
 	if err != nil {
 		return nil, err
 	}
@@ -246,7 +245,7 @@ func CreateAndWaitDeployment(ctx context.Context, kubecli kubernetes.Interface, 
 	interval := 5 * time.Second
 	var retDeployment *appsv1.Deployment
 	err = retryutil.Retry(interval, int(timeout/(interval)), func() (bool, error) {
-		retDeployment, err = kubecli.AppsV1().Deployments(ns).Get(ctx, deployment.Name, metav1.GetOptions{})
+		retDeployment, err = kubecli.AppsV1().Deployments(ns).Get(deployment.Name, metav1.GetOptions{})
 		if err != nil {
 			return false, err
 		}
@@ -320,7 +319,7 @@ func addOwnerRefToObject(o metav1.Object, r metav1.OwnerReference) {
 }
 
 // CreateNetPolicy creates a NetworkPolicy for a Sensu cluster
-func CreateNetPolicy(ctx context.Context, kubecli kubernetes.Interface, clusterName, namespace string, owner metav1.OwnerReference) error {
+func CreateNetPolicy(kubecli kubernetes.Interface, clusterName, namespace string, owner metav1.OwnerReference) error {
 	labels := map[string]string{
 		"app":           "sensu",
 		"sensu_cluster": clusterName,
@@ -436,7 +435,7 @@ func CreateNetPolicy(ctx context.Context, kubecli kubernetes.Interface, clusterN
 
 	for _, net := range netCases {
 		addOwnerRefToObject(net.GetObjectMeta(), owner)
-		if _, err := kubecli.NetworkingV1().NetworkPolicies(namespace).Create(ctx, &net, metav1.CreateOptions{}); err != nil {
+		if _, err := kubecli.NetworkingV1().NetworkPolicies(namespace).Create(&net); err != nil {
 			return err
 		}
 	}
