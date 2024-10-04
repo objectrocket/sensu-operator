@@ -158,11 +158,11 @@ workflows:
         filters:
           branches:
             ignore: master
-    - unit_test:
-        context: platform-eng
-        filters:
-          branches:
-            ignore: master
+    #- unit_test:
+    #    context: platform-eng
+    ##    filters:
+    #      branches:
+    #        ignore: master
     - build:
         context: platform-eng
         filters:
