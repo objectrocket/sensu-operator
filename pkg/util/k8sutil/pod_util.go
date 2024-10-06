@@ -69,7 +69,7 @@ func sensuContainer(cmd []string, repo, version, clusteradminusername, clusterad
 		},
 		VolumeMounts: etcdVolumeMounts(),
 		Lifecycle: &v1.Lifecycle{
-			PostStart: &v1.Handler{
+			PostStart: &v1.LifecycleHandler{
 				Exec: &v1.ExecAction{
 					Command: []string{"/bin/sh", "-c", fmt.Sprintf(`
 					sensu-backend init --cluster-admin-username %s --cluster-admin-password %s
@@ -99,7 +99,7 @@ func containerWithRequirements(c v1.Container, r v1.ResourceRequirements) v1.Con
 
 func newSensuProbe() *v1.Probe {
 	return &v1.Probe{
-		Handler: v1.Handler{
+		ProbeHandler: v1.ProbeHandler{
 			HTTPGet: &v1.HTTPGetAction{
 				Path: "/health",
 				Port: intstr.FromInt(8080),

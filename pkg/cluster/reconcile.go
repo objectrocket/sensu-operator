@@ -19,11 +19,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/coreos/etcd/clientv3"
 	api "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
 	"github.com/objectrocket/sensu-operator/pkg/util/constants"
 	"github.com/objectrocket/sensu-operator/pkg/util/etcdutil"
 	"github.com/objectrocket/sensu-operator/pkg/util/k8sutil"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
