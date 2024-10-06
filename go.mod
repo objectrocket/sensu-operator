@@ -1,6 +1,8 @@
 module github.com/objectrocket/sensu-operator
 
-go 1.18
+go 1.22.0
+
+toolchain go1.22.8
 
 require (
 	github.com/Azure/azure-sdk-for-go v11.3.0-beta+incompatible
@@ -11,8 +13,8 @@ require (
 	github.com/pborman/uuid v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.17.0
+	github.com/sensu/core/v2 v2.20.0
 	github.com/sensu/sensu-go v0.0.0-20240131213833-9587df6d89d2
-	github.com/sensu/sensu-go/api/core/v2 v2.16.0
 	github.com/sensu/sensu-go/types v0.13.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.7.0
@@ -20,10 +22,10 @@ require (
 	github.com/stretchr/testify v1.9.0
 	go.etcd.io/etcd v3.3.27+incompatible
 	go.etcd.io/etcd/client/v3 v3.5.16
-	k8s.io/api v0.28.0
+	k8s.io/api v0.31.1
 	k8s.io/apiextensions-apiserver v0.25.0
-	k8s.io/apimachinery v0.28.0
-	k8s.io/client-go v0.28.0
+	k8s.io/apimachinery v0.31.1
+	k8s.io/client-go v0.31.1
 	k8s.io/kube-openapi v0.0.0-20240903163716-9e1beecbcb38
 )
 
@@ -48,9 +50,9 @@ require (
 	github.com/dnaeon/go-vcr v1.2.0 // indirect
 	github.com/echlebek/timeproxy v1.0.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
-	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/evanphx/json-patch/v5 v5.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
+	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/go-ini/ini v1.37.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
@@ -93,7 +95,6 @@ require (
 	github.com/robertkrimen/otto v0.2.1 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/satori/uuid v1.2.0 // indirect
-	github.com/sensu/core/v2 v2.20.0 // indirect
 	github.com/sensu/core/v3 v3.9.0 // indirect
 	github.com/sensu/sensu-api-tools v0.2.1 // indirect
 	github.com/smartystreets/goconvey v1.8.1 // indirect
@@ -104,10 +105,10 @@ require (
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
 	github.com/willf/pad v0.0.0-20190207183901-eccfe5d84172 // indirect
+	github.com/x448/float16 v0.8.4 // indirect
 	go.etcd.io/etcd/api/v3 v3.5.16 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.5.16 // indirect
 	go.etcd.io/etcd/server/v3 v3.5.16 // indirect
-	go.uber.org/goleak v1.3.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
 	golang.org/x/crypto v0.26.0 // indirect
@@ -122,6 +123,7 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20231120223509-83a465c0220f // indirect
 	google.golang.org/grpc v1.60.1 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
+	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
