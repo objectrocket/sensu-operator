@@ -20,6 +20,7 @@ package v1beta1
 
 import (
 	"time"
+	"context"
 
 	v1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
 	scheme "github.com/objectrocket/sensu-operator/pkg/generated/clientset/versioned/scheme"
@@ -66,18 +67,20 @@ func newSensuCheckConfigs(c *ObjectrocketV1beta1Client, namespace string) *sensu
 // Get takes name of the sensuCheckConfig, and returns the corresponding sensuCheckConfig object, and an error if there is any.
 func (c *sensuCheckConfigs) Get(name string, options v1.GetOptions) (result *v1beta1.SensuCheckConfig, err error) {
 	result = &v1beta1.SensuCheckConfig{}
+	ctx := context.Background()
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("sensucheckconfigs").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of SensuCheckConfigs that match those selectors.
 func (c *sensuCheckConfigs) List(opts v1.ListOptions) (result *v1beta1.SensuCheckConfigList, err error) {
+	ctx := context.Background()
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -88,13 +91,14 @@ func (c *sensuCheckConfigs) List(opts v1.ListOptions) (result *v1beta1.SensuChec
 		Resource("sensucheckconfigs").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested sensuCheckConfigs.
 func (c *sensuCheckConfigs) Watch(opts v1.ListOptions) (watch.Interface, error) {
+	ctx := context.Background()
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -105,17 +109,18 @@ func (c *sensuCheckConfigs) Watch(opts v1.ListOptions) (watch.Interface, error) 
 		Resource("sensucheckconfigs").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a sensuCheckConfig and creates it.  Returns the server's representation of the sensuCheckConfig, and an error, if there is any.
 func (c *sensuCheckConfigs) Create(sensuCheckConfig *v1beta1.SensuCheckConfig) (result *v1beta1.SensuCheckConfig, err error) {
+	ctx := context.Background()
 	result = &v1beta1.SensuCheckConfig{}
 	err = c.client.Post().
 		Namespace(c.ns).
 		Resource("sensucheckconfigs").
 		Body(sensuCheckConfig).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
@@ -123,12 +128,13 @@ func (c *sensuCheckConfigs) Create(sensuCheckConfig *v1beta1.SensuCheckConfig) (
 // Update takes the representation of a sensuCheckConfig and updates it. Returns the server's representation of the sensuCheckConfig, and an error, if there is any.
 func (c *sensuCheckConfigs) Update(sensuCheckConfig *v1beta1.SensuCheckConfig) (result *v1beta1.SensuCheckConfig, err error) {
 	result = &v1beta1.SensuCheckConfig{}
+	ctx := context.Background()
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("sensucheckconfigs").
 		Name(sensuCheckConfig.Name).
 		Body(sensuCheckConfig).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
@@ -138,30 +144,33 @@ func (c *sensuCheckConfigs) Update(sensuCheckConfig *v1beta1.SensuCheckConfig) (
 
 func (c *sensuCheckConfigs) UpdateStatus(sensuCheckConfig *v1beta1.SensuCheckConfig) (result *v1beta1.SensuCheckConfig, err error) {
 	result = &v1beta1.SensuCheckConfig{}
+	ctx := context.Background()
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("sensucheckconfigs").
 		Name(sensuCheckConfig.Name).
 		SubResource("status").
 		Body(sensuCheckConfig).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the sensuCheckConfig and deletes it. Returns an error if one occurs.
 func (c *sensuCheckConfigs) Delete(name string, options *v1.DeleteOptions) error {
+	ctx := context.Background()
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("sensucheckconfigs").
 		Name(name).
 		Body(options).
-		Do().
+		Do(ctx).
 		Error()
 }
 
 // DeleteCollection deletes a collection of objects.
 func (c *sensuCheckConfigs) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
+	ctx := context.Background()
 	var timeout time.Duration
 	if listOptions.TimeoutSeconds != nil {
 		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
@@ -172,12 +181,13 @@ func (c *sensuCheckConfigs) DeleteCollection(options *v1.DeleteOptions, listOpti
 		VersionedParams(&listOptions, scheme.ParameterCodec).
 		Timeout(timeout).
 		Body(options).
-		Do().
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched sensuCheckConfig.
 func (c *sensuCheckConfigs) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.SensuCheckConfig, err error) {
+	ctx := context.Background()
 	result = &v1beta1.SensuCheckConfig{}
 	err = c.client.Patch(pt).
 		Namespace(c.ns).
@@ -185,7 +195,7 @@ func (c *sensuCheckConfigs) Patch(name string, pt types.PatchType, data []byte, 
 		SubResource(subresources...).
 		Name(name).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

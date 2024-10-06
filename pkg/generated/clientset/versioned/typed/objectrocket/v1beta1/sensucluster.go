@@ -20,6 +20,7 @@ package v1beta1
 
 import (
 	"time"
+	"context"
 
 	v1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
 	scheme "github.com/objectrocket/sensu-operator/pkg/generated/clientset/versioned/scheme"
@@ -65,19 +66,21 @@ func newSensuClusters(c *ObjectrocketV1beta1Client, namespace string) *sensuClus
 
 // Get takes name of the sensuCluster, and returns the corresponding sensuCluster object, and an error if there is any.
 func (c *sensuClusters) Get(name string, options v1.GetOptions) (result *v1beta1.SensuCluster, err error) {
+	ctx := context.Background()
 	result = &v1beta1.SensuCluster{}
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("sensuclusters").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of SensuClusters that match those selectors.
 func (c *sensuClusters) List(opts v1.ListOptions) (result *v1beta1.SensuClusterList, err error) {
+	ctx := context.Background()
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -88,13 +91,14 @@ func (c *sensuClusters) List(opts v1.ListOptions) (result *v1beta1.SensuClusterL
 		Resource("sensuclusters").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested sensuClusters.
 func (c *sensuClusters) Watch(opts v1.ListOptions) (watch.Interface, error) {
+	ctx := context.Background()
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -105,30 +109,32 @@ func (c *sensuClusters) Watch(opts v1.ListOptions) (watch.Interface, error) {
 		Resource("sensuclusters").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a sensuCluster and creates it.  Returns the server's representation of the sensuCluster, and an error, if there is any.
 func (c *sensuClusters) Create(sensuCluster *v1beta1.SensuCluster) (result *v1beta1.SensuCluster, err error) {
+	ctx := context.Background()
 	result = &v1beta1.SensuCluster{}
 	err = c.client.Post().
 		Namespace(c.ns).
 		Resource("sensuclusters").
 		Body(sensuCluster).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a sensuCluster and updates it. Returns the server's representation of the sensuCluster, and an error, if there is any.
 func (c *sensuClusters) Update(sensuCluster *v1beta1.SensuCluster) (result *v1beta1.SensuCluster, err error) {
+	ctx := context.Background()
 	result = &v1beta1.SensuCluster{}
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("sensuclusters").
 		Name(sensuCluster.Name).
 		Body(sensuCluster).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
@@ -137,6 +143,7 @@ func (c *sensuClusters) Update(sensuCluster *v1beta1.SensuCluster) (result *v1be
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
 
 func (c *sensuClusters) UpdateStatus(sensuCluster *v1beta1.SensuCluster) (result *v1beta1.SensuCluster, err error) {
+	ctx := context.Background()
 	result = &v1beta1.SensuCluster{}
 	err = c.client.Put().
 		Namespace(c.ns).
@@ -144,24 +151,26 @@ func (c *sensuClusters) UpdateStatus(sensuCluster *v1beta1.SensuCluster) (result
 		Name(sensuCluster.Name).
 		SubResource("status").
 		Body(sensuCluster).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the sensuCluster and deletes it. Returns an error if one occurs.
 func (c *sensuClusters) Delete(name string, options *v1.DeleteOptions) error {
+	ctx := context.Background()
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("sensuclusters").
 		Name(name).
 		Body(options).
-		Do().
+		Do(ctx).
 		Error()
 }
 
 // DeleteCollection deletes a collection of objects.
 func (c *sensuClusters) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
+	ctx := context.Background()
 	var timeout time.Duration
 	if listOptions.TimeoutSeconds != nil {
 		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
@@ -172,12 +181,13 @@ func (c *sensuClusters) DeleteCollection(options *v1.DeleteOptions, listOptions 
 		VersionedParams(&listOptions, scheme.ParameterCodec).
 		Timeout(timeout).
 		Body(options).
-		Do().
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched sensuCluster.
 func (c *sensuClusters) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.SensuCluster, err error) {
+	ctx := context.Background()
 	result = &v1beta1.SensuCluster{}
 	err = c.client.Patch(pt).
 		Namespace(c.ns).
@@ -185,7 +195,7 @@ func (c *sensuClusters) Patch(name string, pt types.PatchType, data []byte, subr
 		SubResource(subresources...).
 		Name(name).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"path"
 
+	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -11,8 +12,9 @@ const keySeparator = "/"
 
 // KeyBuilder builds multi-tenant resource keys.
 type KeyBuilder struct {
-	resourceName string
-	namespace    string
+	resourceName         string
+	namespace            string
+	includeTrailingSlash bool
 }
 
 // NewKeyBuilder creates a new KeyBuilder.
@@ -39,6 +41,17 @@ func (b KeyBuilder) WithContext(ctx context.Context) KeyBuilder {
 	return b
 }
 
+// WithExactMatch ensures the final key has a trailing slash.
+// This is useful for searching sub-resources without erroneously including
+// resources that the final path component is a prefix for.
+// eg consider two entities, foo and foobar, both with events.
+// Without a trailing slash, we end up iterating over both
+// /foo/event and /foobar/event.
+func (b KeyBuilder) WithExactMatch() KeyBuilder {
+	b.includeTrailingSlash = true
+	return b
+}
+
 // Build builds a key from the components it is given.
 func (b KeyBuilder) Build(keys ...string) string {
 	items := append(
@@ -60,6 +73,11 @@ func (b KeyBuilder) Build(keys ...string) string {
 		if len(keys) == 0 || keys[len(keys)-1] == "" {
 			key += keySeparator
 		}
+	}
+
+	// Be specific when listing sub-resources for a specific resource.
+	if b.includeTrailingSlash {
+		key += keySeparator
 	}
 
 	return key
@@ -85,4 +103,44 @@ func (b KeyBuilder) BuildPrefix(keys ...string) string {
 	}
 
 	return out
+}
+
+// KeyFromResource determines the path to a resource in the store using the
+// resource itself
+func KeyFromResource(r corev2.Resource) string {
+	resourcePrefix := r.StorePrefix()
+	namespace := r.GetObjectMeta().Namespace
+	name := r.GetObjectMeta().Name
+	key := path.Join(Root, resourcePrefix, namespace, name)
+
+	// In order to not inadvertently build a key that could list across
+	// namespaces, we need to make sure that we terminate the key with the key
+	// separator when a namespace is involved without a specific object name
+	// within it.
+	if namespace != "" {
+		if len(name) == 0 {
+			key += keySeparator
+		}
+	}
+
+	return key
+}
+
+// KeyFromArgs determines the path to a resource in the store using the provided
+// arguments
+func KeyFromArgs(ctx context.Context, resourcePrefix, name string) string {
+	namespace := NewNamespaceFromContext(ctx)
+	key := path.Join(Root, resourcePrefix, namespace, name)
+
+	// In order to not inadvertently build a key that could list across
+	// namespaces, we need to make sure that we terminate the key with the key
+	// separator when a namespace is involved without a specific object name
+	// within it.
+	if namespace != "" {
+		if len(name) == 0 {
+			key += keySeparator
+		}
+	}
+
+	return key
 }

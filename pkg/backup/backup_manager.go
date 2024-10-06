@@ -22,8 +22,8 @@ import (
 	"github.com/objectrocket/sensu-operator/pkg/backup/writer"
 	"github.com/objectrocket/sensu-operator/pkg/util/constants"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/sirupsen/logrus"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"k8s.io/client-go/kubernetes"
 )
 

@@ -3,13 +3,13 @@ package store
 import (
 	"context"
 	"crypto/tls"
-	"errors"
 	"fmt"
 
-	"github.com/coreos/etcd/clientv3"
-	jwt "github.com/dgrijalva/jwt-go"
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
+	"github.com/sensu/sensu-go/backend/store/patch"
 	"github.com/sensu/sensu-go/types"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 // ErrAlreadyExists is returned when an object already exists
@@ -69,9 +69,22 @@ func (e *ErrNotValid) Error() string {
 	return fmt.Sprintf("resource is invalid: %s", e.Err.Error())
 }
 
+// ErrPreconditionFailed is returned when a condition was not fulfilled
+type ErrPreconditionFailed struct {
+	Key string
+}
+
+func (e *ErrPreconditionFailed) Error() string {
+	return fmt.Sprintf("at least one condition failed for the key %s", e.Key)
+}
+
 // ErrInternal is returned when something generally bad happened while
-// interacting with the store. Other, more specific errors should preferably be
+// interacting with the store. Other, more specific errors should be
 // returned when appropriate.
+//
+// The backend will use ErrInternal to detect if an error is unrecoverable.
+// It should only be used to signal that the underlying database is not
+// functional
 type ErrInternal struct {
 	Message string
 }
@@ -88,34 +101,59 @@ type SelectionPredicate struct {
 	Continue string
 	// Limit indicates the number of resources to retrieve
 	Limit int64
+	// Offset into the collection
+	Offset int64
 	// Subcollection represents a sub-collection of the primary collection
 	Subcollection string
+	// Ordering indicates the property to sort on, if supported by the store
+	Ordering string
+	// Descending indicates the sort direction is in descending order.
+	Descending bool
 }
 
-// A WatchEventCheckConfig contains the modified store object and the action that occured
-// during the modification.
+// A WatchEventCheckConfig contains the modified store object and the action
+// that occurred during the modification.
 type WatchEventCheckConfig struct {
 	CheckConfig *types.CheckConfig
 	Action      WatchActionType
 }
 
-// A WatchEventHookConfig contains the modified asset object and the action that occurred
-// during the modification.
+// A WatchEventHookConfig contains the modified asset object and the action that
+// occurred during the modification.
 type WatchEventHookConfig struct {
 	HookConfig *types.HookConfig
 	Action     WatchActionType
 }
 
-// WatchEventEntity is a notification that the entity store has been updated.
-type WatchEventEntity struct {
-	Entity *corev2.Entity
-	Action WatchActionType
-}
-
-// WatchEventTessenConfig is a notification that the tessen config store has been updated.
+// WatchEventTessenConfig is a notification that the tessen config store has
+// been updated.
 type WatchEventTessenConfig struct {
 	TessenConfig *corev2.TessenConfig
 	Action       WatchActionType
+}
+
+// WatchEventResource is a store event about a specific resource
+type WatchEventResource struct {
+	Resource corev2.Resource
+	Action   WatchActionType
+}
+
+// WatchEventResourceV3 is a notification that a corev3.Resource has been
+// created, deleted or updated.
+type WatchEventResourceV3 struct {
+	// Resource is the resource associated with the event. It is nil when Action
+	// is WatchError or WatchUnknown.
+	Resource corev3.Resource
+
+	// Action is the type of action that affected the resource.
+	Action WatchActionType
+}
+
+// WatchEventEntityConfig contains an updated entity config and the action that
+// occurred during this modification.
+type WatchEventEntityConfig struct {
+	Entity *corev3.EntityConfig
+	Action WatchActionType
 }
 
 // Store is used to abstract the durable storage used by the Sensu backend
@@ -130,6 +168,9 @@ type Store interface {
 
 	// CheckConfigStore provides an interface for managing checks configuration
 	CheckConfigStore
+
+	// ClusterIDStore provides an interface for managing the sensu cluster id
+	ClusterIDStore
 
 	// EntityStore provides an interface for managing entities
 	EntityStore
@@ -164,11 +205,17 @@ type Store interface {
 	// ClusterRoleBindingStore provides an interface for managing cluster role bindings
 	ClusterRoleBindingStore
 
+	// PipelineStore provides an interface for managing pipelines
+	PipelineStore
+
 	// RoleStore provides an interface for managing roles
 	RoleStore
 
 	// RoleBindingStore provides an interface for managing role bindings
 	RoleBindingStore
+
+	// SessionStore provides an interface for managing user sessions
+	SessionStore
 
 	// SilencedStore provides an interface for managing silenced entries,
 	// consisting of entities, subscriptions and/or checks
@@ -177,18 +224,15 @@ type Store interface {
 	// TessenConfigStore provides an interface for managing the tessen configuration
 	TessenConfigStore
 
-	// TokenStore provides an interface for managing the JWT access list
-	TokenStore
-
 	// UserStore provides an interface for managing users
 	UserStore
 
-	// ExtensionRegistry tracks third-party extensions.
-	ExtensionRegistry
+	// ResourceStore ...
+	ResourceStore
 
 	// NewInitializer returns the Initializer interfaces, which provides the
 	// required mechanism to verify if a store is initialized
-	NewInitializer() (Initializer, error)
+	NewInitializer(context.Context) (Initializer, error)
 }
 
 // AssetStore provides methods for managing checks assets
@@ -222,6 +266,21 @@ type AuthenticationStore interface {
 	UpdateJWTSecret(secret []byte) error
 }
 
+// SessionStore provides methods for managing user sessions
+type SessionStore interface {
+	// GetSession retrieves the session state uniquely identified by the given
+	// username and session ID.
+	GetSession(ctx context.Context, username, sessionID string) (string, error)
+
+	// UpdateSession applies the supplied state to the session uniquely
+	// identified by the given username and session ID.
+	UpdateSession(ctx context.Context, username, sessionID string, state string) error
+
+	// DeleteSession deletes the session uniquely identified by the given
+	// username and session ID.
+	DeleteSession(ctx context.Context, username, sessionID string) error
+}
+
 // CheckConfigStore provides methods for managing checks configuration
 type CheckConfigStore interface {
 	// DeleteCheckConfigByName deletes a check's configuration using the given name
@@ -248,33 +307,42 @@ type CheckConfigStore interface {
 	GetCheckConfigWatcher(ctx context.Context) <-chan WatchEventCheckConfig
 }
 
+// ClusterIDStore provides methods for managing the sensu cluster id
+type ClusterIDStore interface {
+	// CreateClusterID creates a sensu cluster id
+	CreateClusterID(context.Context, string) error
+
+	// GetClusterID gets the sensu cluster id
+	GetClusterID(context.Context) (string, error)
+}
+
 // ClusterRoleBindingStore provides methods for managing RBAC cluster role
 // bindings
 type ClusterRoleBindingStore interface {
-	// Create a given cluster role binding
+	// CreateClusterRoleBinding creates a given cluster role binding
 	CreateClusterRoleBinding(ctx context.Context, clusterRoleBinding *types.ClusterRoleBinding) error
 
-	// CreateOrUpdateRole overwrites the given cluster role binding
+	// CreateOrUpdateClusterRoleBinding overwrites the given cluster role binding
 	CreateOrUpdateClusterRoleBinding(ctx context.Context, clusterRoleBinding *types.ClusterRoleBinding) error
 
-	// DeleteRole deletes a cluster role binding using the given name.
+	// DeleteClusterRoleBinding deletes a cluster role binding using the given name.
 	DeleteClusterRoleBinding(ctx context.Context, name string) error
 
-	// GetRole returns a cluster role binding using the given name. An error is
+	// GetClusterRoleBinding returns a cluster role binding using the given name. An error is
 	// returned if no binding was found
 	GetClusterRoleBinding(ctx context.Context, name string) (*types.ClusterRoleBinding, error)
 
-	// ListRoles returns all cluster role binding. An error is returned if no
+	// ListClusterRoleBindings returns all cluster role binding. An error is returned if no
 	// binding were found
 	ListClusterRoleBindings(ctx context.Context, pred *SelectionPredicate) (clusterRoleBindings []*types.ClusterRoleBinding, err error)
 
-	// UpdateRole creates or updates a given cluster role binding.
+	// UpdateClusterRoleBinding creates or updates a given cluster role binding.
 	UpdateClusterRoleBinding(ctx context.Context, clusterRoleBinding *types.ClusterRoleBinding) error
 }
 
 // ClusterRoleStore provides methods for managing RBAC cluster roles and rules
 type ClusterRoleStore interface {
-	// Create a given cluster role
+	// CreateClusterRole creates a given cluster role
 	CreateClusterRole(ctx context.Context, clusterRole *types.ClusterRole) error
 
 	// CreateOrUpdateClusterRole overwrites the given cluster role
@@ -333,8 +401,6 @@ type EntityStore interface {
 
 	// UpdateEntity creates or updates a given entity.
 	UpdateEntity(ctx context.Context, entity *types.Entity) error
-
-	GetEntityWatcher(context.Context) <-chan WatchEventEntity
 }
 
 // EventStore provides methods for managing events
@@ -356,8 +422,18 @@ type EventStore interface {
 	// is nil if none was found.
 	GetEventByEntityCheck(ctx context.Context, entity, check string) (*types.Event, error)
 
-	// UpdateEvent creates or updates a given event.
-	UpdateEvent(ctx context.Context, event *types.Event) error
+	// UpdateEvent creates or updates a given event. It returns the updated
+	// event, which may be the same as the event that was passed in, and the
+	// previous event, if one existed, as well as any error that occurred.
+	UpdateEvent(ctx context.Context, event *types.Event) (old, new *types.Event, err error)
+
+	// CountEvents counts the number of events in the namespace. The namespace is
+	// provided as part of the context.
+	CountEvents(context.Context, *SelectionPredicate) (int64, error)
+
+	// EventStoreSupportsFiltering signals whether an event store implementation
+	// supporting filtering, ordering and offsets. Currently an enterprise postgres store feature.
+	EventStoreSupportsFiltering(ctx context.Context) bool
 }
 
 // EventFilterStore provides methods for managing events filters
@@ -453,32 +529,54 @@ type NamespaceStore interface {
 	UpdateNamespace(ctx context.Context, org *types.Namespace) error
 }
 
+// PipelineStore provides methods for managing pipelines
+type PipelineStore interface {
+	// GetPipelineByName returns a pipeline using the given name and the
+	// namespace stored in ctx. The resulting pipeline is nil if none was found.
+	GetPipelineByName(ctx context.Context, name string) (*corev2.Pipeline, error)
+}
+
+// ResourceStore ...
+type ResourceStore interface {
+	CreateResource(ctx context.Context, resource corev2.Resource) error
+
+	CreateOrUpdateResource(ctx context.Context, resource corev2.Resource) error
+
+	DeleteResource(ctx context.Context, kind, name string) error
+
+	GetResource(ctx context.Context, name string, resource corev2.Resource) error
+
+	ListResources(ctx context.Context, kind string, resources interface{}, pred *SelectionPredicate) error
+
+	PatchResource(ctx context.Context, resource corev2.Resource, name string, patcher patch.Patcher, condition *ETagCondition) error
+}
+
 // RoleBindingStore provides methods for managing RBAC role bindings
 type RoleBindingStore interface {
-	// Create a given role binding
+	// CreateRoleBinding creates a given role binding
 	CreateRoleBinding(ctx context.Context, roleBinding *types.RoleBinding) error
 
-	// CreateOrUpdateRole overwrites the given role binding
+	// CreateOrUpdateRoleBinding overwrites the given role binding
 	CreateOrUpdateRoleBinding(ctx context.Context, roleBinding *types.RoleBinding) error
 
-	// DeleteRole deletes a role binding using the given name.
+	// DeleteRoleBinding deletes a role binding using the given name.
 	DeleteRoleBinding(ctx context.Context, name string) error
 
-	// GetRole returns a role binding using the given name. An error is returned
+	// GetRoleBinding returns a role binding using the given name. An error is returned
 	// if no binding was found
 	GetRoleBinding(ctx context.Context, name string) (*types.RoleBinding, error)
 
-	// ListRoles returns all role binding. An error is returned if no binding were
+	// ListRoleBindings returns all role binding. An error is returned if no binding were
 	// found
 	ListRoleBindings(ctx context.Context, pred *SelectionPredicate) (roleBindings []*types.RoleBinding, err error)
 
-	// UpdateRole creates or updates a given role binding.
+	// UpdateRoleBinding creates or updates a given role binding.
 	UpdateRoleBinding(ctx context.Context, roleBinding *types.RoleBinding) error
 }
 
 // RoleStore provides methods for managing RBAC roles and rules
 type RoleStore interface {
-	// Create a given role
+	// CreateRole creates a given role
 	CreateRole(ctx context.Context, role *types.Role) error
 
 	// CreateOrUpdateRole overwrites the given role
@@ -502,7 +600,7 @@ type RoleStore interface {
 // consisting of entities, subscriptions and/or checks
 type SilencedStore interface {
 	// DeleteSilencedEntryByName deletes an entry using the given id.
-	DeleteSilencedEntryByName(ctx context.Context, id string) error
+	DeleteSilencedEntryByName(ctx context.Context, id ...string) error
 
 	// GetSilencedEntries returns all entries. A nil slice with no error is
 	// returned if none were found.
@@ -513,18 +611,21 @@ type SilencedStore interface {
 	// returned if none were found.
 	GetSilencedEntriesByCheckName(ctx context.Context, check string) ([]*types.Silenced, error)
 
-	// GetSilencedEntriesByCheckName returns all entries for the given subscription
+	// GetSilencedEntriesBySubscription returns all entries for the given subscription
 	// within the ctx's namespace. A nil slice with no error is
 	// returned if none were found.
-	GetSilencedEntriesBySubscription(ctx context.Context, subscription string) ([]*types.Silenced, error)
+	GetSilencedEntriesBySubscription(ctx context.Context, subscriptions ...string) ([]*types.Silenced, error)
 
 	// GetSilencedEntryByName returns an entry using the given id and the
 	// namespace stored in ctx. The resulting entry is nil if
 	// none was found.
 	GetSilencedEntryByName(ctx context.Context, id string) (*types.Silenced, error)
 
-	// UpdateHandler creates or updates a given entry.
+	// UpdateSilencedEntry creates or updates a given entry.
 	UpdateSilencedEntry(ctx context.Context, entry *types.Silenced) error
+
+	// GetSilencedEntriesByName gets all the named silenced entries.
+	GetSilencedEntriesByName(ctx context.Context, id ...string) ([]*types.Silenced, error)
 }
 
 // TessenConfigStore provides methods for managing the Tessen configuration
@@ -539,20 +640,6 @@ type TessenConfigStore interface {
 	GetTessenConfigWatcher(context.Context) <-chan WatchEventTessenConfig
 }
 
-// TokenStore provides methods for managing the JWT access list
-type TokenStore interface {
-	// AllowTokens adds the provided tokens to the JWT access list
-	AllowTokens(tokens ...*jwt.Token) error
-
-	// RevokeTokens removes tokens using the provided claims from the JWT access
-	// list
-	RevokeTokens(claims ...*corev2.Claims) error
-
-	// GetToken returns the claims of a given token ID, belonging to the given
-	// subject. An error is returned if no claims were found.
-	GetToken(subject, id string) (*types.Claims, error)
-}
-
 // UserStore provides methods for managing users
 type UserStore interface {
 	// AuthenticateUser attempts to authenticate a user with the given username
@@ -560,11 +647,8 @@ type UserStore interface {
 	// disabled or the given password does not match.
 	AuthenticateUser(ctx context.Context, username, password string) (*types.User, error)
 
-	// CreateUsern creates a new user with the given user struct.
-	CreateUser(user *types.User) error
-
-	// DeleteUser deletes a user using the given user struct.
-	DeleteUser(ctx context.Context, user *types.User) error
+	// CreateUser creates a new user with the given user struct.
+	CreateUser(ctx context.Context, user *types.User) error
 
 	// GetUser returns a user using the given username.
 	GetUser(ctx context.Context, username string) (*types.User, error)
@@ -573,48 +657,26 @@ type UserStore interface {
 	// returned if none were found.
 	GetUsers() ([]*types.User, error)
 
-	// GetUsers returns all users, including the disabled ones. A nil slice with
+	// GetAllUsers returns all users, including the disabled ones. A nil slice with
 	// no error is  returned if none were found.
 	GetAllUsers(pred *SelectionPredicate) ([]*types.User, error)
 
-	// UpdateHandler updates a given user.
+	// UpdateUser updates a given user.
 	UpdateUser(user *types.User) error
 }
 
 // Initializer provides methods to verify if a store is initialized
 type Initializer interface {
 	// Close closes the session to the store and unlock any mutex
-	Close() error
+	Close(context.Context) error
 
 	// FlagAsInitialized marks the store as initialized
-	FlagAsInitialized() error
+	FlagAsInitialized(context.Context) error
 
 	// IsInitialized returns a boolean error that indicates if the store has been
 	// initialized or not
-	IsInitialized() (bool, error)
+	IsInitialized(context.Context) (bool, error)
 
 	// Lock locks a mutex to avoid competing writes
-	Lock() error
-}
-
-// ErrNoExtension is returned when a named extension does not exist.
-var ErrNoExtension = errors.New("the extension does not exist")
-
-// ExtensionRegistry registers and tracks Sensu extensions.
-type ExtensionRegistry interface {
-	// RegisterExtension registers an extension. It associates an extension type and
-	// name with a URL. The registry assumes that the extension provides
-	// a handler and a mutator named 'name'.
-	RegisterExtension(context.Context, *types.Extension) error
-
-	// DeregisterExtension deregisters an extension. If the extension does not exist,
-	// nil error is returned.
-	DeregisterExtension(ctx context.Context, name string) error
-
-	// GetExtension gets the address of a registered extension. If the extension does
-	// not exist, ErrNoExtension is returned.
-	GetExtension(ctx context.Context, name string) (*types.Extension, error)
-
-	// GetExtensions gets all the extensions for the namespace in ctx.
-	GetExtensions(ctx context.Context, pred *SelectionPredicate) ([]*types.Extension, error)
+	Lock(context.Context) error
 }

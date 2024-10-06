@@ -36,7 +36,7 @@ func (c *sensuAPITestClient) CreateNamespace(ns *types.Namespace) error {
 func TestNew(t *testing.T) {
 	conf := basic.Config{
 		Cluster: basic.Cluster{
-			APIUrl: "http://testCluster-api.testnamespace.svc:8080",
+			APIUrl: "http://testCluster-api.testnamespace.svc.cluster.local:8080",
 		},
 		Profile: basic.Profile{
 			Format:    "json",
@@ -103,7 +103,7 @@ func TestNew(t *testing.T) {
 func TestSensuClient_makeFullyQualifiedSensuClientURL(t *testing.T) {
 	conf := basic.Config{
 		Cluster: basic.Cluster{
-			APIUrl: "http://testCluster.testnamespace.svc:8080",
+			APIUrl: "http://testCluster.testnamespace.svc.cluster.local:8080",
 		},
 		Profile: basic.Profile{
 			Format:    "json",
@@ -138,7 +138,7 @@ func TestSensuClient_makeFullyQualifiedSensuClientURL(t *testing.T) {
 					Logger: logger,
 				},
 			},
-			"testCluster-api.testnamespace.svc",
+			"testCluster-api.testnamespace.svc.cluster.local",
 		},
 	}
 	for _, tt := range tests {
@@ -159,7 +159,7 @@ func TestSensuClient_makeFullyQualifiedSensuClientURL(t *testing.T) {
 func TestSensuClient_ensureCredentials(t *testing.T) {
 	conf := basic.Config{
 		Cluster: basic.Cluster{
-			APIUrl: "http://testCluster.testnamespace.svc:8080",
+			APIUrl: "http://testCluster.testnamespace.svc.cluster.local:8080",
 			Tokens: &types.Tokens{
 				Access: "fake",
 			},
@@ -171,7 +171,7 @@ func TestSensuClient_ensureCredentials(t *testing.T) {
 	}
 	confNoToken := basic.Config{
 		Cluster: basic.Cluster{
-			APIUrl: "http://testCluster.testnamespace.svc:8080",
+			APIUrl: "http://testCluster.testnamespace.svc.cluster.local:8080",
 		},
 		Profile: basic.Profile{
 			Format:    "json",
@@ -243,7 +243,7 @@ func TestSensuClient_ensureCredentials(t *testing.T) {
 func TestSensuClient_ensureNamespace(t *testing.T) {
 	conf := basic.Config{
 		Cluster: basic.Cluster{
-			APIUrl: "http://testCluster.testnamespace.svc:8080",
+			APIUrl: "http://testCluster.testnamespace.svc.cluster.local:8080",
 			Tokens: &types.Tokens{
 				Access: "fake",
 			},
