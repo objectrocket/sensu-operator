@@ -46,15 +46,19 @@ type SensuHandler struct {
 // SensuHandlerSpec is the spec section of the custom object
 // +k8s:openapi-gen=true
 type SensuHandlerSpec struct {
-	Type          string        `json:"type"`
-	Mutator       string        `json:"mutator,omitempty"`
-	Command       string        `json:"command,omitempty"`
-	Timeout       uint32        `json:"timeout,omitempty"`
-	Socket        HandlerSocket `json:"socket,omitempty"`
-	Handlers      []string      `json:"handlers,omitempty"`
-	Filters       []string      `json:"filters,omitempty"`
-	EnvVars       []string      `json:"envVars,omitempty"`
-	RuntimeAssets []string      `json:"runtimeAssets,omitempty"`
+	Type    string        `json:"type"`
+	Mutator string        `json:"mutator,omitempty"`
+	Command string        `json:"command,omitempty"`
+	Timeout uint32        `json:"timeout,omitempty"`
+	Socket  HandlerSocket `json:"socket,omitempty"`
+	//+listType=set
+	Handlers []string `json:"handlers,omitempty"`
+	//+listType=set
+	Filters []string `json:"filters,omitempty"`
+	//+listType=set
+	EnvVars []string `json:"envVars,omitempty"`
+	//+listType=set
+	RuntimeAssets []string `json:"runtimeAssets,omitempty"`
 	// Metadata contains the sensu name, sensu namespace, sensu annotations, and sensu labels of the handler
 	SensuMetadata ObjectMeta `json:"sensuMetadata"`
 	// Validation is the OpenAPIV3Schema validation for sensu assets

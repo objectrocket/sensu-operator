@@ -51,9 +51,11 @@ type SensuEventFilterSpec struct {
 	Action string `json:"action"`
 	// Expressions is an array of boolean expressions that are &&'d together
 	// to determine if the event matches this filter.
+	//+listType=set
 	Expressions []string `json:"expressions"`
 	// Runtime assets are Sensu assets that contain javascript libraries. They
 	// are evaluated within the execution context.
+	//+listType=set
 	RuntimeAssets []string `json:"runtimeAssets,omitempty"`
 
 	// Organization indicates to which org an event filter belongs to

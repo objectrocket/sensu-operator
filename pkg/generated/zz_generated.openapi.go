@@ -164,6 +164,11 @@ func schema_pkg_apis_objectrocket_v1beta1_SensuAssetSpec(ref common.ReferenceCal
 						},
 					},
 					"filters": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "Filters are a collection of sensu queries, used by the system to determine if the asset should be installed. If more than one filter is present the queries are joined by the \"AND\" operator.",
 							Type:        []string{"array"},
@@ -265,6 +270,11 @@ func schema_pkg_apis_objectrocket_v1beta1_SensuCheckConfigSpec(ref common.Refere
 						},
 					},
 					"handlers": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "Handlers are the event handler for the check (incidents and/or metrics).",
 							Type:        []string{"array"},
@@ -308,6 +318,11 @@ func schema_pkg_apis_objectrocket_v1beta1_SensuCheckConfigSpec(ref common.Refere
 						},
 					},
 					"runtimeAssets": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "RuntimeAssets are a list of assets required to execute check.",
 							Type:        []string{"array"},
@@ -323,6 +338,11 @@ func schema_pkg_apis_objectrocket_v1beta1_SensuCheckConfigSpec(ref common.Refere
 						},
 					},
 					"subscriptions": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "Subscriptions is the list of subscribers for the check.",
 							Type:        []string{"array"},
@@ -345,6 +365,11 @@ func schema_pkg_apis_objectrocket_v1beta1_SensuCheckConfigSpec(ref common.Refere
 						},
 					},
 					"checkHooks": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "CheckHooks is the list of check hooks for the check",
 							Type:        []string{"array"},
@@ -413,6 +438,11 @@ func schema_pkg_apis_objectrocket_v1beta1_SensuCheckConfigSpec(ref common.Refere
 						},
 					},
 					"outputMetricHandlers": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "OutputOutputMetricHandlers is the list of event handlers that will respond to metrics that have been extracted from the check.",
 							Type:        []string{"array"},
@@ -428,6 +458,11 @@ func schema_pkg_apis_objectrocket_v1beta1_SensuCheckConfigSpec(ref common.Refere
 						},
 					},
 					"envVars": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "EnvVars is the list of environment variables to set for the check's execution environment.",
 							Type:        []string{"array"},
@@ -530,6 +565,11 @@ func schema_pkg_apis_objectrocket_v1beta1_SensuEventFilterSpec(ref common.Refere
 						},
 					},
 					"expressions": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "Expressions is an array of boolean expressions that are &&'d together to determine if the event matches this filter.",
 							Type:        []string{"array"},
@@ -545,6 +585,11 @@ func schema_pkg_apis_objectrocket_v1beta1_SensuEventFilterSpec(ref common.Refere
 						},
 					},
 					"runtimeAssets": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "Runtime assets are Sensu assets that contain javascript libraries. They are evaluated within the execution context.",
 							Type:        []string{"array"},
@@ -669,6 +714,11 @@ func schema_pkg_apis_objectrocket_v1beta1_SensuHandlerSpec(ref common.ReferenceC
 						},
 					},
 					"handlers": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
@@ -683,6 +733,11 @@ func schema_pkg_apis_objectrocket_v1beta1_SensuHandlerSpec(ref common.ReferenceC
 						},
 					},
 					"filters": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
@@ -697,6 +752,11 @@ func schema_pkg_apis_objectrocket_v1beta1_SensuHandlerSpec(ref common.ReferenceC
 						},
 					},
 					"envVars": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
@@ -711,6 +771,11 @@ func schema_pkg_apis_objectrocket_v1beta1_SensuHandlerSpec(ref common.ReferenceC
 						},
 					},
 					"runtimeAssets": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{

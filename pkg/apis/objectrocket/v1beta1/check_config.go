@@ -49,6 +49,7 @@ type SensuCheckConfigSpec struct {
 	// Command is the command to be executed.
 	Command string `json:"command"`
 	// Handlers are the event handler for the check (incidents and/or metrics).
+	//+listType=set
 	Handlers []string `json:"handlers,omitempty"`
 	// HighFlapThreshold is the flap detection high threshold (% state change) for
 	// the check. Sensu uses the same flap detection algorithm as Nagios.
@@ -61,14 +62,17 @@ type SensuCheckConfigSpec struct {
 	// Publish indicates if check requests are published for the check
 	Publish bool `json:"publish,omitempty"`
 	// RuntimeAssets are a list of assets required to execute check.
+	//+listType=set
 	RuntimeAssets []string `json:"runtimeAssets,omitempty"`
 	// Subscriptions is the list of subscribers for the check.
+	//+listType=set
 	Subscriptions []string `json:"subscriptions"`
 	// ExtendedAttributes store serialized arbitrary JSON-encoded data
 	ExtendedAttributes []byte `json:"-"`
 	// Sources indicates the name of the entity representing an external resource
 	ProxyEntityName string `json:"proxyEntityName,omitempty"`
 	// CheckHooks is the list of check hooks for the check
+	//+listType=set
 	CheckHooks []HookList `json:"checkHooks,omitempty"`
 	// STDIN indicates if the check command accepts JSON via stdin from the agent
 	Stdin bool `json:"stdin,omitempty"`
@@ -89,9 +93,11 @@ type SensuCheckConfigSpec struct {
 	OutputMetricFormat string `json:"outputMetricFormat,omitempty"`
 	// OutputOutputMetricHandlers is the list of event handlers that will respond to metrics
 	// that have been extracted from the check.
+	//+listType=set
 	OutputMetricHandlers []string `json:"outputMetricHandlers,omitempty"`
 	// EnvVars is the list of environment variables to set for the check's
 	// execution environment.
+	//+listType=set
 	EnvVars []string `json:"envVars,omitempty"`
 	// Metadata contains the sensu name, sensu clusterName, sensu namespace, sensu labels and sensu annotations of the check
 	SensuMetadata ObjectMeta `json:"sensuMetadata,omitempty"`
