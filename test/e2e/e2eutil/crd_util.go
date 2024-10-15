@@ -15,6 +15,7 @@
 package e2eutil
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -36,8 +37,10 @@ type StorageCheckerOptions struct {
 }
 
 func CreateCluster(t *testing.T, crClient versioned.Interface, namespace string, cl *api.SensuCluster) (*api.SensuCluster, error) {
+	ctx := context.Background()
+
 	cl.Namespace = namespace
-	res, err := crClient.ObjectrocketV1beta1().SensuClusters(namespace).Create(cl)
+	res, err := crClient.ObjectrocketV1beta1().SensuClusters(namespace).Create(ctx, cl, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -47,18 +50,20 @@ func CreateCluster(t *testing.T, crClient versioned.Interface, namespace string,
 }
 
 func UpdateCluster(crClient versioned.Interface, cl *api.SensuCluster, maxRetries int, updateFunc k8sutil.SensuClusterCRUpdateFunc) (*api.SensuCluster, error) {
+	ctx := context.Background()
+
 	name := cl.Name
 	namespace := cl.Namespace
 	result := &api.SensuCluster{}
 	err := retryutil.Retry(1*time.Second, maxRetries, func() (done bool, err error) {
-		sensuCluster, err := crClient.ObjectrocketV1beta1().SensuClusters(namespace).Get(name, metav1.GetOptions{})
+		sensuCluster, err := crClient.ObjectrocketV1beta1().SensuClusters(namespace).Get(ctx, name, metav1.GetOptions{})
 		if err != nil {
 			return false, err
 		}
 
 		updateFunc(sensuCluster)
 
-		result, err = crClient.ObjectrocketV1beta1().SensuClusters(namespace).Update(sensuCluster)
+		result, err = crClient.ObjectrocketV1beta1().SensuClusters(namespace).Update(ctx, sensuCluster, metav1.UpdateOptions{})
 		if err != nil {
 			if apierrors.IsConflict(err) {
 				return false, nil
@@ -71,8 +76,10 @@ func UpdateCluster(crClient versioned.Interface, cl *api.SensuCluster, maxRetrie
 }
 
 func DeleteCluster(t *testing.T, crClient versioned.Interface, kubeClient kubernetes.Interface, cl *api.SensuCluster) error {
+	ctx := context.Background()
+
 	t.Logf("deleting sensu cluster: %v", cl.Name)
-	err := crClient.ObjectrocketV1beta1().SensuClusters(cl.Namespace).Delete(cl.Name, nil)
+	err := crClient.ObjectrocketV1beta1().SensuClusters(cl.Namespace).Delete(ctx, cl.Name, metav1.DeleteOptions{})
 	if err != nil {
 		return err
 	}

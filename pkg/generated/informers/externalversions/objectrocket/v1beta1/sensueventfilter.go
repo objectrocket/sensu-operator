@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The sensu-operator Authors
+Copyright 2024 The sensu-operator Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,12 +19,13 @@ limitations under the License.
 package v1beta1
 
 import (
+	context "context"
 	time "time"
 
-	objectrocketv1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
+	apisobjectrocketv1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
 	versioned "github.com/objectrocket/sensu-operator/pkg/generated/clientset/versioned"
 	internalinterfaces "github.com/objectrocket/sensu-operator/pkg/generated/informers/externalversions/internalinterfaces"
-	v1beta1 "github.com/objectrocket/sensu-operator/pkg/generated/listers/objectrocket/v1beta1"
+	objectrocketv1beta1 "github.com/objectrocket/sensu-operator/pkg/generated/listers/objectrocket/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -35,7 +36,7 @@ import (
 // SensuEventFilters.
 type SensuEventFilterInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1beta1.SensuEventFilterLister
+	Lister() objectrocketv1beta1.SensuEventFilterLister
 }
 
 type sensuEventFilterInformer struct {
@@ -61,16 +62,16 @@ func NewFilteredSensuEventFilterInformer(client versioned.Interface, namespace s
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ObjectrocketV1beta1().SensuEventFilters(namespace).List(options)
+				return client.ObjectrocketV1beta1().SensuEventFilters(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ObjectrocketV1beta1().SensuEventFilters(namespace).Watch(options)
+				return client.ObjectrocketV1beta1().SensuEventFilters(namespace).Watch(context.TODO(), options)
 			},
 		},
-		&objectrocketv1beta1.SensuEventFilter{},
+		&apisobjectrocketv1beta1.SensuEventFilter{},
 		resyncPeriod,
 		indexers,
 	)
@@ -81,9 +82,9 @@ func (f *sensuEventFilterInformer) defaultInformer(client versioned.Interface, r
 }
 
 func (f *sensuEventFilterInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&objectrocketv1beta1.SensuEventFilter{}, f.defaultInformer)
+	return f.factory.InformerFor(&apisobjectrocketv1beta1.SensuEventFilter{}, f.defaultInformer)
 }
 
-func (f *sensuEventFilterInformer) Lister() v1beta1.SensuEventFilterLister {
-	return v1beta1.NewSensuEventFilterLister(f.Informer().GetIndexer())
+func (f *sensuEventFilterInformer) Lister() objectrocketv1beta1.SensuEventFilterLister {
+	return objectrocketv1beta1.NewSensuEventFilterLister(f.Informer().GetIndexer())
 }

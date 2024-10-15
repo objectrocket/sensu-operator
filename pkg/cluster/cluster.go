@@ -452,16 +452,17 @@ func (c *Cluster) updateMemberStatus(running []*v1.Pod) {
 }
 
 func (c *Cluster) updateCRStatus() error {
+	ctx := context.Background()
 	if reflect.DeepEqual(c.cluster.Status, c.status) {
 		return nil
 	}
 
-	newCluster, err := c.config.SensuCRCli.ObjectrocketV1beta1().SensuClusters(c.cluster.GetNamespace()).Get(c.cluster.GetName(), metav1.GetOptions{})
+	newCluster, err := c.config.SensuCRCli.ObjectrocketV1beta1().SensuClusters(c.cluster.GetNamespace()).Get(ctx, c.cluster.GetName(), metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("Failed to fetch cluster for status update: %v", err)
 	}
 	newCluster.Status = c.status
-	newCluster, err = c.config.SensuCRCli.ObjectrocketV1beta1().SensuClusters(newCluster.GetNamespace()).Update(newCluster)
+	newCluster, err = c.config.SensuCRCli.ObjectrocketV1beta1().SensuClusters(newCluster.GetNamespace()).Update(ctx, newCluster, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to update CR status: %v", err)
 	}
@@ -472,6 +473,7 @@ func (c *Cluster) updateCRStatus() error {
 }
 
 func (c *Cluster) reportFailedStatus() {
+	ctx := context.Background()
 	c.logger.Info("cluster failed. Reporting failed reason...")
 
 	retryInterval := 5 * time.Second
@@ -488,7 +490,7 @@ func (c *Cluster) reportFailedStatus() {
 		}
 
 		cl, err := c.config.SensuCRCli.ObjectrocketV1beta1().SensuClusters(c.cluster.Namespace).
-			Get(c.cluster.Name, metav1.GetOptions{})
+			Get(ctx, c.cluster.Name, metav1.GetOptions{})
 		if err != nil {
 			// Update (PUT) will return conflict even if object is deleted since we have UID set in object.
 			// Because it will check UID first and return something like:

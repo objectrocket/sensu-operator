@@ -1808,8 +1808,6 @@ github.com/sensu/sensu-api-tools v0.2.1 h1:wjT5AFdboQ3jDwzBMcD38VJEwwWhPIIuReZrC
 github.com/sensu/sensu-api-tools v0.2.1/go.mod h1:SNISS4OhwNSZI9/YKTQr1bghOEwed9ZT4v+ztKk1Mq0=
 github.com/sensu/sensu-go v0.0.0-20240131213833-9587df6d89d2 h1:znhJ+yBy++KT17rDC1VawZVHVXJXRcLV+7WX3CZupVE=
 github.com/sensu/sensu-go v0.0.0-20240131213833-9587df6d89d2/go.mod h1:07Qg+B/IwB+KJdE5CdOt6COJF9Nnss74VqVI+QaPUc4=
-github.com/sensu/sensu-go/api/core/v2 v2.16.0 h1:HOq4rFkQ1S5ZjxmMTLc5J5mAbECrnKWvtXXbMqr3j9s=
-github.com/sensu/sensu-go/api/core/v2 v2.16.0/go.mod h1:MjM7+MCGEyTAgaZ589SiGHwYiaYF7N/58dU0J070u/0=
 github.com/sensu/sensu-go/types v0.13.0 h1:Cu1yLciXXakckkiv6u+VuNxPkVWQslaZogOVpR4IDAg=
 github.com/sensu/sensu-go/types v0.13.0/go.mod h1:Xb1E+aKOtebJ85CjyQCagxlV9lJzGrK6PfPqHj/z6z0=
 github.com/shirou/gopsutil/v3 v3.23.2/go.mod h1:gv0aQw33GLo3pG8SiWKiQrbDzbRY1K80RyZJ7V4Th1M=

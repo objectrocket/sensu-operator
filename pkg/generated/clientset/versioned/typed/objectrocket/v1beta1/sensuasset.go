@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The sensu-operator Authors
+Copyright 2024 The sensu-operator Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,15 +19,14 @@ limitations under the License.
 package v1beta1
 
 import (
-	"context"
-	"time"
+	context "context"
 
-	v1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
+	objectrocketv1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
 	scheme "github.com/objectrocket/sensu-operator/pkg/generated/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
-	rest "k8s.io/client-go/rest"
+	gentype "k8s.io/client-go/gentype"
 )
 
 // SensuAssetsGetter has a method to return a SensuAssetInterface.
@@ -38,164 +37,33 @@ type SensuAssetsGetter interface {
 
 // SensuAssetInterface has methods to work with SensuAsset resources.
 type SensuAssetInterface interface {
-	Create(*v1beta1.SensuAsset) (*v1beta1.SensuAsset, error)
-	Update(*v1beta1.SensuAsset) (*v1beta1.SensuAsset, error)
-	UpdateStatus(*v1beta1.SensuAsset) (*v1beta1.SensuAsset, error)
-	Delete(name string, options *v1.DeleteOptions) error
-	DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error
-	Get(name string, options v1.GetOptions) (*v1beta1.SensuAsset, error)
-	List(opts v1.ListOptions) (*v1beta1.SensuAssetList, error)
-	Watch(opts v1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.SensuAsset, err error)
+	Create(ctx context.Context, sensuAsset *objectrocketv1beta1.SensuAsset, opts v1.CreateOptions) (*objectrocketv1beta1.SensuAsset, error)
+	Update(ctx context.Context, sensuAsset *objectrocketv1beta1.SensuAsset, opts v1.UpdateOptions) (*objectrocketv1beta1.SensuAsset, error)
+	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
+	UpdateStatus(ctx context.Context, sensuAsset *objectrocketv1beta1.SensuAsset, opts v1.UpdateOptions) (*objectrocketv1beta1.SensuAsset, error)
+	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
+	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*objectrocketv1beta1.SensuAsset, error)
+	List(ctx context.Context, opts v1.ListOptions) (*objectrocketv1beta1.SensuAssetList, error)
+	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *objectrocketv1beta1.SensuAsset, err error)
 	SensuAssetExpansion
 }
 
 // sensuAssets implements SensuAssetInterface
 type sensuAssets struct {
-	client rest.Interface
-	ns     string
+	*gentype.ClientWithList[*objectrocketv1beta1.SensuAsset, *objectrocketv1beta1.SensuAssetList]
 }
 
 // newSensuAssets returns a SensuAssets
 func newSensuAssets(c *ObjectrocketV1beta1Client, namespace string) *sensuAssets {
 	return &sensuAssets{
-		client: c.RESTClient(),
-		ns:     namespace,
+		gentype.NewClientWithList[*objectrocketv1beta1.SensuAsset, *objectrocketv1beta1.SensuAssetList](
+			"sensuassets",
+			c.RESTClient(),
+			scheme.ParameterCodec,
+			namespace,
+			func() *objectrocketv1beta1.SensuAsset { return &objectrocketv1beta1.SensuAsset{} },
+			func() *objectrocketv1beta1.SensuAssetList { return &objectrocketv1beta1.SensuAssetList{} }),
 	}
-}
-
-// Get takes name of the sensuAsset, and returns the corresponding sensuAsset object, and an error if there is any.
-func (c *sensuAssets) Get(name string, options v1.GetOptions) (result *v1beta1.SensuAsset, err error) {
-	ctx := context.Background()
-	result = &v1beta1.SensuAsset{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("sensuassets").
-		Name(name).
-		VersionedParams(&options, scheme.ParameterCodec).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// List takes label and field selectors, and returns the list of SensuAssets that match those selectors.
-func (c *sensuAssets) List(opts v1.ListOptions) (result *v1beta1.SensuAssetList, err error) {
-	ctx := context.Background()
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	result = &v1beta1.SensuAssetList{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("sensuassets").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Watch returns a watch.Interface that watches the requested sensuAssets.
-func (c *sensuAssets) Watch(opts v1.ListOptions) (watch.Interface, error) {
-	ctx := context.Background()
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	opts.Watch = true
-	return c.client.Get().
-		Namespace(c.ns).
-		Resource("sensuassets").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Watch(ctx)
-}
-
-// Create takes the representation of a sensuAsset and creates it.  Returns the server's representation of the sensuAsset, and an error, if there is any.
-func (c *sensuAssets) Create(sensuAsset *v1beta1.SensuAsset) (result *v1beta1.SensuAsset, err error) {
-	ctx := context.Background()
-	result = &v1beta1.SensuAsset{}
-	err = c.client.Post().
-		Namespace(c.ns).
-		Resource("sensuassets").
-		Body(sensuAsset).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Update takes the representation of a sensuAsset and updates it. Returns the server's representation of the sensuAsset, and an error, if there is any.
-func (c *sensuAssets) Update(sensuAsset *v1beta1.SensuAsset) (result *v1beta1.SensuAsset, err error) {
-	ctx := context.Background()
-	result = &v1beta1.SensuAsset{}
-	err = c.client.Put().
-		Namespace(c.ns).
-		Resource("sensuassets").
-		Name(sensuAsset.Name).
-		Body(sensuAsset).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// UpdateStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-
-func (c *sensuAssets) UpdateStatus(sensuAsset *v1beta1.SensuAsset) (result *v1beta1.SensuAsset, err error) {
-	ctx := context.Background()
-	result = &v1beta1.SensuAsset{}
-	err = c.client.Put().
-		Namespace(c.ns).
-		Resource("sensuassets").
-		Name(sensuAsset.Name).
-		SubResource("status").
-		Body(sensuAsset).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Delete takes name of the sensuAsset and deletes it. Returns an error if one occurs.
-func (c *sensuAssets) Delete(name string, options *v1.DeleteOptions) error {
-	ctx := context.Background()
-	return c.client.Delete().
-		Namespace(c.ns).
-		Resource("sensuassets").
-		Name(name).
-		Body(options).
-		Do(ctx).
-		Error()
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *sensuAssets) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	ctx := context.Background()
-	var timeout time.Duration
-	if listOptions.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
-	}
-	return c.client.Delete().
-		Namespace(c.ns).
-		Resource("sensuassets").
-		VersionedParams(&listOptions, scheme.ParameterCodec).
-		Timeout(timeout).
-		Body(options).
-		Do(ctx).
-		Error()
-}
-
-// Patch applies the patch and returns the patched sensuAsset.
-func (c *sensuAssets) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.SensuAsset, err error) {
-	ctx := context.Background()
-	result = &v1beta1.SensuAsset{}
-	err = c.client.Patch(pt).
-		Namespace(c.ns).
-		Resource("sensuassets").
-		SubResource(subresources...).
-		Name(name).
-		Body(data).
-		Do(ctx).
-		Into(result)
-	return
 }

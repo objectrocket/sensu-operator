@@ -121,9 +121,11 @@ func getVersionFromImage(image string) string {
 }
 
 func waitSizeReachedWithAccept(t *testing.T, crClient versioned.Interface, size, retries int, cl *api.SensuCluster, accepts ...acceptFunc) ([]string, error) {
+	ctx := context.Background()
+
 	var names []string
 	err := retryutil.Retry(retryInterval, retries, func() (done bool, err error) {
-		currCluster, err := crClient.ObjectrocketV1beta1().SensuClusters(cl.Namespace).Get(cl.Name, metav1.GetOptions{})
+		currCluster, err := crClient.ObjectrocketV1beta1().SensuClusters(cl.Namespace).Get(ctx, cl.Name, metav1.GetOptions{})
 		if err != nil {
 			return false, err
 		}
@@ -148,9 +150,11 @@ func waitSizeReachedWithAccept(t *testing.T, crClient versioned.Interface, size,
 }
 
 func WaitUntilMembersWithNamesDeleted(t *testing.T, crClient versioned.Interface, retries int, cl *api.SensuCluster, targetNames ...string) ([]string, error) {
+	ctx := context.Background()
+
 	var remaining []string
 	err := retryutil.Retry(retryInterval, retries, func() (done bool, err error) {
-		currCluster, err := crClient.ObjectrocketV1beta1().SensuClusters(cl.Namespace).Get(cl.Name, metav1.GetOptions{})
+		currCluster, err := crClient.ObjectrocketV1beta1().SensuClusters(cl.Namespace).Get(ctx, cl.Name, metav1.GetOptions{})
 		if err != nil {
 			return false, err
 		}

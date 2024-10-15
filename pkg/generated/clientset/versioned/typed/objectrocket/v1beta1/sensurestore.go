@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The sensu-operator Authors
+Copyright 2024 The sensu-operator Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,14 +19,14 @@ limitations under the License.
 package v1beta1
 
 import (
-	"time"
-	"context"
-	v1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
+	context "context"
+
+	objectrocketv1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
 	scheme "github.com/objectrocket/sensu-operator/pkg/generated/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
-	rest "k8s.io/client-go/rest"
+	gentype "k8s.io/client-go/gentype"
 )
 
 // SensuRestoresGetter has a method to return a SensuRestoreInterface.
@@ -37,164 +37,33 @@ type SensuRestoresGetter interface {
 
 // SensuRestoreInterface has methods to work with SensuRestore resources.
 type SensuRestoreInterface interface {
-	Create(*v1beta1.SensuRestore) (*v1beta1.SensuRestore, error)
-	Update(*v1beta1.SensuRestore) (*v1beta1.SensuRestore, error)
-	UpdateStatus(*v1beta1.SensuRestore) (*v1beta1.SensuRestore, error)
-	Delete(name string, options *v1.DeleteOptions) error
-	DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error
-	Get(name string, options v1.GetOptions) (*v1beta1.SensuRestore, error)
-	List(opts v1.ListOptions) (*v1beta1.SensuRestoreList, error)
-	Watch(opts v1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.SensuRestore, err error)
+	Create(ctx context.Context, sensuRestore *objectrocketv1beta1.SensuRestore, opts v1.CreateOptions) (*objectrocketv1beta1.SensuRestore, error)
+	Update(ctx context.Context, sensuRestore *objectrocketv1beta1.SensuRestore, opts v1.UpdateOptions) (*objectrocketv1beta1.SensuRestore, error)
+	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
+	UpdateStatus(ctx context.Context, sensuRestore *objectrocketv1beta1.SensuRestore, opts v1.UpdateOptions) (*objectrocketv1beta1.SensuRestore, error)
+	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
+	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*objectrocketv1beta1.SensuRestore, error)
+	List(ctx context.Context, opts v1.ListOptions) (*objectrocketv1beta1.SensuRestoreList, error)
+	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *objectrocketv1beta1.SensuRestore, err error)
 	SensuRestoreExpansion
 }
 
 // sensuRestores implements SensuRestoreInterface
 type sensuRestores struct {
-	client rest.Interface
-	ns     string
+	*gentype.ClientWithList[*objectrocketv1beta1.SensuRestore, *objectrocketv1beta1.SensuRestoreList]
 }
 
 // newSensuRestores returns a SensuRestores
 func newSensuRestores(c *ObjectrocketV1beta1Client, namespace string) *sensuRestores {
 	return &sensuRestores{
-		client: c.RESTClient(),
-		ns:     namespace,
+		gentype.NewClientWithList[*objectrocketv1beta1.SensuRestore, *objectrocketv1beta1.SensuRestoreList](
+			"sensurestores",
+			c.RESTClient(),
+			scheme.ParameterCodec,
+			namespace,
+			func() *objectrocketv1beta1.SensuRestore { return &objectrocketv1beta1.SensuRestore{} },
+			func() *objectrocketv1beta1.SensuRestoreList { return &objectrocketv1beta1.SensuRestoreList{} }),
 	}
-}
-
-// Get takes name of the sensuRestore, and returns the corresponding sensuRestore object, and an error if there is any.
-func (c *sensuRestores) Get(name string, options v1.GetOptions) (result *v1beta1.SensuRestore, err error) {
-	ctx := context.Background()
-	result = &v1beta1.SensuRestore{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("sensurestores").
-		Name(name).
-		VersionedParams(&options, scheme.ParameterCodec).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// List takes label and field selectors, and returns the list of SensuRestores that match those selectors.
-func (c *sensuRestores) List(opts v1.ListOptions) (result *v1beta1.SensuRestoreList, err error) {
-	ctx := context.Background()
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	result = &v1beta1.SensuRestoreList{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("sensurestores").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Watch returns a watch.Interface that watches the requested sensuRestores.
-func (c *sensuRestores) Watch(opts v1.ListOptions) (watch.Interface, error) {
-	ctx := context.Background()
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	opts.Watch = true
-	return c.client.Get().
-		Namespace(c.ns).
-		Resource("sensurestores").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Watch(ctx)
-}
-
-// Create takes the representation of a sensuRestore and creates it.  Returns the server's representation of the sensuRestore, and an error, if there is any.
-func (c *sensuRestores) Create(sensuRestore *v1beta1.SensuRestore) (result *v1beta1.SensuRestore, err error) {
-	ctx := context.Background()
-	result = &v1beta1.SensuRestore{}
-	err = c.client.Post().
-		Namespace(c.ns).
-		Resource("sensurestores").
-		Body(sensuRestore).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Update takes the representation of a sensuRestore and updates it. Returns the server's representation of the sensuRestore, and an error, if there is any.
-func (c *sensuRestores) Update(sensuRestore *v1beta1.SensuRestore) (result *v1beta1.SensuRestore, err error) {
-	ctx := context.Background()
-	result = &v1beta1.SensuRestore{}
-	err = c.client.Put().
-		Namespace(c.ns).
-		Resource("sensurestores").
-		Name(sensuRestore.Name).
-		Body(sensuRestore).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// UpdateStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-
-func (c *sensuRestores) UpdateStatus(sensuRestore *v1beta1.SensuRestore) (result *v1beta1.SensuRestore, err error) {
-	ctx := context.Background()
-	result = &v1beta1.SensuRestore{}
-	err = c.client.Put().
-		Namespace(c.ns).
-		Resource("sensurestores").
-		Name(sensuRestore.Name).
-		SubResource("status").
-		Body(sensuRestore).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Delete takes name of the sensuRestore and deletes it. Returns an error if one occurs.
-func (c *sensuRestores) Delete(name string, options *v1.DeleteOptions) error {
-	ctx := context.Background()
-	return c.client.Delete().
-		Namespace(c.ns).
-		Resource("sensurestores").
-		Name(name).
-		Body(options).
-		Do(ctx).
-		Error()
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *sensuRestores) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	ctx := context.Background()
-	var timeout time.Duration
-	if listOptions.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
-	}
-	return c.client.Delete().
-		Namespace(c.ns).
-		Resource("sensurestores").
-		VersionedParams(&listOptions, scheme.ParameterCodec).
-		Timeout(timeout).
-		Body(options).
-		Do(ctx).
-		Error()
-}
-
-// Patch applies the patch and returns the patched sensuRestore.
-func (c *sensuRestores) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.SensuRestore, err error) {
-	ctx := context.Background()
-	result = &v1beta1.SensuRestore{}
-	err = c.client.Patch(pt).
-		Namespace(c.ns).
-		Resource("sensurestores").
-		SubResource(subresources...).
-		Name(name).
-		Body(data).
-		Do(ctx).
-		Into(result)
-	return
 }

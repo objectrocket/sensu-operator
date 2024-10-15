@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The sensu-operator Authors
+Copyright 2024 The sensu-operator Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,9 +19,10 @@ limitations under the License.
 package v1beta1
 
 import (
-	v1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
-	"github.com/objectrocket/sensu-operator/pkg/generated/clientset/versioned/scheme"
-	serializer "k8s.io/apimachinery/pkg/runtime/serializer"
+	http "net/http"
+
+	objectrocketv1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
+	scheme "github.com/objectrocket/sensu-operator/pkg/generated/clientset/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )
 
@@ -70,12 +71,28 @@ func (c *ObjectrocketV1beta1Client) SensuRestores(namespace string) SensuRestore
 }
 
 // NewForConfig creates a new ObjectrocketV1beta1Client for the given config.
+// NewForConfig is equivalent to NewForConfigAndClient(c, httpClient),
+// where httpClient was generated with rest.HTTPClientFor(c).
 func NewForConfig(c *rest.Config) (*ObjectrocketV1beta1Client, error) {
 	config := *c
 	if err := setConfigDefaults(&config); err != nil {
 		return nil, err
 	}
-	client, err := rest.RESTClientFor(&config)
+	httpClient, err := rest.HTTPClientFor(&config)
+	if err != nil {
+		return nil, err
+	}
+	return NewForConfigAndClient(&config, httpClient)
+}
+
+// NewForConfigAndClient creates a new ObjectrocketV1beta1Client for the given config and http client.
+// Note the http client provided takes precedence over the configured transport values.
+func NewForConfigAndClient(c *rest.Config, h *http.Client) (*ObjectrocketV1beta1Client, error) {
+	config := *c
+	if err := setConfigDefaults(&config); err != nil {
+		return nil, err
+	}
+	client, err := rest.RESTClientForConfigAndClient(&config, h)
 	if err != nil {
 		return nil, err
 	}
@@ -98,11 +115,10 @@ func New(c rest.Interface) *ObjectrocketV1beta1Client {
 }
 
 func setConfigDefaults(config *rest.Config) error {
-	gv := v1beta1.SchemeGroupVersion
+	gv := objectrocketv1beta1.SchemeGroupVersion
 	config.GroupVersion = &gv
 	config.APIPath = "/apis"
-//	config.NegotiatedSerializer = serializer.NewCodecFactory{CodecFactory: scheme.Codecs}
-	config.NegotiatedSerializer = serializer.NewCodecFactory(scheme.Scheme)
+	config.NegotiatedSerializer = scheme.Codecs.WithoutConversion()
 
 	if config.UserAgent == "" {
 		config.UserAgent = rest.DefaultKubernetesUserAgent()
