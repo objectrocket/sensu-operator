@@ -32,7 +32,7 @@ orbs:
 jobs:
   markdownlint:
     docker:
-    - image: circleci/node:10.14.2
+    - image: cimg/node:18.14.1
       auth:
         username: ${DOCKER_USERNAME}
         password: ${DOCKER_PASSWORD}
@@ -71,7 +71,7 @@ jobs:
     - checkout
     - run:
         name: go tests
-        command: make unittest
+        command: make unittest && make test
   build_deploy:
     working_directory: /go/src/github.com/objectrocket/sensu-operator
     docker:
@@ -86,7 +86,7 @@ jobs:
     - run:
         name: docker login
         command: |
-          docker login -u $DOCKER_USER -p $DOCKER_PASS
+          docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
     - run:
         name: docker build and push
         command: |

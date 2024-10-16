@@ -150,7 +150,8 @@ func (s *Scheme) Converter() *conversion.Converter {
 // API group and version that would never be updated.
 //
 // TODO: there is discussion about removing unversioned and replacing it with objects that are manifest into
-//   every version with particular schemas. Resolve this method at that point.
+//
+//	every version with particular schemas. Resolve this method at that point.
 func (s *Scheme) AddUnversionedTypes(version schema.GroupVersion, types ...Object) {
 	s.addObservedVersion(version)
 	s.AddKnownTypes(version, types...)
@@ -319,6 +320,7 @@ func (s *Scheme) AddIgnoredConversionType(from, to interface{}) error {
 // DestVersion fields on the Meta object. Example:
 //
 // s.AddConversionFuncs(
+//
 //	func(in *InternalObject, out *ExternalObject, scope conversion.Scope) error {
 //		// You can depend on Meta() being non-nil, and this being set to
 //		// the source version, e.g., ""
@@ -330,6 +332,7 @@ func (s *Scheme) AddIgnoredConversionType(from, to interface{}) error {
 //		s.Convert(&in.SubFieldThatMoved, &out.NewLocation.NewName, 0)
 //		return nil
 //	},
+//
 // )
 //
 // (For more detail about conversion functions, see Converter.Register's comment.)
@@ -524,7 +527,10 @@ func (s *Scheme) convertToVersion(copy bool, in Object, target GroupVersioner) (
 		return nil, NewNotRegisteredErrForType(s.schemeName, t)
 	}
 
+	fmt.Println(target)
+	fmt.Println(kinds)
 	gvk, ok := target.KindForGroupVersionKinds(kinds)
+	fmt.Println(gvk)
 	if !ok {
 		// try to see if this type is listed as unversioned (for legacy support)
 		// TODO: when we move to server API versions, we should completely remove the unversioned concept

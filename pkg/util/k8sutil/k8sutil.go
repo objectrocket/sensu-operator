@@ -501,6 +501,11 @@ etcd-key-file: %[1]s/server.key
 		Name:      "etcsensu",
 		MountPath: "/etc/sensu",
 	}
+	/*configVolumeMountData := v1.VolumeMount{
+		Name:				"etcd-data",
+		MountPath:	"/var/lib/sensu/etcd",
+	}*/
+
 	container := containerWithProbes(
 		sensuContainer(strings.Split(commands, " "), cs.Repository, cs.Version, cs.ClusterAdminUsername, cs.ClusterAdminPassword),
 		livenessProbe,
@@ -564,7 +569,7 @@ etcd-key-file: %[1]s/server.key
 					TIMEOUT_READY=%d
 					SUBDOMAIN=%s
 					NAMESPACE=%s
-					LOCAL_HOSTNAME=$(hostname).${SUBDOMAIN}.${NAMESPACE}.svc
+					LOCAL_HOSTNAME=$(hostname).${SUBDOMAIN}.${NAMESPACE}.svc.cluster.local
 					while ( ! nslookup $LOCAL_HOSTNAME )
 					do
 						# If TIMEOUT_READY is 0 we should never time out and exit
@@ -595,9 +600,9 @@ ORDINAL=${HOSTNAME##*-}
 TOKEN=%s
 SUBDOMAIN=%s
 NAMESPACE=%s
-LOCAL_HOSTNAME=${HOSTNAME}.${SUBDOMAIN}.${NAMESPACE}.svc
+LOCAL_HOSTNAME=${HOSTNAME}.${SUBDOMAIN}.${NAMESPACE}.svc.cluster.local
 SEED_NAME=${SUBDOMAIN}-0
-SEED_HOSTNAME=${SEED_NAME}.${SUBDOMAIN}.${NAMESPACE}.svc
+SEED_HOSTNAME=${SEED_NAME}.${SUBDOMAIN}.${NAMESPACE}.svc.cluster.local
 INITIAL_CLUSTER="${SEED_NAME}=http://${SEED_HOSTNAME}:2380"
 STATE="new"
 if [[ "$ORDINAL" == "0" ]]
@@ -607,7 +612,7 @@ else
 	STATE="existing"
 	for i in $(seq 1 $ORDINAL)
 	do
-		INITIAL_CLUSTER=${INITIAL_CLUSTER},${SUBDOMAIN}-${i}=http://${SUBDOMAIN}-${i}.${SUBDOMAIN}.${NAMESPACE}.svc:2380
+		INITIAL_CLUSTER=${INITIAL_CLUSTER},${SUBDOMAIN}-${i}=http://${SUBDOMAIN}-${i}.${SUBDOMAIN}.${NAMESPACE}.svc.cluster.local:2380
 	done
 fi
 if [[ "${STATE}" == "new" ]]
@@ -621,6 +626,7 @@ cat /etc/sensu/backend.yml
 `, token, clusterName, m.Namespace, options)},
 					VolumeMounts: []v1.VolumeMount{configVolumeMount},
 				},
+
 			},
 			Containers:    []v1.Container{container},
 			RestartPolicy: v1.RestartPolicyAlways,
@@ -682,7 +688,7 @@ func InClusterConfig() (*rest.Config, error) {
 	// Work around https://github.com/kubernetes/kubernetes/issues/40973
 	// See https://github.com/sensu/sensu-operator/issues/731#issuecomment-283804819
 	if len(os.Getenv("KUBERNETES_SERVICE_HOST")) == 0 {
-		addrs, err := net.LookupHost("kubernetes.default.svc")
+		addrs, err := net.LookupHost("kubernetes.default.svc.cluster.local")
 		if err != nil {
 			panic(err)
 		}
