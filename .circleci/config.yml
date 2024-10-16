@@ -71,7 +71,7 @@ jobs:
     - checkout
     - run:
         name: go tests
-        command: make unittest
+        command: make unittest && make test
   build_deploy:
     working_directory: /go/src/github.com/objectrocket/sensu-operator
     docker:
