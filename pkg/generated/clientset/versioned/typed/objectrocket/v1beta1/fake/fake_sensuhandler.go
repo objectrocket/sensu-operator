@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The sensu-operator Authors
+Copyright 2024 The sensu-operator Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,10 +19,11 @@ limitations under the License.
 package fake
 
 import (
+	context "context"
+
 	v1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -34,28 +35,30 @@ type FakeSensuHandlers struct {
 	ns   string
 }
 
-var sensuhandlersResource = schema.GroupVersionResource{Group: "objectrocket.com", Version: "v1beta1", Resource: "sensuhandlers"}
+var sensuhandlersResource = v1beta1.SchemeGroupVersion.WithResource("sensuhandlers")
 
-var sensuhandlersKind = schema.GroupVersionKind{Group: "objectrocket.com", Version: "v1beta1", Kind: "SensuHandler"}
+var sensuhandlersKind = v1beta1.SchemeGroupVersion.WithKind("SensuHandler")
 
 // Get takes name of the sensuHandler, and returns the corresponding sensuHandler object, and an error if there is any.
-func (c *FakeSensuHandlers) Get(name string, options v1.GetOptions) (result *v1beta1.SensuHandler, err error) {
+func (c *FakeSensuHandlers) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta1.SensuHandler, err error) {
+	emptyResult := &v1beta1.SensuHandler{}
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(sensuhandlersResource, c.ns, name), &v1beta1.SensuHandler{})
+		Invokes(testing.NewGetActionWithOptions(sensuhandlersResource, c.ns, name, options), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.SensuHandler), err
 }
 
 // List takes label and field selectors, and returns the list of SensuHandlers that match those selectors.
-func (c *FakeSensuHandlers) List(opts v1.ListOptions) (result *v1beta1.SensuHandlerList, err error) {
+func (c *FakeSensuHandlers) List(ctx context.Context, opts v1.ListOptions) (result *v1beta1.SensuHandlerList, err error) {
+	emptyResult := &v1beta1.SensuHandlerList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(sensuhandlersResource, sensuhandlersKind, c.ns, opts), &v1beta1.SensuHandlerList{})
+		Invokes(testing.NewListActionWithOptions(sensuhandlersResource, sensuhandlersKind, c.ns, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -72,69 +75,73 @@ func (c *FakeSensuHandlers) List(opts v1.ListOptions) (result *v1beta1.SensuHand
 }
 
 // Watch returns a watch.Interface that watches the requested sensuHandlers.
-func (c *FakeSensuHandlers) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeSensuHandlers) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(sensuhandlersResource, c.ns, opts))
+		InvokesWatch(testing.NewWatchActionWithOptions(sensuhandlersResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a sensuHandler and creates it.  Returns the server's representation of the sensuHandler, and an error, if there is any.
-func (c *FakeSensuHandlers) Create(sensuHandler *v1beta1.SensuHandler) (result *v1beta1.SensuHandler, err error) {
+func (c *FakeSensuHandlers) Create(ctx context.Context, sensuHandler *v1beta1.SensuHandler, opts v1.CreateOptions) (result *v1beta1.SensuHandler, err error) {
+	emptyResult := &v1beta1.SensuHandler{}
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(sensuhandlersResource, c.ns, sensuHandler), &v1beta1.SensuHandler{})
+		Invokes(testing.NewCreateActionWithOptions(sensuhandlersResource, c.ns, sensuHandler, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.SensuHandler), err
 }
 
 // Update takes the representation of a sensuHandler and updates it. Returns the server's representation of the sensuHandler, and an error, if there is any.
-func (c *FakeSensuHandlers) Update(sensuHandler *v1beta1.SensuHandler) (result *v1beta1.SensuHandler, err error) {
+func (c *FakeSensuHandlers) Update(ctx context.Context, sensuHandler *v1beta1.SensuHandler, opts v1.UpdateOptions) (result *v1beta1.SensuHandler, err error) {
+	emptyResult := &v1beta1.SensuHandler{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(sensuhandlersResource, c.ns, sensuHandler), &v1beta1.SensuHandler{})
+		Invokes(testing.NewUpdateActionWithOptions(sensuhandlersResource, c.ns, sensuHandler, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.SensuHandler), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeSensuHandlers) UpdateStatus(sensuHandler *v1beta1.SensuHandler) (*v1beta1.SensuHandler, error) {
+func (c *FakeSensuHandlers) UpdateStatus(ctx context.Context, sensuHandler *v1beta1.SensuHandler, opts v1.UpdateOptions) (result *v1beta1.SensuHandler, err error) {
+	emptyResult := &v1beta1.SensuHandler{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceAction(sensuhandlersResource, "status", c.ns, sensuHandler), &v1beta1.SensuHandler{})
+		Invokes(testing.NewUpdateSubresourceActionWithOptions(sensuhandlersResource, "status", c.ns, sensuHandler, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.SensuHandler), err
 }
 
 // Delete takes name of the sensuHandler and deletes it. Returns an error if one occurs.
-func (c *FakeSensuHandlers) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeSensuHandlers) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(sensuhandlersResource, c.ns, name), &v1beta1.SensuHandler{})
+		Invokes(testing.NewDeleteActionWithOptions(sensuhandlersResource, c.ns, name, opts), &v1beta1.SensuHandler{})
 
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeSensuHandlers) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(sensuhandlersResource, c.ns, listOptions)
+func (c *FakeSensuHandlers) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionActionWithOptions(sensuhandlersResource, c.ns, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1beta1.SensuHandlerList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched sensuHandler.
-func (c *FakeSensuHandlers) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.SensuHandler, err error) {
+func (c *FakeSensuHandlers) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta1.SensuHandler, err error) {
+	emptyResult := &v1beta1.SensuHandler{}
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(sensuhandlersResource, c.ns, name, pt, data, subresources...), &v1beta1.SensuHandler{})
+		Invokes(testing.NewPatchSubresourceActionWithOptions(sensuhandlersResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.SensuHandler), err
 }

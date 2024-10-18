@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -64,14 +65,18 @@ func TestController_syncSensuHandler(t *testing.T) {
 				},
 			},
 			func(t *testing.T, c *Controller, handler *api.SensuHandler) {
-				_, err := c.SensuCRCli.ObjectrocketV1beta1().SensuHandlers("sensu").Create(handler)
+				ctx := context.Background()
+
+				_, err := c.SensuCRCli.ObjectrocketV1beta1().SensuHandlers("sensu").Create(ctx, handler, metav1.CreateOptions{})
 				if err != nil {
 					t.Error(err)
 				}
 			},
 			func(c *Controller, handler *api.SensuHandler) error {
+				ctx := context.Background()
+
 				c.syncSensuHandler(handler)
-				k8sHandler, err := c.SensuCRCli.ObjectrocketV1beta1().SensuHandlers("sensu").Get("testHandler", metav1.GetOptions{})
+				k8sHandler, err := c.SensuCRCli.ObjectrocketV1beta1().SensuHandlers("sensu").Get(ctx, "testHandler", metav1.GetOptions{})
 				if err != nil {
 					return errors.New("failed to find handler in k8s")
 				}

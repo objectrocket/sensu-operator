@@ -20,20 +20,32 @@ import (
 	"fmt"
 	"sync"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // Interface can be implemented by anything that knows how to watch and report changes.
 type Interface interface {
-	// Stops watching. Will close the channel returned by ResultChan(). Releases
-	// any resources used by the watch.
+	// Stop tells the producer that the consumer is done watching, so the
+	// producer should stop sending events and close the result channel. The
+	// consumer should keep watching for events until the result channel is
+	// closed.
+	//
+	// Because some implementations may create channels when constructed, Stop
+	// must always be called, even if the consumer has not yet called
+	// ResultChan().
+	//
+	// Only the consumer should call Stop(), not the producer. If the producer
+	// errors and needs to stop the watch prematurely, it should instead send
+	// an error event and close the result channel.
 	Stop()
 
-	// Returns a chan which will receive all the events. If an error occurs
-	// or Stop() is called, this channel will be closed, in which case the
-	// watch should be completely cleaned up.
+	// ResultChan returns a channel which will receive events from the event
+	// producer. If an error occurs or Stop() is called, the producer must
+	// close this channel and release any resources used by the watch.
+	// Closing the result channel tells the consumer that no more events will be
+	// sent.
 	ResultChan() <-chan Event
 }
 
@@ -44,8 +56,11 @@ const (
 	Added    EventType = "ADDED"
 	Modified EventType = "MODIFIED"
 	Deleted  EventType = "DELETED"
+	Bookmark EventType = "BOOKMARK"
 	Error    EventType = "ERROR"
+)
 
+var (
 	DefaultChanSize int32 = 100
 )
 
@@ -57,6 +72,10 @@ type Event struct {
 	// Object is:
 	//  * If Type is Added or Modified: the new state of the object.
 	//  * If Type is Deleted: the state of the object immediately before deletion.
+	//  * If Type is Bookmark: the object (instance of a type being watched) where
+	//    only ResourceVersion field is set. On successful restart of watch from a
+	//    bookmark resourceVersion, client is guaranteed to not get repeat event
+	//    nor miss any events.
 	//  * If Type is Error: *api.Status is recommended; other types may make sense
 	//    depending on context.
 	Object runtime.Object
@@ -85,7 +104,7 @@ func (w emptyWatch) ResultChan() <-chan Event {
 // FakeWatcher lets you test anything that consumes a watch.Interface; threadsafe.
 type FakeWatcher struct {
 	result  chan Event
-	Stopped bool
+	stopped bool
 	sync.Mutex
 }
 
@@ -105,24 +124,24 @@ func NewFakeWithChanSize(size int, blocking bool) *FakeWatcher {
 func (f *FakeWatcher) Stop() {
 	f.Lock()
 	defer f.Unlock()
-	if !f.Stopped {
+	if !f.stopped {
 		klog.V(4).Infof("Stopping fake watcher.")
 		close(f.result)
-		f.Stopped = true
+		f.stopped = true
 	}
 }
 
 func (f *FakeWatcher) IsStopped() bool {
 	f.Lock()
 	defer f.Unlock()
-	return f.Stopped
+	return f.stopped
 }
 
 // Reset prepares the watcher to be reused.
 func (f *FakeWatcher) Reset() {
 	f.Lock()
 	defer f.Unlock()
-	f.Stopped = false
+	f.stopped = false
 	f.result = make(chan Event)
 }
 
@@ -269,7 +288,7 @@ func (f *RaceFreeFakeWatcher) Action(action EventType, obj runtime.Object) {
 	}
 }
 
-// ProxyWatcher lets you wrap your channel in watch Interface. Threadsafe.
+// ProxyWatcher lets you wrap your channel in watch Interface. threadsafe.
 type ProxyWatcher struct {
 	result chan Event
 	stopCh chan struct{}
@@ -314,4 +333,22 @@ func (pw *ProxyWatcher) ResultChan() <-chan Event {
 // StopChan returns stop channel
 func (pw *ProxyWatcher) StopChan() <-chan struct{} {
 	return pw.stopCh
+}
+
+// MockWatcher implements watch.Interface with mockable functions.
+type MockWatcher struct {
+	StopFunc       func()
+	ResultChanFunc func() <-chan Event
+}
+
+var _ Interface = &MockWatcher{}
+
+// Stop calls StopFunc
+func (mw MockWatcher) Stop() {
+	mw.StopFunc()
+}
+
+// ResultChan calls ResultChanFunc
+func (mw MockWatcher) ResultChan() <-chan Event {
+	return mw.ResultChanFunc()
 }

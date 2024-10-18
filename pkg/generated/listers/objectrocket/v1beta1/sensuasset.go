@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The sensu-operator Authors
+Copyright 2024 The sensu-operator Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,16 +19,18 @@ limitations under the License.
 package v1beta1
 
 import (
-	v1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/tools/cache"
+	objectrocketv1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // SensuAssetLister helps list SensuAssets.
+// All objects returned here must be treated as read-only.
 type SensuAssetLister interface {
 	// List lists all SensuAssets in the indexer.
-	List(selector labels.Selector) (ret []*v1beta1.SensuAsset, err error)
+	// Objects returned here must be treated as read-only.
+	List(selector labels.Selector) (ret []*objectrocketv1beta1.SensuAsset, err error)
 	// SensuAssets returns an object that can list and get SensuAssets.
 	SensuAssets(namespace string) SensuAssetNamespaceLister
 	SensuAssetListerExpansion
@@ -36,59 +38,33 @@ type SensuAssetLister interface {
 
 // sensuAssetLister implements the SensuAssetLister interface.
 type sensuAssetLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*objectrocketv1beta1.SensuAsset]
 }
 
 // NewSensuAssetLister returns a new SensuAssetLister.
 func NewSensuAssetLister(indexer cache.Indexer) SensuAssetLister {
-	return &sensuAssetLister{indexer: indexer}
-}
-
-// List lists all SensuAssets in the indexer.
-func (s *sensuAssetLister) List(selector labels.Selector) (ret []*v1beta1.SensuAsset, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1beta1.SensuAsset))
-	})
-	return ret, err
+	return &sensuAssetLister{listers.New[*objectrocketv1beta1.SensuAsset](indexer, objectrocketv1beta1.Resource("sensuasset"))}
 }
 
 // SensuAssets returns an object that can list and get SensuAssets.
 func (s *sensuAssetLister) SensuAssets(namespace string) SensuAssetNamespaceLister {
-	return sensuAssetNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return sensuAssetNamespaceLister{listers.NewNamespaced[*objectrocketv1beta1.SensuAsset](s.ResourceIndexer, namespace)}
 }
 
 // SensuAssetNamespaceLister helps list and get SensuAssets.
+// All objects returned here must be treated as read-only.
 type SensuAssetNamespaceLister interface {
 	// List lists all SensuAssets in the indexer for a given namespace.
-	List(selector labels.Selector) (ret []*v1beta1.SensuAsset, err error)
+	// Objects returned here must be treated as read-only.
+	List(selector labels.Selector) (ret []*objectrocketv1beta1.SensuAsset, err error)
 	// Get retrieves the SensuAsset from the indexer for a given namespace and name.
-	Get(name string) (*v1beta1.SensuAsset, error)
+	// Objects returned here must be treated as read-only.
+	Get(name string) (*objectrocketv1beta1.SensuAsset, error)
 	SensuAssetNamespaceListerExpansion
 }
 
 // sensuAssetNamespaceLister implements the SensuAssetNamespaceLister
 // interface.
 type sensuAssetNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all SensuAssets in the indexer for a given namespace.
-func (s sensuAssetNamespaceLister) List(selector labels.Selector) (ret []*v1beta1.SensuAsset, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1beta1.SensuAsset))
-	})
-	return ret, err
-}
-
-// Get retrieves the SensuAsset from the indexer for a given namespace and name.
-func (s sensuAssetNamespaceLister) Get(name string) (*v1beta1.SensuAsset, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1beta1.Resource("sensuasset"), name)
-	}
-	return obj.(*v1beta1.SensuAsset), nil
+	listers.ResourceIndexer[*objectrocketv1beta1.SensuAsset]
 }

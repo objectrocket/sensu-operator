@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The sensu-operator Authors
+Copyright 2024 The sensu-operator Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,16 +19,18 @@ limitations under the License.
 package v1beta1
 
 import (
-	v1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/tools/cache"
+	objectrocketv1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // SensuCheckConfigLister helps list SensuCheckConfigs.
+// All objects returned here must be treated as read-only.
 type SensuCheckConfigLister interface {
 	// List lists all SensuCheckConfigs in the indexer.
-	List(selector labels.Selector) (ret []*v1beta1.SensuCheckConfig, err error)
+	// Objects returned here must be treated as read-only.
+	List(selector labels.Selector) (ret []*objectrocketv1beta1.SensuCheckConfig, err error)
 	// SensuCheckConfigs returns an object that can list and get SensuCheckConfigs.
 	SensuCheckConfigs(namespace string) SensuCheckConfigNamespaceLister
 	SensuCheckConfigListerExpansion
@@ -36,59 +38,33 @@ type SensuCheckConfigLister interface {
 
 // sensuCheckConfigLister implements the SensuCheckConfigLister interface.
 type sensuCheckConfigLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*objectrocketv1beta1.SensuCheckConfig]
 }
 
 // NewSensuCheckConfigLister returns a new SensuCheckConfigLister.
 func NewSensuCheckConfigLister(indexer cache.Indexer) SensuCheckConfigLister {
-	return &sensuCheckConfigLister{indexer: indexer}
-}
-
-// List lists all SensuCheckConfigs in the indexer.
-func (s *sensuCheckConfigLister) List(selector labels.Selector) (ret []*v1beta1.SensuCheckConfig, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1beta1.SensuCheckConfig))
-	})
-	return ret, err
+	return &sensuCheckConfigLister{listers.New[*objectrocketv1beta1.SensuCheckConfig](indexer, objectrocketv1beta1.Resource("sensucheckconfig"))}
 }
 
 // SensuCheckConfigs returns an object that can list and get SensuCheckConfigs.
 func (s *sensuCheckConfigLister) SensuCheckConfigs(namespace string) SensuCheckConfigNamespaceLister {
-	return sensuCheckConfigNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return sensuCheckConfigNamespaceLister{listers.NewNamespaced[*objectrocketv1beta1.SensuCheckConfig](s.ResourceIndexer, namespace)}
 }
 
 // SensuCheckConfigNamespaceLister helps list and get SensuCheckConfigs.
+// All objects returned here must be treated as read-only.
 type SensuCheckConfigNamespaceLister interface {
 	// List lists all SensuCheckConfigs in the indexer for a given namespace.
-	List(selector labels.Selector) (ret []*v1beta1.SensuCheckConfig, err error)
+	// Objects returned here must be treated as read-only.
+	List(selector labels.Selector) (ret []*objectrocketv1beta1.SensuCheckConfig, err error)
 	// Get retrieves the SensuCheckConfig from the indexer for a given namespace and name.
-	Get(name string) (*v1beta1.SensuCheckConfig, error)
+	// Objects returned here must be treated as read-only.
+	Get(name string) (*objectrocketv1beta1.SensuCheckConfig, error)
 	SensuCheckConfigNamespaceListerExpansion
 }
 
 // sensuCheckConfigNamespaceLister implements the SensuCheckConfigNamespaceLister
 // interface.
 type sensuCheckConfigNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all SensuCheckConfigs in the indexer for a given namespace.
-func (s sensuCheckConfigNamespaceLister) List(selector labels.Selector) (ret []*v1beta1.SensuCheckConfig, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1beta1.SensuCheckConfig))
-	})
-	return ret, err
-}
-
-// Get retrieves the SensuCheckConfig from the indexer for a given namespace and name.
-func (s sensuCheckConfigNamespaceLister) Get(name string) (*v1beta1.SensuCheckConfig, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1beta1.Resource("sensucheckconfig"), name)
-	}
-	return obj.(*v1beta1.SensuCheckConfig), nil
+	listers.ResourceIndexer[*objectrocketv1beta1.SensuCheckConfig]
 }

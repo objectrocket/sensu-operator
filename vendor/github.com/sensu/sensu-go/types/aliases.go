@@ -1,6 +1,6 @@
 package types
 
-import v2 "github.com/sensu/sensu-go/api/core/v2"
+import v2 "github.com/sensu/core/v2"
 
 type (
 	AdhocRequest        = v2.AdhocRequest
@@ -18,7 +18,6 @@ type (
 	Entity              = v2.Entity
 	Event               = v2.Event
 	EventFilter         = v2.EventFilter
-	Extension           = v2.Extension
 	Handler             = v2.Handler
 	HandlerSocket       = v2.HandlerSocket
 	HealthResponse      = v2.HealthResponse
@@ -28,6 +27,10 @@ type (
 	KeepaliveRecord     = v2.KeepaliveRecord
 	MetricPoint         = v2.MetricPoint
 	MetricTag           = v2.MetricTag
+	MetricThreshold     = v2.MetricThreshold
+	MetricThresholds    = v2.MetricThresholds
+	MetricThresholdRule = v2.MetricThresholdRule
+	MetricThresholdTag  = v2.MetricThresholdTag
 	Metrics             = v2.Metrics
 	Mutator             = v2.Mutator
 	Namespace           = v2.Namespace
@@ -122,9 +125,6 @@ const (
 	// socket
 	HandlerUDPType = v2.HandlerUDPType
 
-	// HandlerGRPCType is a special kind of handler that represents an extension
-	HandlerGRPCType = v2.HandlerGRPCType
-
 	// EventFilterActionAllow is an action to allow events to pass through to the pipeline
 	EventFilterActionAllow = v2.EventFilterActionAllow
 
@@ -206,7 +206,6 @@ var (
 	FixtureEvent              = v2.FixtureEvent
 	FixtureEventFilter        = v2.FixtureEventFilter
 	FixtureDenyEventFilter    = v2.FixtureDenyEventFilter
-	FixtureExtension          = v2.FixtureExtension
 	FixtureMutator            = v2.FixtureMutator
 	FixtureAsset              = v2.FixtureAsset
 	FixtureSubject            = v2.FixtureSubject
@@ -243,6 +242,8 @@ var (
 	SortEntitiesByPredicate     = v2.SortEntitiesByPredicate
 	SortEntitiesByID            = v2.SortEntitiesByID
 	SortEntitiesByLastSeen      = v2.SortEntitiesByLastSeen
+	SortEventFiltersByPredicate = v2.SortEventFiltersByPredicate
+	SortEventFiltersByName      = v2.SortEventFiltersByName
 	SortHandlersByPredicate     = v2.SortHandlersByPredicate
 	SortHandlersByName          = v2.SortHandlersByName
 	SortSilencedByPredicate     = v2.SortSilencedByPredicate

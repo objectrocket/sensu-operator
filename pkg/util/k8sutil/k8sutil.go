@@ -15,6 +15,7 @@
 package k8sutil
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -191,9 +192,10 @@ func CreatePeerService(kubecli kubernetes.Interface, clusterName, ns string, own
 }
 
 func createService(kubecli kubernetes.Interface, svcName, clusterName, ns, clusterIP string, ports []v1.ServicePort, owner metav1.OwnerReference) error {
+	ctx := context.Background()
 	svc := newSensuServiceManifest(svcName, clusterName, clusterIP, ports)
 	addOwnerRefToObject(svc.GetObjectMeta(), owner)
-	_, err := kubecli.CoreV1().Services(ns).Create(svc)
+	_, err := kubecli.CoreV1().Services(ns).Create(ctx, svc, metav1.CreateOptions{})
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return err
 	}
@@ -202,7 +204,8 @@ func createService(kubecli kubernetes.Interface, svcName, clusterName, ns, clust
 
 // CreateAndWaitPod creates a pod and waits until it is running
 func CreateAndWaitPod(kubecli kubernetes.Interface, ns string, pod *v1.Pod, timeout time.Duration) (*v1.Pod, error) {
-	_, err := kubecli.CoreV1().Pods(ns).Create(pod)
+	ctx := context.Background()
+	_, err := kubecli.CoreV1().Pods(ns).Create(ctx, pod, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +213,7 @@ func CreateAndWaitPod(kubecli kubernetes.Interface, ns string, pod *v1.Pod, time
 	interval := 5 * time.Second
 	var retPod *v1.Pod
 	err = retryutil.Retry(interval, int(timeout/(interval)), func() (bool, error) {
-		retPod, err = kubecli.CoreV1().Pods(ns).Get(pod.Name, metav1.GetOptions{})
+		retPod, err = kubecli.CoreV1().Pods(ns).Get(ctx, pod.Name, metav1.GetOptions{})
 		if err != nil {
 			return false, err
 		}
@@ -237,7 +240,8 @@ func CreateAndWaitPod(kubecli kubernetes.Interface, ns string, pod *v1.Pod, time
 // CreateAndWaitDeployment creates a deployment and waits until the defined
 // number of replicas is reached
 func CreateAndWaitDeployment(kubecli kubernetes.Interface, ns string, deployment *appsv1.Deployment, timeout time.Duration) (*appsv1.Deployment, error) {
-	deployment, err := kubecli.AppsV1().Deployments(ns).Create(deployment)
+	ctx := context.Background()
+	deployment, err := kubecli.AppsV1().Deployments(ns).Create(ctx, deployment, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -245,7 +249,7 @@ func CreateAndWaitDeployment(kubecli kubernetes.Interface, ns string, deployment
 	interval := 5 * time.Second
 	var retDeployment *appsv1.Deployment
 	err = retryutil.Retry(interval, int(timeout/(interval)), func() (bool, error) {
-		retDeployment, err = kubecli.AppsV1().Deployments(ns).Get(deployment.Name, metav1.GetOptions{})
+		retDeployment, err = kubecli.AppsV1().Deployments(ns).Get(ctx, deployment.Name, metav1.GetOptions{})
 		if err != nil {
 			return false, err
 		}
@@ -320,6 +324,7 @@ func addOwnerRefToObject(o metav1.Object, r metav1.OwnerReference) {
 
 // CreateNetPolicy creates a NetworkPolicy for a Sensu cluster
 func CreateNetPolicy(kubecli kubernetes.Interface, clusterName, namespace string, owner metav1.OwnerReference) error {
+	ctx := context.Background()
 	labels := map[string]string{
 		"app":           "sensu",
 		"sensu_cluster": clusterName,
@@ -435,7 +440,7 @@ func CreateNetPolicy(kubecli kubernetes.Interface, clusterName, namespace string
 
 	for _, net := range netCases {
 		addOwnerRefToObject(net.GetObjectMeta(), owner)
-		if _, err := kubecli.NetworkingV1().NetworkPolicies(namespace).Create(&net); err != nil {
+		if _, err := kubecli.NetworkingV1().NetworkPolicies(namespace).Create(ctx, &net, metav1.CreateOptions{}); err != nil {
 			return err
 		}
 	}
@@ -501,6 +506,11 @@ etcd-key-file: %[1]s/server.key
 		Name:      "etcsensu",
 		MountPath: "/etc/sensu",
 	}
+	/*configVolumeMountData := v1.VolumeMount{
+		Name:				"etcd-data",
+		MountPath:	"/var/lib/sensu/etcd",
+	}*/
+
 	container := containerWithProbes(
 		sensuContainer(strings.Split(commands, " "), cs.Repository, cs.Version, cs.ClusterAdminUsername, cs.ClusterAdminPassword),
 		livenessProbe,
@@ -564,7 +574,7 @@ etcd-key-file: %[1]s/server.key
 					TIMEOUT_READY=%d
 					SUBDOMAIN=%s
 					NAMESPACE=%s
-					LOCAL_HOSTNAME=$(hostname).${SUBDOMAIN}.${NAMESPACE}.svc
+					LOCAL_HOSTNAME=$(hostname).${SUBDOMAIN}.${NAMESPACE}.svc.cluster.local
 					while ( ! nslookup $LOCAL_HOSTNAME )
 					do
 						# If TIMEOUT_READY is 0 we should never time out and exit
@@ -595,9 +605,9 @@ ORDINAL=${HOSTNAME##*-}
 TOKEN=%s
 SUBDOMAIN=%s
 NAMESPACE=%s
-LOCAL_HOSTNAME=${HOSTNAME}.${SUBDOMAIN}.${NAMESPACE}.svc
+LOCAL_HOSTNAME=${HOSTNAME}.${SUBDOMAIN}.${NAMESPACE}.svc.cluster.local
 SEED_NAME=${SUBDOMAIN}-0
-SEED_HOSTNAME=${SEED_NAME}.${SUBDOMAIN}.${NAMESPACE}.svc
+SEED_HOSTNAME=${SEED_NAME}.${SUBDOMAIN}.${NAMESPACE}.svc.cluster.local
 INITIAL_CLUSTER="${SEED_NAME}=http://${SEED_HOSTNAME}:2380"
 STATE="new"
 if [[ "$ORDINAL" == "0" ]]
@@ -607,7 +617,7 @@ else
 	STATE="existing"
 	for i in $(seq 1 $ORDINAL)
 	do
-		INITIAL_CLUSTER=${INITIAL_CLUSTER},${SUBDOMAIN}-${i}=http://${SUBDOMAIN}-${i}.${SUBDOMAIN}.${NAMESPACE}.svc:2380
+		INITIAL_CLUSTER=${INITIAL_CLUSTER},${SUBDOMAIN}-${i}=http://${SUBDOMAIN}-${i}.${SUBDOMAIN}.${NAMESPACE}.svc.cluster.local:2380
 	done
 fi
 if [[ "${STATE}" == "new" ]]
@@ -682,7 +692,7 @@ func InClusterConfig() (*rest.Config, error) {
 	// Work around https://github.com/kubernetes/kubernetes/issues/40973
 	// See https://github.com/sensu/sensu-operator/issues/731#issuecomment-283804819
 	if len(os.Getenv("KUBERNETES_SERVICE_HOST")) == 0 {
-		addrs, err := net.LookupHost("kubernetes.default.svc")
+		addrs, err := net.LookupHost("kubernetes.default.svc.cluster.local")
 		if err != nil {
 			panic(err)
 		}

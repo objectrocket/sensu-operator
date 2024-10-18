@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The sensu-operator Authors
+Copyright 2024 The sensu-operator Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,10 +19,11 @@ limitations under the License.
 package fake
 
 import (
+	context "context"
+
 	v1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -34,28 +35,30 @@ type FakeSensuRestores struct {
 	ns   string
 }
 
-var sensurestoresResource = schema.GroupVersionResource{Group: "objectrocket.com", Version: "v1beta1", Resource: "sensurestores"}
+var sensurestoresResource = v1beta1.SchemeGroupVersion.WithResource("sensurestores")
 
-var sensurestoresKind = schema.GroupVersionKind{Group: "objectrocket.com", Version: "v1beta1", Kind: "SensuRestore"}
+var sensurestoresKind = v1beta1.SchemeGroupVersion.WithKind("SensuRestore")
 
 // Get takes name of the sensuRestore, and returns the corresponding sensuRestore object, and an error if there is any.
-func (c *FakeSensuRestores) Get(name string, options v1.GetOptions) (result *v1beta1.SensuRestore, err error) {
+func (c *FakeSensuRestores) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta1.SensuRestore, err error) {
+	emptyResult := &v1beta1.SensuRestore{}
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(sensurestoresResource, c.ns, name), &v1beta1.SensuRestore{})
+		Invokes(testing.NewGetActionWithOptions(sensurestoresResource, c.ns, name, options), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.SensuRestore), err
 }
 
 // List takes label and field selectors, and returns the list of SensuRestores that match those selectors.
-func (c *FakeSensuRestores) List(opts v1.ListOptions) (result *v1beta1.SensuRestoreList, err error) {
+func (c *FakeSensuRestores) List(ctx context.Context, opts v1.ListOptions) (result *v1beta1.SensuRestoreList, err error) {
+	emptyResult := &v1beta1.SensuRestoreList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(sensurestoresResource, sensurestoresKind, c.ns, opts), &v1beta1.SensuRestoreList{})
+		Invokes(testing.NewListActionWithOptions(sensurestoresResource, sensurestoresKind, c.ns, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -72,69 +75,73 @@ func (c *FakeSensuRestores) List(opts v1.ListOptions) (result *v1beta1.SensuRest
 }
 
 // Watch returns a watch.Interface that watches the requested sensuRestores.
-func (c *FakeSensuRestores) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeSensuRestores) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(sensurestoresResource, c.ns, opts))
+		InvokesWatch(testing.NewWatchActionWithOptions(sensurestoresResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a sensuRestore and creates it.  Returns the server's representation of the sensuRestore, and an error, if there is any.
-func (c *FakeSensuRestores) Create(sensuRestore *v1beta1.SensuRestore) (result *v1beta1.SensuRestore, err error) {
+func (c *FakeSensuRestores) Create(ctx context.Context, sensuRestore *v1beta1.SensuRestore, opts v1.CreateOptions) (result *v1beta1.SensuRestore, err error) {
+	emptyResult := &v1beta1.SensuRestore{}
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(sensurestoresResource, c.ns, sensuRestore), &v1beta1.SensuRestore{})
+		Invokes(testing.NewCreateActionWithOptions(sensurestoresResource, c.ns, sensuRestore, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.SensuRestore), err
 }
 
 // Update takes the representation of a sensuRestore and updates it. Returns the server's representation of the sensuRestore, and an error, if there is any.
-func (c *FakeSensuRestores) Update(sensuRestore *v1beta1.SensuRestore) (result *v1beta1.SensuRestore, err error) {
+func (c *FakeSensuRestores) Update(ctx context.Context, sensuRestore *v1beta1.SensuRestore, opts v1.UpdateOptions) (result *v1beta1.SensuRestore, err error) {
+	emptyResult := &v1beta1.SensuRestore{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(sensurestoresResource, c.ns, sensuRestore), &v1beta1.SensuRestore{})
+		Invokes(testing.NewUpdateActionWithOptions(sensurestoresResource, c.ns, sensuRestore, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.SensuRestore), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeSensuRestores) UpdateStatus(sensuRestore *v1beta1.SensuRestore) (*v1beta1.SensuRestore, error) {
+func (c *FakeSensuRestores) UpdateStatus(ctx context.Context, sensuRestore *v1beta1.SensuRestore, opts v1.UpdateOptions) (result *v1beta1.SensuRestore, err error) {
+	emptyResult := &v1beta1.SensuRestore{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceAction(sensurestoresResource, "status", c.ns, sensuRestore), &v1beta1.SensuRestore{})
+		Invokes(testing.NewUpdateSubresourceActionWithOptions(sensurestoresResource, "status", c.ns, sensuRestore, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.SensuRestore), err
 }
 
 // Delete takes name of the sensuRestore and deletes it. Returns an error if one occurs.
-func (c *FakeSensuRestores) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeSensuRestores) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(sensurestoresResource, c.ns, name), &v1beta1.SensuRestore{})
+		Invokes(testing.NewDeleteActionWithOptions(sensurestoresResource, c.ns, name, opts), &v1beta1.SensuRestore{})
 
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeSensuRestores) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(sensurestoresResource, c.ns, listOptions)
+func (c *FakeSensuRestores) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionActionWithOptions(sensurestoresResource, c.ns, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1beta1.SensuRestoreList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched sensuRestore.
-func (c *FakeSensuRestores) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.SensuRestore, err error) {
+func (c *FakeSensuRestores) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta1.SensuRestore, err error) {
+	emptyResult := &v1beta1.SensuRestore{}
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(sensurestoresResource, c.ns, name, pt, data, subresources...), &v1beta1.SensuRestore{})
+		Invokes(testing.NewPatchSubresourceActionWithOptions(sensurestoresResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.SensuRestore), err
 }

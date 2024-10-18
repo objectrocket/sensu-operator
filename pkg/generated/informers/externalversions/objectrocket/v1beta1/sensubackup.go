@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The sensu-operator Authors
+Copyright 2024 The sensu-operator Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,12 +19,13 @@ limitations under the License.
 package v1beta1
 
 import (
+	context "context"
 	time "time"
 
-	objectrocketv1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
+	apisobjectrocketv1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
 	versioned "github.com/objectrocket/sensu-operator/pkg/generated/clientset/versioned"
 	internalinterfaces "github.com/objectrocket/sensu-operator/pkg/generated/informers/externalversions/internalinterfaces"
-	v1beta1 "github.com/objectrocket/sensu-operator/pkg/generated/listers/objectrocket/v1beta1"
+	objectrocketv1beta1 "github.com/objectrocket/sensu-operator/pkg/generated/listers/objectrocket/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -35,7 +36,7 @@ import (
 // SensuBackups.
 type SensuBackupInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1beta1.SensuBackupLister
+	Lister() objectrocketv1beta1.SensuBackupLister
 }
 
 type sensuBackupInformer struct {
@@ -61,16 +62,16 @@ func NewFilteredSensuBackupInformer(client versioned.Interface, namespace string
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ObjectrocketV1beta1().SensuBackups(namespace).List(options)
+				return client.ObjectrocketV1beta1().SensuBackups(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ObjectrocketV1beta1().SensuBackups(namespace).Watch(options)
+				return client.ObjectrocketV1beta1().SensuBackups(namespace).Watch(context.TODO(), options)
 			},
 		},
-		&objectrocketv1beta1.SensuBackup{},
+		&apisobjectrocketv1beta1.SensuBackup{},
 		resyncPeriod,
 		indexers,
 	)
@@ -81,9 +82,9 @@ func (f *sensuBackupInformer) defaultInformer(client versioned.Interface, resync
 }
 
 func (f *sensuBackupInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&objectrocketv1beta1.SensuBackup{}, f.defaultInformer)
+	return f.factory.InformerFor(&apisobjectrocketv1beta1.SensuBackup{}, f.defaultInformer)
 }
 
-func (f *sensuBackupInformer) Lister() v1beta1.SensuBackupLister {
-	return v1beta1.NewSensuBackupLister(f.Informer().GetIndexer())
+func (f *sensuBackupInformer) Lister() objectrocketv1beta1.SensuBackupLister {
+	return objectrocketv1beta1.NewSensuBackupLister(f.Informer().GetIndexer())
 }

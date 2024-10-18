@@ -15,6 +15,7 @@
 package s3factory
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -69,13 +70,14 @@ func (w *S3Client) Close() {
 
 // setupAWSConfig setup local AWS config/credential files from Kubernetes aws secret.
 func setupAWSConfig(kubecli kubernetes.Interface, ns, secret, endpoint, configDir string) (*session.Options, error) {
+	ctx := context.Background()
 	options := &session.Options{}
 	options.SharedConfigState = session.SharedConfigEnable
 
 	// empty string defaults to aws
 	options.Config.Endpoint = &endpoint
 
-	se, err := kubecli.CoreV1().Secrets(ns).Get(secret, metav1.GetOptions{})
+	se, err := kubecli.CoreV1().Secrets(ns).Get(ctx, secret, metav1.GetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("setup AWS config failed: get k8s secret failed: %v", err)
 	}

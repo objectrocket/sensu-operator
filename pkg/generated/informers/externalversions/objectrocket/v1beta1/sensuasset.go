@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The sensu-operator Authors
+Copyright 2024 The sensu-operator Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,12 +19,13 @@ limitations under the License.
 package v1beta1
 
 import (
+	context "context"
 	time "time"
 
-	objectrocketv1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
+	apisobjectrocketv1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
 	versioned "github.com/objectrocket/sensu-operator/pkg/generated/clientset/versioned"
 	internalinterfaces "github.com/objectrocket/sensu-operator/pkg/generated/informers/externalversions/internalinterfaces"
-	v1beta1 "github.com/objectrocket/sensu-operator/pkg/generated/listers/objectrocket/v1beta1"
+	objectrocketv1beta1 "github.com/objectrocket/sensu-operator/pkg/generated/listers/objectrocket/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -35,7 +36,7 @@ import (
 // SensuAssets.
 type SensuAssetInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1beta1.SensuAssetLister
+	Lister() objectrocketv1beta1.SensuAssetLister
 }
 
 type sensuAssetInformer struct {
@@ -61,16 +62,16 @@ func NewFilteredSensuAssetInformer(client versioned.Interface, namespace string,
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ObjectrocketV1beta1().SensuAssets(namespace).List(options)
+				return client.ObjectrocketV1beta1().SensuAssets(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ObjectrocketV1beta1().SensuAssets(namespace).Watch(options)
+				return client.ObjectrocketV1beta1().SensuAssets(namespace).Watch(context.TODO(), options)
 			},
 		},
-		&objectrocketv1beta1.SensuAsset{},
+		&apisobjectrocketv1beta1.SensuAsset{},
 		resyncPeriod,
 		indexers,
 	)
@@ -81,9 +82,9 @@ func (f *sensuAssetInformer) defaultInformer(client versioned.Interface, resyncP
 }
 
 func (f *sensuAssetInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&objectrocketv1beta1.SensuAsset{}, f.defaultInformer)
+	return f.factory.InformerFor(&apisobjectrocketv1beta1.SensuAsset{}, f.defaultInformer)
 }
 
-func (f *sensuAssetInformer) Lister() v1beta1.SensuAssetLister {
-	return v1beta1.NewSensuAssetLister(f.Informer().GetIndexer())
+func (f *sensuAssetInformer) Lister() objectrocketv1beta1.SensuAssetLister {
+	return objectrocketv1beta1.NewSensuAssetLister(f.Informer().GetIndexer())
 }

@@ -16,6 +16,7 @@ package framework
 
 import (
 	"bytes"
+	"context"
 	"flag"
 	"fmt"
 	"os/exec"
@@ -153,14 +154,15 @@ func (f *Framework) DeleteSensuOperatorCompletely() error {
 }
 
 func (f *Framework) deleteOperatorCompletely(name string) error {
-	err := f.KubeClient.CoreV1().Pods(f.Namespace).Delete(name, metav1.NewDeleteOptions(1))
+	ctx := context.Background()
+	err := f.KubeClient.CoreV1().Pods(f.Namespace).Delete(ctx, name, *metav1.NewDeleteOptions(1))
 	if err != nil {
 		return err
 	}
 	// Grace period isn't exactly accurate. It took ~10s for operator pod to completely disappear.
 	// We work around by increasing the wait time. Revisit this later.
 	err = retryutil.Retry(5*time.Second, 6, func() (bool, error) {
-		_, err := f.KubeClient.CoreV1().Pods(f.Namespace).Get(name, metav1.GetOptions{})
+		_, err := f.KubeClient.CoreV1().Pods(f.Namespace).Get(ctx, name, metav1.GetOptions{})
 		if err == nil {
 			return false, nil
 		}

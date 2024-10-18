@@ -1,11 +1,13 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 
 	api "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
 	sensu_client "github.com/objectrocket/sensu-operator/pkg/sensu_client"
 
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -14,6 +16,8 @@ func (c *Controller) onUpdateSensuCheckConfig(newObj interface{}) {
 }
 
 func (c *Controller) onDeleteSensuCheckConfig(obj interface{}) {
+	ctx := context.Background()
+
 	checkConfig, ok := obj.(*api.SensuCheckConfig)
 	if !ok {
 		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
@@ -40,12 +44,14 @@ func (c *Controller) onDeleteSensuCheckConfig(obj interface{}) {
 	}
 	cc := checkConfig.DeepCopy()
 	cc.Finalizers = make([]string, 0)
-	if _, err := c.SensuCRCli.ObjectrocketV1beta1().SensuCheckConfigs(checkConfig.GetNamespace()).Update(cc); err != nil {
+	if _, err := c.SensuCRCli.ObjectrocketV1beta1().SensuCheckConfigs(checkConfig.GetNamespace()).Update(ctx, cc, v1.UpdateOptions{}); err != nil {
 		c.logger.Warningf("failed to update checkconfig to remove finalizer: %+v", err)
 	}
 }
 
 func (c *Controller) syncSensuCheckConfig(checkConfig *api.SensuCheckConfig) {
+	ctx := context.Background()
+
 	var err error
 	c.logger.Debugf("in syncSensuCheckConfig, about to update checkconfig within sensu cluster '%s', within k8s namespace '%s', and sensu namespace '%s'",
 		checkConfig.Spec.SensuMetadata.ClusterName, checkConfig.GetNamespace(), checkConfig.Spec.SensuMetadata.Namespace)
@@ -58,7 +64,7 @@ func (c *Controller) syncSensuCheckConfig(checkConfig *api.SensuCheckConfig) {
 	if len(checkConfig.Finalizers) == 0 {
 		copy := checkConfig.DeepCopy()
 		copy.Finalizers = append(copy.Finalizers, "asset.finalizer.objectrocket.com")
-		if _, err = c.SensuCRCli.ObjectrocketV1beta1().SensuCheckConfigs(copy.GetNamespace()).Update(copy); err != nil {
+		if _, err = c.SensuCRCli.ObjectrocketV1beta1().SensuCheckConfigs(copy.GetNamespace()).Update(ctx, copy, v1.UpdateOptions{}); err != nil {
 			msg := fmt.Sprintf("failed to update assets's finalizer during sync event: %v", err)
 			c.logger.Warningf(msg)
 			return
@@ -70,7 +76,7 @@ func (c *Controller) syncSensuCheckConfig(checkConfig *api.SensuCheckConfig) {
 		copy := checkConfig.DeepCopy()
 		copy.Status.Accepted = false
 		copy.Status.LastError = fmt.Sprintf("Sensu cluster '%s' not found", checkConfig.Spec.SensuMetadata.ClusterName)
-		if _, err = c.SensuCRCli.ObjectrocketV1beta1().SensuCheckConfigs(copy.GetNamespace()).Update(copy); err != nil {
+		if _, err = c.SensuCRCli.ObjectrocketV1beta1().SensuCheckConfigs(copy.GetNamespace()).Update(ctx, copy, v1.UpdateOptions{}); err != nil {
 			c.logger.Warningf("failed to update checkConfig's status during update event: %v", err)
 		}
 		return
@@ -87,7 +93,7 @@ func (c *Controller) syncSensuCheckConfig(checkConfig *api.SensuCheckConfig) {
 		copy.Status.Accepted = true
 		c.logger.Debugf("in syncSensuCheckConfig, about to update checkconfig status within sensu cluster '%s', within k8s namespace '%s', and sensu namespace '%s'",
 			checkConfig.Spec.SensuMetadata.ClusterName, checkConfig.GetNamespace(), checkConfig.Spec.SensuMetadata.Namespace)
-		if _, err = c.SensuCRCli.ObjectrocketV1beta1().SensuCheckConfigs(copy.GetNamespace()).Update(copy); err != nil {
+		if _, err = c.SensuCRCli.ObjectrocketV1beta1().SensuCheckConfigs(copy.GetNamespace()).Update(ctx, copy, v1.UpdateOptions{}); err != nil {
 			c.logger.Warningf("failed to update checkconfig's status during update event: %v", err)
 		}
 		c.logger.Debugf("in syncSensuCheckConfig, done updating checkconfig status within sensu cluster '%s', within k8s namespace '%s', and sensu namespace '%s'",

@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The sensu-operator Authors
+Copyright 2024 The sensu-operator Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,10 +19,11 @@ limitations under the License.
 package fake
 
 import (
+	context "context"
+
 	v1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -34,28 +35,30 @@ type FakeSensuEventFilters struct {
 	ns   string
 }
 
-var sensueventfiltersResource = schema.GroupVersionResource{Group: "objectrocket.com", Version: "v1beta1", Resource: "sensueventfilters"}
+var sensueventfiltersResource = v1beta1.SchemeGroupVersion.WithResource("sensueventfilters")
 
-var sensueventfiltersKind = schema.GroupVersionKind{Group: "objectrocket.com", Version: "v1beta1", Kind: "SensuEventFilter"}
+var sensueventfiltersKind = v1beta1.SchemeGroupVersion.WithKind("SensuEventFilter")
 
 // Get takes name of the sensuEventFilter, and returns the corresponding sensuEventFilter object, and an error if there is any.
-func (c *FakeSensuEventFilters) Get(name string, options v1.GetOptions) (result *v1beta1.SensuEventFilter, err error) {
+func (c *FakeSensuEventFilters) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta1.SensuEventFilter, err error) {
+	emptyResult := &v1beta1.SensuEventFilter{}
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(sensueventfiltersResource, c.ns, name), &v1beta1.SensuEventFilter{})
+		Invokes(testing.NewGetActionWithOptions(sensueventfiltersResource, c.ns, name, options), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.SensuEventFilter), err
 }
 
 // List takes label and field selectors, and returns the list of SensuEventFilters that match those selectors.
-func (c *FakeSensuEventFilters) List(opts v1.ListOptions) (result *v1beta1.SensuEventFilterList, err error) {
+func (c *FakeSensuEventFilters) List(ctx context.Context, opts v1.ListOptions) (result *v1beta1.SensuEventFilterList, err error) {
+	emptyResult := &v1beta1.SensuEventFilterList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(sensueventfiltersResource, sensueventfiltersKind, c.ns, opts), &v1beta1.SensuEventFilterList{})
+		Invokes(testing.NewListActionWithOptions(sensueventfiltersResource, sensueventfiltersKind, c.ns, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -72,69 +75,73 @@ func (c *FakeSensuEventFilters) List(opts v1.ListOptions) (result *v1beta1.Sensu
 }
 
 // Watch returns a watch.Interface that watches the requested sensuEventFilters.
-func (c *FakeSensuEventFilters) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeSensuEventFilters) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(sensueventfiltersResource, c.ns, opts))
+		InvokesWatch(testing.NewWatchActionWithOptions(sensueventfiltersResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a sensuEventFilter and creates it.  Returns the server's representation of the sensuEventFilter, and an error, if there is any.
-func (c *FakeSensuEventFilters) Create(sensuEventFilter *v1beta1.SensuEventFilter) (result *v1beta1.SensuEventFilter, err error) {
+func (c *FakeSensuEventFilters) Create(ctx context.Context, sensuEventFilter *v1beta1.SensuEventFilter, opts v1.CreateOptions) (result *v1beta1.SensuEventFilter, err error) {
+	emptyResult := &v1beta1.SensuEventFilter{}
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(sensueventfiltersResource, c.ns, sensuEventFilter), &v1beta1.SensuEventFilter{})
+		Invokes(testing.NewCreateActionWithOptions(sensueventfiltersResource, c.ns, sensuEventFilter, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.SensuEventFilter), err
 }
 
 // Update takes the representation of a sensuEventFilter and updates it. Returns the server's representation of the sensuEventFilter, and an error, if there is any.
-func (c *FakeSensuEventFilters) Update(sensuEventFilter *v1beta1.SensuEventFilter) (result *v1beta1.SensuEventFilter, err error) {
+func (c *FakeSensuEventFilters) Update(ctx context.Context, sensuEventFilter *v1beta1.SensuEventFilter, opts v1.UpdateOptions) (result *v1beta1.SensuEventFilter, err error) {
+	emptyResult := &v1beta1.SensuEventFilter{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(sensueventfiltersResource, c.ns, sensuEventFilter), &v1beta1.SensuEventFilter{})
+		Invokes(testing.NewUpdateActionWithOptions(sensueventfiltersResource, c.ns, sensuEventFilter, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.SensuEventFilter), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeSensuEventFilters) UpdateStatus(sensuEventFilter *v1beta1.SensuEventFilter) (*v1beta1.SensuEventFilter, error) {
+func (c *FakeSensuEventFilters) UpdateStatus(ctx context.Context, sensuEventFilter *v1beta1.SensuEventFilter, opts v1.UpdateOptions) (result *v1beta1.SensuEventFilter, err error) {
+	emptyResult := &v1beta1.SensuEventFilter{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceAction(sensueventfiltersResource, "status", c.ns, sensuEventFilter), &v1beta1.SensuEventFilter{})
+		Invokes(testing.NewUpdateSubresourceActionWithOptions(sensueventfiltersResource, "status", c.ns, sensuEventFilter, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.SensuEventFilter), err
 }
 
 // Delete takes name of the sensuEventFilter and deletes it. Returns an error if one occurs.
-func (c *FakeSensuEventFilters) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeSensuEventFilters) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(sensueventfiltersResource, c.ns, name), &v1beta1.SensuEventFilter{})
+		Invokes(testing.NewDeleteActionWithOptions(sensueventfiltersResource, c.ns, name, opts), &v1beta1.SensuEventFilter{})
 
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeSensuEventFilters) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(sensueventfiltersResource, c.ns, listOptions)
+func (c *FakeSensuEventFilters) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionActionWithOptions(sensueventfiltersResource, c.ns, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1beta1.SensuEventFilterList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched sensuEventFilter.
-func (c *FakeSensuEventFilters) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.SensuEventFilter, err error) {
+func (c *FakeSensuEventFilters) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta1.SensuEventFilter, err error) {
+	emptyResult := &v1beta1.SensuEventFilter{}
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(sensueventfiltersResource, c.ns, name, pt, data, subresources...), &v1beta1.SensuEventFilter{})
+		Invokes(testing.NewPatchSubresourceActionWithOptions(sensueventfiltersResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.SensuEventFilter), err
 }

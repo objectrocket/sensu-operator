@@ -1,10 +1,12 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 
 	api "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
 	sensu_client "github.com/objectrocket/sensu-operator/pkg/sensu_client"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -13,6 +15,8 @@ func (c *Controller) onUpdateSensuHandler(newObj interface{}) {
 }
 
 func (c *Controller) onDeleteSensuHandler(obj interface{}) {
+	ctx := context.Background()
+
 	handler, ok := obj.(*api.SensuHandler)
 	if !ok {
 		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
@@ -39,12 +43,14 @@ func (c *Controller) onDeleteSensuHandler(obj interface{}) {
 	}
 	cc := handler.DeepCopy()
 	cc.Finalizers = make([]string, 0)
-	if _, err := c.SensuCRCli.ObjectrocketV1beta1().SensuHandlers(handler.GetNamespace()).Update(cc); err != nil {
+	if _, err := c.SensuCRCli.ObjectrocketV1beta1().SensuHandlers(handler.GetNamespace()).Update(ctx, cc, v1.UpdateOptions{}); err != nil {
 		c.logger.Warningf("failed to update handler to remove finalizer: %+v", err)
 	}
 }
 
 func (c *Controller) syncSensuHandler(handler *api.SensuHandler) {
+	ctx := context.Background()
+
 	var err error
 	c.logger.Debugf("in syncSensuHandler, about to update handler within sensu cluster '%s', within k8s namespace '%s', and sensu namespace '%s'",
 		handler.Spec.SensuMetadata.ClusterName, handler.GetNamespace(), handler.Spec.SensuMetadata.Namespace)
@@ -56,7 +62,7 @@ func (c *Controller) syncSensuHandler(handler *api.SensuHandler) {
 	if len(handler.Finalizers) == 0 && handler.DeletionTimestamp == nil {
 		copy := handler.DeepCopy()
 		copy.Finalizers = append(copy.Finalizers, "handler.finalizer.objectrocket.com")
-		if _, err = c.SensuCRCli.ObjectrocketV1beta1().SensuHandlers(copy.GetNamespace()).Update(copy); err != nil {
+		if _, err = c.SensuCRCli.ObjectrocketV1beta1().SensuHandlers(copy.GetNamespace()).Update(ctx, copy, v1.UpdateOptions{}); err != nil {
 			msg := fmt.Sprintf("failed to update handler's finalizer during sync event: %v", err)
 			c.logger.Warningf(msg)
 			return
@@ -67,7 +73,7 @@ func (c *Controller) syncSensuHandler(handler *api.SensuHandler) {
 		copy := handler.DeepCopy()
 		copy.Status.Accepted = false
 		copy.Status.LastError = fmt.Sprintf("Sensu cluster '%s' not found", handler.Spec.SensuMetadata.ClusterName)
-		if _, err = c.SensuCRCli.ObjectrocketV1beta1().SensuHandlers(copy.GetNamespace()).Update(copy); err != nil {
+		if _, err = c.SensuCRCli.ObjectrocketV1beta1().SensuHandlers(copy.GetNamespace()).Update(ctx, copy, v1.UpdateOptions{}); err != nil {
 			c.logger.Warningf("failed to update handler's status during update event: %v", err)
 		}
 		return
@@ -84,7 +90,7 @@ func (c *Controller) syncSensuHandler(handler *api.SensuHandler) {
 		copy.Status.Accepted = true
 		c.logger.Debugf("in syncSensuHandler, about to update handler status within sensu cluster '%s', within k8s namespace '%s', and sensu namespace '%s'",
 			handler.Spec.SensuMetadata.ClusterName, handler.GetNamespace(), handler.Spec.SensuMetadata.Namespace)
-		if _, err = c.SensuCRCli.ObjectrocketV1beta1().SensuHandlers(copy.GetNamespace()).Update(copy); err != nil {
+		if _, err = c.SensuCRCli.ObjectrocketV1beta1().SensuHandlers(copy.GetNamespace()).Update(ctx, copy, v1.UpdateOptions{}); err != nil {
 			c.logger.Warningf("failed to update handlers's status during update event: %v", err)
 		}
 		c.logger.Debugf("in syncSensuhandler, done updating handler's status within sensu cluster '%s', within k8s namespace '%s', and sensu namespace '%s'",

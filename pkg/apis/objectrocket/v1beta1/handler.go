@@ -17,7 +17,7 @@ package v1beta1
 import (
 	crdutil "github.com/objectrocket/sensu-operator/pkg/util/k8sutil/conversionutil"
 	sensutypes "github.com/sensu/sensu-go/types"
-	k8s_api_extensions_v1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	k8s_api_extensions_v1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -46,15 +46,19 @@ type SensuHandler struct {
 // SensuHandlerSpec is the spec section of the custom object
 // +k8s:openapi-gen=true
 type SensuHandlerSpec struct {
-	Type          string        `json:"type"`
-	Mutator       string        `json:"mutator,omitempty"`
-	Command       string        `json:"command,omitempty"`
-	Timeout       uint32        `json:"timeout,omitempty"`
-	Socket        HandlerSocket `json:"socket,omitempty"`
-	Handlers      []string      `json:"handlers,omitempty"`
-	Filters       []string      `json:"filters,omitempty"`
-	EnvVars       []string      `json:"envVars,omitempty"`
-	RuntimeAssets []string      `json:"runtimeAssets,omitempty"`
+	Type    string        `json:"type"`
+	Mutator string        `json:"mutator,omitempty"`
+	Command string        `json:"command,omitempty"`
+	Timeout uint32        `json:"timeout,omitempty"`
+	Socket  HandlerSocket `json:"socket,omitempty"`
+	//+listType=set
+	Handlers []string `json:"handlers,omitempty"`
+	//+listType=set
+	Filters []string `json:"filters,omitempty"`
+	//+listType=set
+	EnvVars []string `json:"envVars,omitempty"`
+	//+listType=set
+	RuntimeAssets []string `json:"runtimeAssets,omitempty"`
 	// Metadata contains the sensu name, sensu namespace, sensu annotations, and sensu labels of the handler
 	SensuMetadata ObjectMeta `json:"sensuMetadata"`
 	// Validation is the OpenAPIV3Schema validation for sensu assets
@@ -99,5 +103,12 @@ func (a SensuHandler) ToSensuType() *sensutypes.Handler {
 
 // GetCustomResourceValidation rreturns the handlers's resource validation
 func (a SensuHandler) GetCustomResourceValidation() *k8s_api_extensions_v1beta1.CustomResourceValidation {
-	return crdutil.GetCustomResourceValidation("github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.SensuHandler", GetOpenAPIDefinitions)
+	schemaProps := crdutil.GetCustomResourceValidation(
+		"github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.SensuHandler",
+		GetOpenAPIDefinitions,
+	)
+
+	return &k8s_api_extensions_v1beta1.CustomResourceValidation{
+		OpenAPIV3Schema: schemaProps,
+	}
 }

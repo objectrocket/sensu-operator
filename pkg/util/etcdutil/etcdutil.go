@@ -21,7 +21,7 @@ import (
 
 	"github.com/objectrocket/sensu-operator/pkg/util/constants"
 
-	"github.com/coreos/etcd/clientv3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 func ListMembers(clientURLs []string, tc *tls.Config) (*clientv3.MemberListResponse, error) {

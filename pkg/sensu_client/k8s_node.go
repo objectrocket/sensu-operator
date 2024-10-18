@@ -8,7 +8,6 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 
-	sensuclient "github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -132,7 +131,7 @@ func (s *SensuClient) fetchEntities(namespace string) ([]types.Entity, error) {
 	)
 	c1 := make(chan fetchEntitiesResponse, 1)
 	go func() {
-		if entities, err = s.sensuCli.Client.ListEntities(namespace, &sensuclient.ListOptions{}); err != nil {
+		if entities, err = s.ListEntities(namespace); err != nil {
 			s.logger.Warnf("failed to retrieve entities from namespace %s, err: %+v", namespace, err)
 			c1 <- fetchEntitiesResponse{nil, errors.Wrapf(err, "failed to retrieve entities from namespace %s", namespace)}
 		}

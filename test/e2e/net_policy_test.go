@@ -15,6 +15,7 @@
 package e2e
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -23,9 +24,11 @@ import (
 	"github.com/objectrocket/sensu-operator/pkg/util/k8sutil"
 	"github.com/objectrocket/sensu-operator/test/e2e/e2eutil"
 	"github.com/objectrocket/sensu-operator/test/e2e/framework"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestClusterNetworkPolicy(t *testing.T) {
+	ctx := context.Background()
 	if os.Getenv(envParallelTest) == envParallelTestTrue {
 		t.Parallel()
 	}
@@ -50,11 +53,11 @@ func TestClusterNetworkPolicy(t *testing.T) {
 	sensuEtcdPortServiceName := fmt.Sprintf("%s-etcd-external", testSensuName)
 	sensuEtcdPortService := e2eutil.NewEtcdService(testSensuName, sensuEtcdPortServiceName)
 
-	if _, err := f.KubeClient.CoreV1().Services("default").Create(sensuEtcdPortService); err != nil {
+	if _, err := f.KubeClient.CoreV1().Services("default").Create(ctx, sensuEtcdPortService, v1.CreateOptions{}); err != nil {
 		t.Fatalf("failed to create Etcd port service: %v", err)
 	}
 	defer func() {
-		if err := f.KubeClient.CoreV1().Services(f.Namespace).Delete(sensuEtcdPortServiceName, nil); err != nil {
+		if err := f.KubeClient.CoreV1().Services(f.Namespace).Delete(ctx, sensuEtcdPortServiceName, v1.DeleteOptions{}); err != nil {
 			t.Fatal(err)
 		}
 	}()

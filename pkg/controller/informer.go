@@ -462,6 +462,8 @@ func (c *Controller) onUpdateSensuClus(newObj interface{}) {
 }
 
 func (c *Controller) onDeleteSensuClus(obj interface{}) {
+	ctx := context.Background()
+
 	var err error
 	clus, ok := obj.(*api.SensuCluster)
 	if !ok {
@@ -476,7 +478,7 @@ func (c *Controller) onDeleteSensuClus(obj interface{}) {
 	}
 
 	clus.Finalizers = make([]string, 0)
-	clus, err = c.SensuCRCli.ObjectrocketV1beta1().SensuClusters(clus.GetNamespace()).Update(clus)
+	clus, err = c.SensuCRCli.ObjectrocketV1beta1().SensuClusters(clus.GetNamespace()).Update(ctx, clus, metav1.UpdateOptions{})
 	if err != nil {
 		c.logger.Warningf("Failed to remove finalizers from cluster: %v", err)
 	}
@@ -493,6 +495,8 @@ func (c *Controller) onDeleteSensuClus(obj interface{}) {
 }
 
 func (c *Controller) syncSensuClus(clus *api.SensuCluster) {
+	ctx := context.Background()
+
 	var err error
 	ev := &Event{
 		Type:   kwatch.Added,
@@ -507,7 +511,7 @@ func (c *Controller) syncSensuClus(clus *api.SensuCluster) {
 	// Ensure that the finalizer exists, failing if it can't be added at this time
 	if len(clus.Finalizers) == 0 && clus.DeletionTimestamp == nil {
 		clus.Finalizers = append(clus.Finalizers, "cluster.finalizer.objectrocket.com")
-		if clus, err = c.SensuCRCli.ObjectrocketV1beta1().SensuClusters(clus.GetNamespace()).Update(clus); err != nil {
+		if clus, err = c.SensuCRCli.ObjectrocketV1beta1().SensuClusters(clus.GetNamespace()).Update(ctx, clus, metav1.UpdateOptions{}); err != nil {
 			msg := fmt.Sprintf("failed to update clusters's finalizer during sync event: %v", err)
 			c.logger.Warningf(msg)
 			return

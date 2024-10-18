@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The sensu-operator Authors
+Copyright 2024 The sensu-operator Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,16 +19,18 @@ limitations under the License.
 package v1beta1
 
 import (
-	v1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/tools/cache"
+	objectrocketv1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // SensuClusterLister helps list SensuClusters.
+// All objects returned here must be treated as read-only.
 type SensuClusterLister interface {
 	// List lists all SensuClusters in the indexer.
-	List(selector labels.Selector) (ret []*v1beta1.SensuCluster, err error)
+	// Objects returned here must be treated as read-only.
+	List(selector labels.Selector) (ret []*objectrocketv1beta1.SensuCluster, err error)
 	// SensuClusters returns an object that can list and get SensuClusters.
 	SensuClusters(namespace string) SensuClusterNamespaceLister
 	SensuClusterListerExpansion
@@ -36,59 +38,33 @@ type SensuClusterLister interface {
 
 // sensuClusterLister implements the SensuClusterLister interface.
 type sensuClusterLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*objectrocketv1beta1.SensuCluster]
 }
 
 // NewSensuClusterLister returns a new SensuClusterLister.
 func NewSensuClusterLister(indexer cache.Indexer) SensuClusterLister {
-	return &sensuClusterLister{indexer: indexer}
-}
-
-// List lists all SensuClusters in the indexer.
-func (s *sensuClusterLister) List(selector labels.Selector) (ret []*v1beta1.SensuCluster, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1beta1.SensuCluster))
-	})
-	return ret, err
+	return &sensuClusterLister{listers.New[*objectrocketv1beta1.SensuCluster](indexer, objectrocketv1beta1.Resource("sensucluster"))}
 }
 
 // SensuClusters returns an object that can list and get SensuClusters.
 func (s *sensuClusterLister) SensuClusters(namespace string) SensuClusterNamespaceLister {
-	return sensuClusterNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return sensuClusterNamespaceLister{listers.NewNamespaced[*objectrocketv1beta1.SensuCluster](s.ResourceIndexer, namespace)}
 }
 
 // SensuClusterNamespaceLister helps list and get SensuClusters.
+// All objects returned here must be treated as read-only.
 type SensuClusterNamespaceLister interface {
 	// List lists all SensuClusters in the indexer for a given namespace.
-	List(selector labels.Selector) (ret []*v1beta1.SensuCluster, err error)
+	// Objects returned here must be treated as read-only.
+	List(selector labels.Selector) (ret []*objectrocketv1beta1.SensuCluster, err error)
 	// Get retrieves the SensuCluster from the indexer for a given namespace and name.
-	Get(name string) (*v1beta1.SensuCluster, error)
+	// Objects returned here must be treated as read-only.
+	Get(name string) (*objectrocketv1beta1.SensuCluster, error)
 	SensuClusterNamespaceListerExpansion
 }
 
 // sensuClusterNamespaceLister implements the SensuClusterNamespaceLister
 // interface.
 type sensuClusterNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all SensuClusters in the indexer for a given namespace.
-func (s sensuClusterNamespaceLister) List(selector labels.Selector) (ret []*v1beta1.SensuCluster, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1beta1.SensuCluster))
-	})
-	return ret, err
-}
-
-// Get retrieves the SensuCluster from the indexer for a given namespace and name.
-func (s sensuClusterNamespaceLister) Get(name string) (*v1beta1.SensuCluster, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1beta1.Resource("sensucluster"), name)
-	}
-	return obj.(*v1beta1.SensuCluster), nil
+	listers.ResourceIndexer[*objectrocketv1beta1.SensuCluster]
 }

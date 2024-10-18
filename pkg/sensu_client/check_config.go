@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"time"
 
-	sensu_api_core_v2 "github.com/sensu/sensu-go/api/core/v2"
+	sensu_api_core_v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/types"
 
 	"github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"

@@ -19,11 +19,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/coreos/etcd/clientv3"
 	api "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
 	"github.com/objectrocket/sensu-operator/pkg/util/constants"
 	"github.com/objectrocket/sensu-operator/pkg/util/etcdutil"
 	"github.com/objectrocket/sensu-operator/pkg/util/k8sutil"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -35,9 +35,10 @@ var ErrLostQuorum = errors.New("lost quorum")
 // - it tries to reconcile the cluster to desired size.
 // - if the cluster needs for upgrade, it tries to upgrade old member one by one.
 func (c *Cluster) reconcile(pods []*v1.Pod) error {
+	ctx := context.Background()
 	if c.statefulSet.Spec.Replicas == nil {
 		c.logger.Infof("StatefulSet for cluster %s has nil Replicas.  Fetching new StatefulSet", c.name())
-		set, err := c.config.KubeCli.AppsV1().StatefulSets(c.cluster.Namespace).Get(c.cluster.Name, metav1.GetOptions{})
+		set, err := c.config.KubeCli.AppsV1().StatefulSets(c.cluster.Namespace).Get(ctx, c.cluster.Name, metav1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("Failed to fetch new StatefulSet: %v", err)
 		}
@@ -46,7 +47,7 @@ func (c *Cluster) reconcile(pods []*v1.Pod) error {
 		return nil
 	}
 	if c.cluster.Spec.Size != int(*c.statefulSet.Spec.Replicas) {
-		set, err := c.config.KubeCli.AppsV1().StatefulSets(c.cluster.Namespace).Get(c.cluster.Name, metav1.GetOptions{})
+		set, err := c.config.KubeCli.AppsV1().StatefulSets(c.cluster.Namespace).Get(ctx, c.cluster.Name, metav1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("Error getting StatefulSet %s for size update: %v", c.statefulSet.GetName(), err)
 		}
@@ -64,7 +65,7 @@ func (c *Cluster) reconcile(pods []*v1.Pod) error {
 				return err
 			}
 		}
-		set, err = c.config.KubeCli.AppsV1().StatefulSets(c.cluster.Namespace).Update(set)
+		set, err = c.config.KubeCli.AppsV1().StatefulSets(c.cluster.Namespace).Update(ctx, set, metav1.UpdateOptions{})
 		if err != nil {
 			return fmt.Errorf("Error updating StatefulSet %s size: %v", c.statefulSet.GetName(), err)
 		}
@@ -176,7 +177,8 @@ func (c *Cluster) pvcName(ordinalID int) string {
 }
 
 func (c *Cluster) removePVC(pvcName string) error {
-	err := c.config.KubeCli.Core().PersistentVolumeClaims(c.cluster.Namespace).Delete(pvcName, nil)
+	ctx := context.Background()
+	err := c.config.KubeCli.CoreV1().PersistentVolumeClaims(c.cluster.Namespace).Delete(ctx, pvcName, metav1.DeleteOptions{})
 	if err != nil && !k8sutil.IsKubernetesResourceNotFoundError(err) {
 		return fmt.Errorf("remove pvc (%s) failed: %v", pvcName, err)
 	}

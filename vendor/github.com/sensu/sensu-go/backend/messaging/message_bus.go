@@ -5,10 +5,15 @@ package messaging
 import (
 	"fmt"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sensu/sensu-go/backend/daemon"
 )
 
 const (
+	// TopicEntityConfig is the topic for the entity configuration sent by agentd
+	// to agents
+	TopicEntityConfig = "sensu:entity-config"
+
 	// TopicEvent is the topic for events that have been written to Etcd and
 	// normalized by eventd.
 	TopicEvent = "sensu:event"
@@ -25,6 +30,24 @@ const (
 
 	// TopicTessen is the topic prefix for tessen api events to Tessend.
 	TopicTessen = "sensu:tessen"
+
+	// TopicTessenMetric is the topic prefix for tessen api metrics to Tessend.
+	TopicTessenMetric = "sensu:tessen-metric"
+
+	// TopicKeepaliveRaw is a separate channel for keepalives that
+	// allows eventd to process keepalives at a higher priority than
+	// regular events.
+	TopicKeepaliveRaw = "sensu:keepalive-raw"
+)
+
+var (
+	topicCounter = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "sensu_go_wizard_bus",
+			Help: "Number of elements in a topic",
+		},
+		[]string{"topic"},
+	)
 )
 
 // A Subscriber receives messages via a channel.
@@ -43,6 +66,12 @@ type Subscription struct {
 // Cancel a WizardSubscription.
 func (t Subscription) Cancel() error {
 	return t.cancel(t.id)
+}
+
+type ChanSubscriber chan interface{}
+
+func (c ChanSubscriber) Receiver() chan<- interface{} {
+	return c
 }
 
 // MessageBus is the interface to the internal messaging system.
@@ -69,8 +98,20 @@ type MessageBus interface {
 	Publish(topic string, message interface{}) error
 }
 
+// EntityConfigTopic is a helper to determine the proper topic name for an
+// entity
+func EntityConfigTopic(namespace, name string) string {
+	return fmt.Sprintf("%s:%s:%s", TopicEntityConfig, namespace, name)
+}
+
 // SubscriptionTopic is a helper to determine the proper topic name for a
 // subscription based on the namespace
 func SubscriptionTopic(namespace, sub string) string {
 	return fmt.Sprintf("%s:%s:%s", TopicSubscriptions, namespace, sub)
+}
+
+// BurialTopic is used to signal to agentd sessions that a keepalive burial
+// has been processed.
+func BurialTopic(namespace, entity string) string {
+	return fmt.Sprintf("sensu:burial:%s:%s", namespace, entity)
 }

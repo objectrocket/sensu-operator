@@ -1,10 +1,12 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 
 	api "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
 	sensu_client "github.com/objectrocket/sensu-operator/pkg/sensu_client"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -13,6 +15,8 @@ func (c *Controller) onUpdateSensuEventFilter(newObj interface{}) {
 }
 
 func (c *Controller) onDeleteSensuEventFilter(obj interface{}) {
+	ctx := context.Background()
+
 	filter, ok := obj.(*api.SensuEventFilter)
 	if !ok {
 		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
@@ -39,12 +43,14 @@ func (c *Controller) onDeleteSensuEventFilter(obj interface{}) {
 	}
 	copy := filter.DeepCopy()
 	copy.Finalizers = make([]string, 0)
-	if _, err := c.SensuCRCli.ObjectrocketV1beta1().SensuEventFilters(filter.GetNamespace()).Update(copy); err != nil {
+	if _, err := c.SensuCRCli.ObjectrocketV1beta1().SensuEventFilters(filter.GetNamespace()).Update(ctx, copy, v1.UpdateOptions{}); err != nil {
 		c.logger.Warningf("failed to update filter to remove finalizer: %+v", err)
 	}
 }
 
 func (c *Controller) syncSensuEventFilter(filter *api.SensuEventFilter) {
+	ctx := context.Background()
+
 	var err error
 	c.logger.Debugf("in syncSensuEventFilter, about to update filter within sensu cluster '%s', within k8s namespace '%s', and sensu namespace '%s'",
 		filter.Spec.SensuMetadata.ClusterName, filter.GetNamespace(), filter.Spec.SensuMetadata.Namespace)
@@ -56,7 +62,7 @@ func (c *Controller) syncSensuEventFilter(filter *api.SensuEventFilter) {
 	if len(filter.Finalizers) == 0 && filter.DeletionTimestamp == nil {
 		copy := filter.DeepCopy()
 		copy.Finalizers = append(copy.Finalizers, "eventfilter.finalizer.objectrocket.com")
-		if _, err = c.SensuCRCli.ObjectrocketV1beta1().SensuEventFilters(copy.GetNamespace()).Update(copy); err != nil {
+		if _, err = c.SensuCRCli.ObjectrocketV1beta1().SensuEventFilters(copy.GetNamespace()).Update(ctx, copy, v1.UpdateOptions{}); err != nil {
 			msg := fmt.Sprintf("failed to update filter's finalizer during sync event: %v", err)
 			c.logger.Warningf(msg)
 			return
@@ -67,7 +73,7 @@ func (c *Controller) syncSensuEventFilter(filter *api.SensuEventFilter) {
 		copy := filter.DeepCopy()
 		copy.Status.Accepted = false
 		copy.Status.LastError = fmt.Sprintf("Sensu cluster '%s' not found", filter.Spec.SensuMetadata.ClusterName)
-		if _, err = c.SensuCRCli.ObjectrocketV1beta1().SensuEventFilters(copy.GetNamespace()).Update(copy); err != nil {
+		if _, err = c.SensuCRCli.ObjectrocketV1beta1().SensuEventFilters(copy.GetNamespace()).Update(ctx, copy, v1.UpdateOptions{}); err != nil {
 			c.logger.Warningf("failed to update filter's status during update event: %v", err)
 		}
 		return
@@ -84,7 +90,7 @@ func (c *Controller) syncSensuEventFilter(filter *api.SensuEventFilter) {
 		copy.Status.Accepted = true
 		c.logger.Debugf("in syncSensuEventFilter, about to update filter status within sensu cluster '%s', within k8s namespace '%s', and sensu namespace '%s'",
 			filter.Spec.SensuMetadata.ClusterName, filter.GetNamespace(), filter.Spec.SensuMetadata.Namespace)
-		if _, err = c.SensuCRCli.ObjectrocketV1beta1().SensuEventFilters(copy.GetNamespace()).Update(copy); err != nil {
+		if _, err = c.SensuCRCli.ObjectrocketV1beta1().SensuEventFilters(copy.GetNamespace()).Update(ctx, copy, v1.UpdateOptions{}); err != nil {
 			c.logger.Warningf("failed to update filters's status during update event: %v", err)
 		}
 		c.logger.Debugf("in syncSensufilter, done updating filter's status within sensu cluster '%s', within k8s namespace '%s', and sensu namespace '%s'",

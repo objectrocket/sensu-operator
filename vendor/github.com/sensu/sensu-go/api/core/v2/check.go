@@ -1,44 +1,95 @@
 package v2
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
-	"sort"
-	"strconv"
-	"strings"
+	"path"
 	"time"
 
-	jsoniter "github.com/json-iterator/go"
-	"github.com/robfig/cron"
-	"github.com/sensu/sensu-go/js"
-	utilstrings "github.com/sensu/sensu-go/util/strings"
+	cron "github.com/robfig/cron/v3"
+	utilstrings "github.com/sensu/sensu-go/api/core/v2/internal/stringutil"
 )
 
-// CheckRequestType is the message type string for check request.
-const CheckRequestType = "check_request"
+const (
+	// CheckRequestType is the message type string for check request.
+	CheckRequestType = "check_request"
 
-// DefaultSplayCoverage is the default splay coverage for proxy check requests
-const DefaultSplayCoverage = 90.0
+	// ChecksResource is the name of this resource type
+	ChecksResource = "checks"
 
-// NagiosOutputMetricFormat is the accepted string to represent the output metric format of
-// Nagios Perf Data
-const NagiosOutputMetricFormat = "nagios_perfdata"
+	// DefaultSplayCoverage is the default splay coverage for proxy check requests
+	DefaultSplayCoverage = 90.0
 
-// GraphiteOutputMetricFormat is the accepted string to represent the output metric format of
-// Graphite Plain Text
-const GraphiteOutputMetricFormat = "graphite_plaintext"
+	// NagiosOutputMetricFormat is the accepted string to represent the output metric format of
+	// Nagios Perf Data
+	NagiosOutputMetricFormat = "nagios_perfdata"
 
-// OpenTSDBOutputMetricFormat is the accepted string to represent the output metric format of
-// OpenTSDB Line
-const OpenTSDBOutputMetricFormat = "opentsdb_line"
+	// GraphiteOutputMetricFormat is the accepted string to represent the output metric format of
+	// Graphite Plain Text
+	GraphiteOutputMetricFormat = "graphite_plaintext"
 
-// InfluxDBOutputMetricFormat is the accepted string to represent the output metric format of
-// InfluxDB Line
-const InfluxDBOutputMetricFormat = "influxdb_line"
+	// OpenTSDBOutputMetricFormat is the accepted string to represent the output metric format of
+	// OpenTSDB Line
+	OpenTSDBOutputMetricFormat = "opentsdb_line"
+
+	// InfluxDBOutputMetricFormat is the accepted string to represent the output metric format of
+	// InfluxDB Line
+	InfluxDBOutputMetricFormat = "influxdb_line"
+
+	// PrometheusOutputMetricFormat is the accepted string to represent the output metric format of
+	// Prometheus Exposition Text Format
+	PrometheusOutputMetricFormat = "prometheus_text"
+
+	// KeepaliveCheckName is the name of the check that is created when a
+	// keepalive timeout occurs.
+	KeepaliveCheckName = "keepalive"
+
+	// RegistrationCheckName is the name of the check that is created when an
+	// entity sends a keepalive and the entity does not yet exist in the store.
+	RegistrationCheckName = "registration"
+
+	// BackendCheckName is the name fo the check that is created when a backend
+	// event is generated from an error.
+	BackendCheckName = "backend"
+
+	// MemoryScheduler indicates that a check is scheduled in-memory.
+	MemoryScheduler = "memory"
+
+	// EtcdScheduler indicates that a check is scheduled with etcd leases and
+	// watchers.
+	EtcdScheduler = "etcd"
+
+	// PostgresScheduler indicates that a check is scheduled with postgresql,
+	// using transactions and asynchronous notification (NOTIFY).
+	PostgresScheduler = "postgres"
+)
 
 // OutputMetricFormats represents all the accepted output_metric_format's a check can have
-var OutputMetricFormats = []string{NagiosOutputMetricFormat, GraphiteOutputMetricFormat, OpenTSDBOutputMetricFormat, InfluxDBOutputMetricFormat}
+var OutputMetricFormats = []string{NagiosOutputMetricFormat, GraphiteOutputMetricFormat, OpenTSDBOutputMetricFormat, InfluxDBOutputMetricFormat, PrometheusOutputMetricFormat}
+
+// FixtureCheck returns a fixture for a Check object.
+func FixtureCheck(id string) *Check {
+	t := time.Now().Unix()
+	config := FixtureCheckConfig(id)
+	history := make([]CheckHistory, 21)
+	for i := 0; i < 21; i++ {
+		history[i] = CheckHistory{
+			Status:   0,
+			Executed: t - (60 * int64(i+1)),
+		}
+	}
+
+	c := NewCheck(config)
+	c.Issued = t
+	c.Executed = t + 1
+	c.Duration = 1.0
+	c.History = history
+	c.State = EventPassingState
+
+	return c
+}
 
 // NewCheck creates a new Check. It copies the fields from CheckConfig that
 // match with Check's fields.
@@ -54,28 +105,32 @@ func NewCheck(c *CheckConfig) *Check {
 			Labels:      c.Labels,
 			Annotations: c.Annotations,
 		},
-		Command:              c.Command,
-		Handlers:             c.Handlers,
-		HighFlapThreshold:    c.HighFlapThreshold,
-		Interval:             c.Interval,
-		LowFlapThreshold:     c.LowFlapThreshold,
-		Publish:              c.Publish,
-		RuntimeAssets:        c.RuntimeAssets,
-		Subscriptions:        c.Subscriptions,
-		ProxyEntityName:      c.ProxyEntityName,
-		CheckHooks:           c.CheckHooks,
-		Stdin:                c.Stdin,
-		Subdue:               c.Subdue,
-		Cron:                 c.Cron,
-		Ttl:                  c.Ttl,
-		Timeout:              c.Timeout,
-		ProxyRequests:        c.ProxyRequests,
-		RoundRobin:           c.RoundRobin,
-		OutputMetricFormat:   c.OutputMetricFormat,
-		OutputMetricHandlers: c.OutputMetricHandlers,
-		EnvVars:              c.EnvVars,
-		DiscardOutput:        c.DiscardOutput,
-		MaxOutputSize:        c.MaxOutputSize,
+		Command:                c.Command,
+		Handlers:               c.Handlers,
+		HighFlapThreshold:      c.HighFlapThreshold,
+		Interval:               c.Interval,
+		LowFlapThreshold:       c.LowFlapThreshold,
+		Publish:                c.Publish,
+		RuntimeAssets:          c.RuntimeAssets,
+		Subscriptions:          c.Subscriptions,
+		ProxyEntityName:        c.ProxyEntityName,
+		CheckHooks:             c.CheckHooks,
+		Stdin:                  c.Stdin,
+		Subdue:                 c.Subdue,
+		Cron:                   c.Cron,
+		Ttl:                    c.Ttl,
+		Timeout:                c.Timeout,
+		ProxyRequests:          c.ProxyRequests,
+		RoundRobin:             c.RoundRobin,
+		OutputMetricFormat:     c.OutputMetricFormat,
+		OutputMetricHandlers:   c.OutputMetricHandlers,
+		OutputMetricTags:       c.OutputMetricTags,
+		OutputMetricThresholds: c.OutputMetricThresholds,
+		EnvVars:                c.EnvVars,
+		DiscardOutput:          c.DiscardOutput,
+		MaxOutputSize:          c.MaxOutputSize,
+		Scheduler:              c.Scheduler,
+		Pipelines:              c.Pipelines,
 	}
 	if check.Labels == nil {
 		check.Labels = make(map[string]string)
@@ -86,30 +141,52 @@ func NewCheck(c *CheckConfig) *Check {
 	return check
 }
 
-const undocumentedTestCheckName = "!sensu_test_check!"
+// SetNamespace sets the namespace of the resource.
+func (c *Check) SetNamespace(namespace string) {
+	c.Namespace = namespace
+}
+
+// SetObjectMeta sets the meta of the resource.
+func (c *Check) SetObjectMeta(meta ObjectMeta) {
+	c.ObjectMeta = meta
+}
+
+// SetName sets the name of the resource.
+func (c *Check) SetName(name string) {
+	c.Name = name
+}
+
+// StorePrefix returns the path prefix to this resource in the store
+func (c *Check) StorePrefix() string {
+	return ChecksResource
+}
+
+// URIPath returns the path component of a check URI.
+func (c *Check) URIPath() string {
+	if c.Namespace == "" {
+		return path.Join(URLPrefix, ChecksResource, url.PathEscape(c.Name))
+	}
+	return path.Join(URLPrefix, "namespaces", url.PathEscape(c.Namespace), ChecksResource, url.PathEscape(c.Name))
+}
 
 // Validate returns an error if the check does not pass validation tests.
 func (c *Check) Validate() error {
-	if c.Name == undocumentedTestCheckName {
-		// undocumented test check, the agent will use this name to return
-		// a canned response. It is not possible to use this name according
-		// to the normal validation rules, so it shouldn't impact anyone.
-		return nil
-	}
 	if err := ValidateName(c.Name); err != nil {
 		return errors.New("check name " + err.Error())
 	}
-	if c.Cron != "" {
-		if c.Interval > 0 {
-			return errors.New("must only specify either an interval or a cron schedule")
-		}
+	if c.Publish {
+		if c.Cron != "" {
+			if c.Interval > 0 {
+				return errors.New("must only specify either an interval or a cron schedule")
+			}
 
-		if _, err := cron.ParseStandard(c.Cron); err != nil {
-			return errors.New("check cron string is invalid")
-		}
-	} else {
-		if c.Interval < 1 {
-			return errors.New("check interval must be greater than or equal to 1")
+			if _, err := cron.ParseStandard(c.Cron); err != nil {
+				return fmt.Errorf("check cron string is invalid: %w", err)
+			}
+		} else {
+			if c.Interval < 1 {
+				return errors.New("check interval must be greater than or equal to 1")
+			}
 		}
 	}
 
@@ -123,6 +200,12 @@ func (c *Check) Validate() error {
 	for _, assetName := range c.RuntimeAssets {
 		if err := ValidateAssetName(assetName); err != nil {
 			return fmt.Errorf("asset's %s", err)
+		}
+	}
+
+	for _, subscription := range c.Subscriptions {
+		if subscription == "" {
+			return fmt.Errorf("subscriptions cannot be empty strings")
 		}
 	}
 
@@ -158,6 +241,16 @@ func (c *Check) Validate() error {
 		return fmt.Errorf("MaxOutputSize must be >= 0")
 	}
 
+	if c.OutputMetricThresholds != nil {
+		if err := MetricThresholds(c.OutputMetricThresholds).Validate(); err != nil {
+			return err
+		}
+	}
+
+	if err := ValidateSubdues(c.Subdues); err != nil {
+		return err
+	}
+
 	return c.Subdue.Validate()
 }
 
@@ -172,120 +265,43 @@ func (c *Check) MarshalJSON() ([]byte, error) {
 	if c.Handlers == nil {
 		c.Handlers = []string{}
 	}
+	if c.Pipelines == nil {
+		c.Pipelines = []*ResourceReference{}
+	}
 
 	type Clone Check
 	clone := &Clone{}
 	*clone = Clone(*c)
 
-	return jsoniter.Marshal(clone)
+	return json.Marshal(clone)
 }
 
-// NewCheckConfig creates a new CheckConfig.
-func NewCheckConfig(meta ObjectMeta) *CheckConfig {
-	return &CheckConfig{ObjectMeta: meta}
-}
-
-// MarshalJSON implements the json.Marshaler interface.
-func (c *CheckConfig) MarshalJSON() ([]byte, error) {
-	if c == nil {
-		return []byte("null"), nil
-	}
-	if c.Subscriptions == nil {
-		c.Subscriptions = []string{}
-	}
-	if c.Handlers == nil {
-		c.Handlers = []string{}
+// MergeWith updates the current Check with the history of the check given as
+// an argument, updating the current check's history appropriately.
+func (c *Check) MergeWith(prevCheck *Check) {
+	history := prevCheck.History
+	histEntry := CheckHistory{
+		Status:   c.Status,
+		Executed: c.Executed,
 	}
 
-	type Clone CheckConfig
-	clone := &Clone{}
-	*clone = Clone(*c)
-
-	return jsoniter.Marshal(clone)
-}
-
-// Validate returns an error if the check does not pass validation tests.
-func (c *CheckConfig) Validate() error {
-	if c.Name == undocumentedTestCheckName {
-		// undocumented test check, the agent will use this name to return
-		// a canned response. It is not possible to use this name according
-		// to the normal validation rules, so it shouldn't impact anyone.
-		return nil
-	}
-	if err := ValidateName(c.Name); err != nil {
-		return errors.New("check name " + err.Error())
+	history = append(history, histEntry)
+	if len(history) > 21 {
+		history = history[1:]
 	}
 
-	if c.Cron != "" {
-		if c.Interval > 0 {
-			return errors.New("must only specify either an interval or a cron schedule")
-		}
+	c.History = history
+	c.LastOK = prevCheck.LastOK
+	c.Occurrences = prevCheck.Occurrences
+	c.OccurrencesWatermark = prevCheck.OccurrencesWatermark
+	updateCheckState(c)
 
-		if _, err := cron.ParseStandard(c.Cron); err != nil {
-			return errors.New("check cron string is invalid")
-		}
-	}
-
-	if c.Interval == 0 && c.Cron == "" {
-		return errors.New("check interval must be greater than 0 or a valid cron schedule must be provided")
-	}
-
-	if c.Namespace == "" {
-		return errors.New("namespace must be set")
-	}
-
-	if c.Ttl > 0 && c.Ttl <= int64(c.Interval) {
-		return errors.New("ttl must be greater than check interval")
-	}
-
-	for _, assetName := range c.RuntimeAssets {
-		if err := ValidateAssetName(assetName); err != nil {
-			return fmt.Errorf("asset's %s", err)
-		}
-	}
-
-	// The entity can be empty but can't contain invalid characters (only
-	// alphanumeric string)
-	if c.ProxyEntityName != "" {
-		if err := ValidateName(c.ProxyEntityName); err != nil {
-			return errors.New("proxy entity name " + err.Error())
-		}
-	}
-
-	if c.ProxyRequests != nil {
-		if err := c.ProxyRequests.Validate(); err != nil {
-			return err
-		}
-	}
-
-	if c.OutputMetricFormat != "" {
-		if err := ValidateOutputMetricFormat(c.OutputMetricFormat); err != nil {
-			return err
-		}
-	}
-
-	if c.LowFlapThreshold != 0 && c.HighFlapThreshold != 0 && c.LowFlapThreshold >= c.HighFlapThreshold {
-		return errors.New("invalid flap thresholds")
-	}
-
-	if err := ValidateEnvVars(c.EnvVars); err != nil {
-		return err
-	}
-
-	return c.Subdue.Validate()
-}
-
-// Validate returns an error if the ProxyRequests does not pass validation tests
-func (p *ProxyRequests) Validate() error {
-	if p.SplayCoverage > 100 {
-		return errors.New("proxy request splay coverage must be between 0 and 100")
-	}
-
-	if (p.Splay) && (p.SplayCoverage == 0) {
-		return errors.New("proxy request splay coverage must be greater than 0 if splay is enabled")
-	}
-
-	return js.ParseExpressions(p.EntityAttributes)
+	// This has to be done after the call to updateCheckState, as that function is what
+	// sets the value for c.State that is used below, but the order can't be switched
+	// around as updateCheckState relies on the latest item (specifically, its status)
+	// being present in c.History.
+	// NB! This has been disabled for 5.x releases.
+	// c.History[len(c.History)-1].Flapping = c.State == EventFlappingState
 }
 
 // ValidateOutputMetricFormat returns an error if the string is not a valid metric
@@ -297,6 +313,24 @@ func ValidateOutputMetricFormat(format string) error {
 	return errors.New("output metric format is not valid")
 }
 
+func ValidateSubdues(subdues []*TimeWindowRepeated) error {
+	for i, subdue := range subdues {
+		if err := subdue.Validate(); err != nil {
+			return fmt.Errorf("subdue %d invalid: %s", i, err)
+		}
+	}
+	return nil
+}
+
+// previousOccurrence returns the most recent CheckHistory item, excluding the current result.
+func (c *Check) previousOccurrence() *CheckHistory {
+	if len(c.History) < 2 {
+		return nil
+	}
+	return &c.History[len(c.History)-2]
+}
+
+// DEPRECATED, DO NOT USE! Events should be ordered FIFO.
 // ByExecuted implements the sort.Interface for []CheckHistory based on the
 // Executed field.
 //
@@ -309,172 +343,10 @@ func (b ByExecuted) Len() int           { return len(b) }
 func (b ByExecuted) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
 func (b ByExecuted) Less(i, j int) bool { return b[i].Executed < b[j].Executed }
 
-// MergeWith updates the current Check with the history of the check given as
-// an argument, updating the current check's history appropriately.
-func (c *Check) MergeWith(prevCheck *Check) {
-	history := prevCheck.History
-	histEntry := CheckHistory{
-		Status:   c.Status,
-		Executed: c.Executed,
-	}
-
-	history = append(history, histEntry)
-	sort.Sort(ByExecuted(history))
-	if len(history) > 21 {
-		history = history[1:]
-	}
-
-	c.History = history
-	c.LastOK = prevCheck.LastOK
-	c.Occurrences = prevCheck.Occurrences
-	c.OccurrencesWatermark = prevCheck.OccurrencesWatermark
+func (c *Check) RBACName() string {
+	return "checks"
 }
 
-// FixtureCheckRequest returns a fixture for a CheckRequest object.
-func FixtureCheckRequest(id string) *CheckRequest {
-	config := FixtureCheckConfig(id)
-
-	return &CheckRequest{
-		Config: config,
-		Assets: []Asset{
-			*FixtureAsset("ruby-2-4-2"),
-		},
-		Hooks: []HookConfig{
-			*FixtureHookConfig("hook1"),
-		},
-	}
-}
-
-// FixtureCheckConfig returns a fixture for a CheckConfig object.
-func FixtureCheckConfig(id string) *CheckConfig {
-	interval := uint32(60)
-	timeout := uint32(0)
-
-	check := &CheckConfig{
-		ObjectMeta:    NewObjectMeta(id, "default"),
-		Interval:      interval,
-		Subscriptions: []string{"linux"},
-		Command:       "command",
-		RuntimeAssets: []string{"ruby-2-4-2"},
-		CheckHooks:    []HookList{*FixtureHookList("hook1")},
-		Publish:       true,
-		Ttl:           0,
-		Timeout:       timeout,
-	}
-	return check
-}
-
-// FixtureCheck returns a fixture for a Check object.
-func FixtureCheck(id string) *Check {
-	t := time.Now().Unix()
-	config := FixtureCheckConfig(id)
-	history := make([]CheckHistory, 21)
-	for i := 0; i < 21; i++ {
-		history[i] = CheckHistory{
-			Status:   0,
-			Executed: t - (60 * int64(i+1)),
-		}
-	}
-
-	c := NewCheck(config)
-	c.Issued = t
-	c.Executed = t + 1
-	c.Duration = 1.0
-	c.History = history
-
-	return c
-}
-
-// FixtureProxyRequests returns a fixture for a ProxyRequests object.
-func FixtureProxyRequests(splay bool) *ProxyRequests {
-	splayCoverage := uint32(0)
-	if splay {
-		splayCoverage = DefaultSplayCoverage
-	}
-	return &ProxyRequests{
-		Splay:         splay,
-		SplayCoverage: splayCoverage,
-	}
-}
-
-// URIPath returns the path component of a Check URI.
-func (c *Check) URIPath() string {
-	return fmt.Sprintf("/api/core/v2/namespaces/%s/checks/%s", url.PathEscape(c.Namespace), url.PathEscape(c.Name))
-}
-
-// URIPath returns the path component of a CheckConfig URI.
-func (c *CheckConfig) URIPath() string {
-	return fmt.Sprintf("/api/core/v2/namespaces/%s/checks/%s", url.PathEscape(c.Namespace), url.PathEscape(c.Name))
-}
-
-//
-// Sorting
-
-type cmpCheckConfig func(a, b *CheckConfig) bool
-
-// SortCheckConfigsByPredicate can be used to sort a given collection using a given
-// predicate.
-func SortCheckConfigsByPredicate(cs []*CheckConfig, fn cmpCheckConfig) sort.Interface {
-	return &checkSorter{checks: cs, byFn: fn}
-}
-
-// SortCheckConfigsByName can be used to sort a given collection of checks by their
-// names.
-func SortCheckConfigsByName(es []*CheckConfig, asc bool) sort.Interface {
-	if asc {
-		return SortCheckConfigsByPredicate(es, func(a, b *CheckConfig) bool {
-			return a.Name < b.Name
-		})
-	}
-	return SortCheckConfigsByPredicate(es, func(a, b *CheckConfig) bool {
-		return a.Name > b.Name
-	})
-}
-
-type checkSorter struct {
-	checks []*CheckConfig
-	byFn   cmpCheckConfig
-}
-
-// Len implements sort.Interface.
-func (s *checkSorter) Len() int {
-	return len(s.checks)
-}
-
-// Swap implements sort.Interface.
-func (s *checkSorter) Swap(i, j int) {
-	s.checks[i], s.checks[j] = s.checks[j], s.checks[i]
-}
-
-// Less implements sort.Interface.
-func (s *checkSorter) Less(i, j int) bool {
-	return s.byFn(s.checks[i], s.checks[j])
-}
-
-// IsSubdued returns true if the check is subdued at the current time.
-// It returns false otherwise.
-func (c *CheckConfig) IsSubdued() bool {
-	subdue := c.GetSubdue()
-	if subdue == nil {
-		return false
-	}
-	subdued, err := subdue.InWindows(time.Now())
-	if err != nil {
-		return false
-	}
-	return subdued
-}
-
-// CheckConfigFields returns a set of fields that represent that resource
-func CheckConfigFields(r Resource) map[string]string {
-	resource := r.(*CheckConfig)
-	return map[string]string{
-		"check.name":           resource.ObjectMeta.Name,
-		"check.namespace":      resource.ObjectMeta.Namespace,
-		"check.handlers":       strings.Join(resource.Handlers, ","),
-		"check.publish":        strconv.FormatBool(resource.Publish),
-		"check.round_robin":    strconv.FormatBool(resource.RoundRobin),
-		"check.runtime_assets": strings.Join(resource.RuntimeAssets, ","),
-		"check.subscriptions":  strings.Join(resource.Subscriptions, ","),
-	}
+func (c *CheckConfig) RBACName() string {
+	return "checks"
 }

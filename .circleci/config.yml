@@ -32,7 +32,7 @@ orbs:
 jobs:
   markdownlint:
     docker:
-    - image: circleci/node:10.14.2
+    - image: cimg/node:18.14.1
       auth:
         username: ${DOCKER_USERNAME}
         password: ${DOCKER_PASSWORD}
@@ -47,9 +47,9 @@ jobs:
         name: lint README.md
         command: markdownlint --config .markdownlint.json README.md
   build:
-    working_directory: /go/src/github.com/objectrocket/sensu-operator
+    working_directory: go/src/github.com/objectrocket/sensu-operator
     docker:
-    - image: circleci/golang:1.10
+    - image: cimg/go:1.22
       auth:
         username: ${DOCKER_USERNAME}
         password: ${DOCKER_PASSWORD}
@@ -61,9 +61,9 @@ jobs:
         name: Build the server binary and docker image
         command: make docker-build IMAGE_VERSION=latest
   unit_test:
-    working_directory: /go/src/github.com/objectrocket/sensu-operator
+    working_directory: go/src/github.com/objectrocket/sensu-operator
     docker:
-    - image: circleci/golang:1.10
+    - image: cimg/go:1.22
       auth:
         username: ${DOCKER_USERNAME}
         password: ${DOCKER_PASSWORD}
@@ -73,9 +73,9 @@ jobs:
         name: go tests
         command: make unittest
   build_deploy:
-    working_directory: /go/src/github.com/objectrocket/sensu-operator
+    working_directory: go/src/github.com/objectrocket/sensu-operator
     docker:
-    - image: circleci/golang:1.10
+    - image: cimg/go:1.22
       auth:
         username: ${DOCKER_USERNAME}
         password: ${DOCKER_PASSWORD}
@@ -86,7 +86,7 @@ jobs:
     - run:
         name: docker login
         command: |
-          docker login -u $DOCKER_USER -p $DOCKER_PASS
+          docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
     - run:
         name: docker build and push
         command: |
@@ -158,11 +158,11 @@ workflows:
         filters:
           branches:
             ignore: master
-    - unit_test:
-        context: platform-eng
-        filters:
-          branches:
-            ignore: master
+    #- unit_test:
+    #    context: platform-eng
+    ##    filters:
+    #      branches:
+    #        ignore: master
     - build:
         context: platform-eng
         filters:

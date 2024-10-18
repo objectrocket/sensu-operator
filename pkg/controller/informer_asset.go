@@ -1,11 +1,13 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 
 	api "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
 	sensu_client "github.com/objectrocket/sensu-operator/pkg/sensu_client"
 
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -14,6 +16,8 @@ func (c *Controller) onUpdateSensuAsset(newObj interface{}) {
 }
 
 func (c *Controller) onDeleteSensuAsset(obj interface{}) {
+	ctx := context.Background()
+
 	asset, ok := obj.(*api.SensuAsset)
 	if !ok {
 		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
@@ -39,12 +43,14 @@ func (c *Controller) onDeleteSensuAsset(obj interface{}) {
 	}
 	a := asset.DeepCopy()
 	a.Finalizers = make([]string, 0)
-	if _, err := c.SensuCRCli.ObjectrocketV1beta1().SensuAssets(asset.GetNamespace()).Update(a); err != nil {
+	if _, err := c.SensuCRCli.ObjectrocketV1beta1().SensuAssets(asset.GetNamespace()).Update(ctx, a, v1.UpdateOptions{}); err != nil {
 		c.logger.Warningf("failed to update asset to remove finalizer: %+v", err)
 	}
 }
 
 func (c *Controller) syncSensuAsset(asset *api.SensuAsset) {
+	ctx := context.Background()
+
 	var err error
 	c.logger.Debugf("in syncSensuAsset, about to update asset within sensu cluster '%s', within k8s namespace '%s', and sensu namespace '%s'",
 		asset.Spec.SensuMetadata.ClusterName, asset.GetNamespace(), asset.Spec.SensuMetadata.Namespace)
@@ -56,7 +62,7 @@ func (c *Controller) syncSensuAsset(asset *api.SensuAsset) {
 	if len(asset.Finalizers) == 0 {
 		copy := asset.DeepCopy()
 		copy.Finalizers = append(copy.Finalizers, "checkconfig.finalizer.objectrocket.com")
-		if _, err = c.SensuCRCli.ObjectrocketV1beta1().SensuAssets(copy.GetNamespace()).Update(copy); err != nil {
+		if _, err = c.SensuCRCli.ObjectrocketV1beta1().SensuAssets(copy.GetNamespace()).Update(ctx, copy, v1.UpdateOptions{}); err != nil {
 			msg := fmt.Sprintf("failed to update checkconfig's finalizer during sync event: %v", err)
 			c.logger.Warningf(msg)
 			return
@@ -68,7 +74,7 @@ func (c *Controller) syncSensuAsset(asset *api.SensuAsset) {
 		copy := asset.DeepCopy()
 		copy.Status.Accepted = false
 		copy.Status.LastError = fmt.Sprintf("Sensu cluster '%s' not found", asset.Spec.SensuMetadata.ClusterName)
-		if _, err = c.SensuCRCli.ObjectrocketV1beta1().SensuAssets(copy.GetNamespace()).Update(copy); err != nil {
+		if _, err = c.SensuCRCli.ObjectrocketV1beta1().SensuAssets(copy.GetNamespace()).Update(ctx, copy, v1.UpdateOptions{}); err != nil {
 			c.logger.Warningf("failed to update assets's status during update event: %v", err)
 		}
 		return
@@ -87,7 +93,7 @@ func (c *Controller) syncSensuAsset(asset *api.SensuAsset) {
 		copy.Status.Accepted = true
 		c.logger.Debugf("in syncSensuAsset, about to update asset status within k8s, using sensu cluster '%s', within k8s namespace '%s', and sensu namespace '%s'",
 			asset.Spec.SensuMetadata.ClusterName, asset.GetNamespace(), asset.Spec.SensuMetadata.Namespace)
-		if _, err = c.SensuCRCli.ObjectrocketV1beta1().SensuAssets(copy.GetNamespace()).Update(copy); err != nil {
+		if _, err = c.SensuCRCli.ObjectrocketV1beta1().SensuAssets(copy.GetNamespace()).Update(ctx, copy, v1.UpdateOptions{}); err != nil {
 			c.logger.Warningf("failed to update assets's status during update event: %v", err)
 		}
 		c.logger.Debugf("in syncSensuAsset, done updating asset's status within k8s, using sensu cluster '%s', within k8s namespace '%s', and sensu namespace '%s",

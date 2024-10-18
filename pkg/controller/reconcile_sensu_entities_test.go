@@ -1,6 +1,9 @@
 package controller
 
 import (
+	"context"
+	"testing"
+
 	"github.com/google/go-cmp/cmp"
 	api "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
 	"github.com/objectrocket/sensu-operator/pkg/cluster"
@@ -11,7 +14,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	testclient "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/tools/cache"
-	"testing"
 )
 
 func Test_calculateSensuEntitiesForRemoval(t *testing.T) {
@@ -80,6 +82,8 @@ func Test_calculateSensuEntitiesForRemoval(t *testing.T) {
 }
 
 func Test_getK8sNodes(t *testing.T) {
+	ctx := context.Background()
+
 	assetInformer, checkInformer, handlerInformer, eventFilterInformer, nodeInformer := initInformers()
 	type fields struct {
 		logger     *logrus.Entry
@@ -137,7 +141,7 @@ func Test_getK8sNodes(t *testing.T) {
 			c.informers[api.SensuHandlerResourcePlural] = &handlerInformer
 			c.informers[api.SensuEventFilterResourcePlural] = &eventFilterInformer
 			c.informers[CoreV1NodesPlural] = &nodeInformer
-			c.Config.KubeCli.CoreV1().Nodes().Create(tt.nodes)
+			c.Config.KubeCli.CoreV1().Nodes().Create(ctx, tt.nodes, metav1.CreateOptions{})
 			response, _ := c.getK8sNodes()
 			t.Logf("response: %v", response)
 			if got := cmp.Equal(response, tt.result); got != tt.want {

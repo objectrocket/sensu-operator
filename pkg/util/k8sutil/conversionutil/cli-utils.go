@@ -23,7 +23,7 @@ import (
 	"strings"
 
 	"github.com/ghodss/yaml"
-	extensionsobj "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	extensionsobj "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -88,7 +88,6 @@ func (labels *Labels) Set(value string) error {
 }
 
 func NewCustomResourceDefinition(config Config) *extensionsobj.CustomResourceDefinition {
-
 	crd := &extensionsobj.CustomResourceDefinition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        config.Plural + "." + config.Group,
@@ -97,28 +96,39 @@ func NewCustomResourceDefinition(config Config) *extensionsobj.CustomResourceDef
 		},
 		TypeMeta: CustomResourceDefinitionTypeMeta,
 		Spec: extensionsobj.CustomResourceDefinitionSpec{
-			Group:   config.Group,
-			Version: config.Version,
-			Scope:   extensionsobj.ResourceScope(config.ResourceScope),
+			Group: config.Group,
+			Scope: extensionsobj.ResourceScope(config.ResourceScope),
 			Names: extensionsobj.CustomResourceDefinitionNames{
 				Plural:     config.Plural,
 				Kind:       config.Kind,
 				Categories: config.Categories,
 				ShortNames: config.ShortNames,
 			},
-			Subresources: &extensionsobj.CustomResourceSubresources{
-				Status: &extensionsobj.CustomResourceSubresourceStatus{},
-				Scale: &extensionsobj.CustomResourceSubresourceScale{
-					SpecReplicasPath:   config.SpecReplicasPath,
-					StatusReplicasPath: config.StatusReplicasPath,
-					LabelSelectorPath:  &config.LabelSelectorPath,
+			Versions: []extensionsobj.CustomResourceDefinitionVersion{
+				{
+					Name:    config.Version,
+					Served:  true,
+					Storage: true,
+					Schema: &extensionsobj.CustomResourceValidation{
+						OpenAPIV3Schema: GetCustomResourceValidation(config.SpecDefinitionName, config.GetOpenAPIDefinitions),
+					},
+					Subresources: &extensionsobj.CustomResourceSubresources{
+						Status: &extensionsobj.CustomResourceSubresourceStatus{},
+						Scale: &extensionsobj.CustomResourceSubresourceScale{
+							SpecReplicasPath:   config.SpecReplicasPath,
+							StatusReplicasPath: config.StatusReplicasPath,
+							LabelSelectorPath:  &config.LabelSelectorPath,
+						},
+					},
 				},
 			},
 		},
 	}
 
-	if config.SpecDefinitionName != "" && config.EnableValidation == true {
-		crd.Spec.Validation = GetCustomResourceValidation(config.SpecDefinitionName, config.GetOpenAPIDefinitions)
+	if config.SpecDefinitionName != "" && config.EnableValidation {
+		crd.Spec.Versions[0].Schema = &extensionsobj.CustomResourceValidation{
+			OpenAPIV3Schema: GetCustomResourceValidation(config.SpecDefinitionName, config.GetOpenAPIDefinitions),
+		}
 	}
 
 	return crd

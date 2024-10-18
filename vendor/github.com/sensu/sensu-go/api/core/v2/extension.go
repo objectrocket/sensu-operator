@@ -2,9 +2,26 @@ package v2
 
 import (
 	"errors"
-	"fmt"
 	"net/url"
+	"path"
+
+	stringsutil "github.com/sensu/sensu-go/api/core/v2/internal/stringutil"
 )
+
+const (
+	// ExtensionsResource is the name of this resource type
+	ExtensionsResource = "extensions"
+)
+
+// StorePrefix returns the path prefix to this resource in the store
+func (e *Extension) StorePrefix() string {
+	return ExtensionsResource
+}
+
+// URIPath returns the path component of an extension URI.
+func (e *Extension) URIPath() string {
+	return path.Join(URLPrefix, "namespaces", url.PathEscape(e.Namespace), ExtensionsResource, url.PathEscape(e.Name))
+}
 
 // Validate validates the extension.
 func (e *Extension) Validate() error {
@@ -18,11 +35,6 @@ func (e *Extension) Validate() error {
 		return errors.New("empty namespace")
 	}
 	return nil
-}
-
-// URIPath returns the path component of an Extension URI.
-func (e *Extension) URIPath() string {
-	return fmt.Sprintf("/api/core/v2/namespaces/%s/extensions/%s", url.PathEscape(e.Namespace), url.PathEscape(e.Name))
 }
 
 // FixtureExtension given a name returns a valid extension for use in tests
@@ -41,8 +53,29 @@ func NewExtension(meta ObjectMeta) *Extension {
 // ExtensionFields returns a set of fields that represent that resource
 func ExtensionFields(r Resource) map[string]string {
 	resource := r.(*Extension)
-	return map[string]string{
+	fields := map[string]string{
 		"extension.name":      resource.ObjectMeta.Name,
 		"extension.namespace": resource.ObjectMeta.Namespace,
 	}
+	stringsutil.MergeMapWithPrefix(fields, resource.ObjectMeta.Labels, "extension.labels.")
+	return fields
+}
+
+// ExtensionFields returns a set of fields that represent that resource
+func (e *Extension) Fields() map[string]string {
+	return ExtensionFields(e)
+}
+
+// SetNamespace sets the namespace of the resource.
+func (e *Extension) SetNamespace(namespace string) {
+	e.Namespace = namespace
+}
+
+// SetObjectMeta sets the meta of the resource.
+func (e *Extension) SetObjectMeta(meta ObjectMeta) {
+	e.ObjectMeta = meta
+}
+
+func (e *Extension) RBACName() string {
+	return "extensions"
 }

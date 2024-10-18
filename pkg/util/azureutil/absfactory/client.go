@@ -15,6 +15,7 @@
 package absfactory
 
 import (
+	"context"
 	"fmt"
 
 	api "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
@@ -31,13 +32,14 @@ type ABSClient struct {
 
 // NewClientFromSecret returns a ABS client based on given k8s secret containing azure credentials.
 func NewClientFromSecret(kubecli kubernetes.Interface, namespace, absSecret string) (w *ABSClient, err error) {
+	ctx := context.Background()
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("new ABS client failed: %v", err)
 		}
 	}()
 
-	se, err := kubecli.CoreV1().Secrets(namespace).Get(absSecret, metav1.GetOptions{})
+	se, err := kubecli.CoreV1().Secrets(namespace).Get(ctx, absSecret, metav1.GetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get k8s secret: %v", err)
 	}

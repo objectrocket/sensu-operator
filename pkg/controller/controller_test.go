@@ -137,8 +137,7 @@ func (s *InformerTestSuite) TestInformerWithNoEvents() {
 				"kind": "SensuClusterList",
 				"metadata": {
 				  "continue": "",
-				  "resourceVersion": "3570",
-				  "selfLink": "/apis/objectrocket.com/v1beta1/namespaces/default/sensuclusters"
+				  "resourceVersion": "3570"
 				}
 			  }
 `)),
@@ -150,12 +149,10 @@ func (s *InformerTestSuite) TestInformerWithNoEvents() {
 	controller.Config.SensuCRCli.ObjectrocketV1beta1()
 	source = cache.NewListWatchFromClient(
 		&fakerest.RESTClient{
-			Client: fakerest.CreateHTTPClient(roundTripper),
-			NegotiatedSerializer: serializer.DirectCodecFactory{
-				CodecFactory: serializer.NewCodecFactory(sensuscheme.Scheme),
-			},
-			GroupVersion:     schema.GroupVersion{},
-			VersionedAPIPath: "/not/a/real/path",
+			Client:               fakerest.CreateHTTPClient(roundTripper),
+			NegotiatedSerializer: serializer.NewCodecFactory(sensuscheme.Scheme),
+			GroupVersion:         schema.GroupVersion{},
+			VersionedAPIPath:     "/not/a/real/path",
 		},
 		api.SensuClusterResourcePlural,
 		controller.Config.Namespace,
@@ -255,7 +252,6 @@ func (s *InformerTestSuite) TestInformerWithOneCluster() {
 					  "name": "example-sensu-cluster",
 					  "namespace": "default",
 					  "resourceVersion": "3570",
-					  "selfLink": "/apis/objectrocket.com/v1beta1/namespaces/default/sensuclusters/example-sensu-cluster",
 					  "uid": "358db0b6-0ee4-11e9-a33b-0800272dcccb"
 					},
 					"spec": {
@@ -296,8 +292,7 @@ func (s *InformerTestSuite) TestInformerWithOneCluster() {
 				"kind": "SensuClusterList",
 				"metadata": {
 				  "continue": "",
-				  "resourceVersion": "3570",
-				  "selfLink": "/apis/objectrocket.com/v1beta1/namespaces/default/sensuclusters"
+				  "resourceVersion": "3570"
 				}
 			  }
 `)),
@@ -309,12 +304,10 @@ func (s *InformerTestSuite) TestInformerWithOneCluster() {
 	controller.Config.SensuCRCli.ObjectrocketV1beta1()
 	source = cache.NewListWatchFromClient(
 		&fakerest.RESTClient{
-			Client: fakerest.CreateHTTPClient(roundTripper),
-			NegotiatedSerializer: serializer.DirectCodecFactory{
-				CodecFactory: serializer.NewCodecFactory(sensuscheme.Scheme),
-			},
-			GroupVersion:     schema.GroupVersion{},
-			VersionedAPIPath: "/not/a/real/path",
+			Client:               fakerest.CreateHTTPClient(roundTripper),
+			NegotiatedSerializer: serializer.NewCodecFactory(sensuscheme.Scheme),
+			GroupVersion:         schema.GroupVersion{},
+			VersionedAPIPath:     "/not/a/real/path",
 		},
 		api.SensuClusterResourcePlural,
 		controller.Config.Namespace,

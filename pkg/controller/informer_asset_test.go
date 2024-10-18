@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -67,14 +68,18 @@ func TestController_syncSensuAsset(t *testing.T) {
 				},
 			},
 			func(t *testing.T, c *Controller, a *api.SensuAsset) {
-				_, err := c.SensuCRCli.ObjectrocketV1beta1().SensuAssets("sensu").Create(a)
+				ctx := context.Background()
+
+				_, err := c.SensuCRCli.ObjectrocketV1beta1().SensuAssets("sensu").Create(ctx, a, metav1.CreateOptions{})
 				if err != nil {
 					t.Error(err)
 				}
 			},
 			func(c *Controller, a *api.SensuAsset) error {
+				ctx := context.Background()
+
 				c.syncSensuAsset(a)
-				k8sAsset, err := c.SensuCRCli.ObjectrocketV1beta1().SensuAssets("sensu").Get("testAsset", metav1.GetOptions{})
+				k8sAsset, err := c.SensuCRCli.ObjectrocketV1beta1().SensuAssets("sensu").Get(ctx, "testAsset", metav1.GetOptions{})
 				if err != nil {
 					return errors.New("failed to find asset in k8s")
 				}

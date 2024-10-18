@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The sensu-operator Authors
+Copyright 2024 The sensu-operator Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,16 +19,18 @@ limitations under the License.
 package v1beta1
 
 import (
-	v1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/tools/cache"
+	objectrocketv1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // SensuHandlerLister helps list SensuHandlers.
+// All objects returned here must be treated as read-only.
 type SensuHandlerLister interface {
 	// List lists all SensuHandlers in the indexer.
-	List(selector labels.Selector) (ret []*v1beta1.SensuHandler, err error)
+	// Objects returned here must be treated as read-only.
+	List(selector labels.Selector) (ret []*objectrocketv1beta1.SensuHandler, err error)
 	// SensuHandlers returns an object that can list and get SensuHandlers.
 	SensuHandlers(namespace string) SensuHandlerNamespaceLister
 	SensuHandlerListerExpansion
@@ -36,59 +38,33 @@ type SensuHandlerLister interface {
 
 // sensuHandlerLister implements the SensuHandlerLister interface.
 type sensuHandlerLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*objectrocketv1beta1.SensuHandler]
 }
 
 // NewSensuHandlerLister returns a new SensuHandlerLister.
 func NewSensuHandlerLister(indexer cache.Indexer) SensuHandlerLister {
-	return &sensuHandlerLister{indexer: indexer}
-}
-
-// List lists all SensuHandlers in the indexer.
-func (s *sensuHandlerLister) List(selector labels.Selector) (ret []*v1beta1.SensuHandler, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1beta1.SensuHandler))
-	})
-	return ret, err
+	return &sensuHandlerLister{listers.New[*objectrocketv1beta1.SensuHandler](indexer, objectrocketv1beta1.Resource("sensuhandler"))}
 }
 
 // SensuHandlers returns an object that can list and get SensuHandlers.
 func (s *sensuHandlerLister) SensuHandlers(namespace string) SensuHandlerNamespaceLister {
-	return sensuHandlerNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return sensuHandlerNamespaceLister{listers.NewNamespaced[*objectrocketv1beta1.SensuHandler](s.ResourceIndexer, namespace)}
 }
 
 // SensuHandlerNamespaceLister helps list and get SensuHandlers.
+// All objects returned here must be treated as read-only.
 type SensuHandlerNamespaceLister interface {
 	// List lists all SensuHandlers in the indexer for a given namespace.
-	List(selector labels.Selector) (ret []*v1beta1.SensuHandler, err error)
+	// Objects returned here must be treated as read-only.
+	List(selector labels.Selector) (ret []*objectrocketv1beta1.SensuHandler, err error)
 	// Get retrieves the SensuHandler from the indexer for a given namespace and name.
-	Get(name string) (*v1beta1.SensuHandler, error)
+	// Objects returned here must be treated as read-only.
+	Get(name string) (*objectrocketv1beta1.SensuHandler, error)
 	SensuHandlerNamespaceListerExpansion
 }
 
 // sensuHandlerNamespaceLister implements the SensuHandlerNamespaceLister
 // interface.
 type sensuHandlerNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all SensuHandlers in the indexer for a given namespace.
-func (s sensuHandlerNamespaceLister) List(selector labels.Selector) (ret []*v1beta1.SensuHandler, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1beta1.SensuHandler))
-	})
-	return ret, err
-}
-
-// Get retrieves the SensuHandler from the indexer for a given namespace and name.
-func (s sensuHandlerNamespaceLister) Get(name string) (*v1beta1.SensuHandler, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1beta1.Resource("sensuhandler"), name)
-	}
-	return obj.(*v1beta1.SensuHandler), nil
+	listers.ResourceIndexer[*objectrocketv1beta1.SensuHandler]
 }
