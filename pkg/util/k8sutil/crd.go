@@ -63,6 +63,34 @@ func CreateCRD(clientset apiextensionsclient.Interface,
 	shortName string,
 	validation *apiextensionsv1.CustomResourceValidation) error {
 	ctx := context.Background()
+	var schema *apiextensionsv1.CustomResourceValidation
+	if validation != nil {
+		schema = &apiextensionsv1.CustomResourceValidation{
+			OpenAPIV3Schema: validation.OpenAPIV3Schema,
+		}
+	} else {
+		schema = &apiextensionsv1.CustomResourceValidation{
+
+			OpenAPIV3Schema: &apiextensionsv1.JSONSchemaProps{
+				Type: "object",
+				Properties: map[string]apiextensionsv1.JSONSchemaProps{
+					"sensuMetadata": {
+						Type: "object",
+						Properties: map[string]apiextensionsv1.JSONSchemaProps{
+							"name": {
+								Type: "string",
+							},
+							"namespace": {
+								Type: "string",
+							},
+							// Add other fields as necessary
+						},
+						Required: []string{"sensuMetadata"}, // Mark fields as required if needed
+					},
+				},
+			},
+		}
+	}
 	crd := &apiextensionsv1.CustomResourceDefinition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: crdName,
@@ -74,9 +102,7 @@ func CreateCRD(clientset apiextensionsclient.Interface,
 					Name:    api.SchemeGroupVersion.Version,
 					Served:  true,
 					Storage: true,
-					Schema: &apiextensionsv1.CustomResourceValidation{
-						OpenAPIV3Schema: validation.OpenAPIV3Schema,
-					},
+					Schema:  schema,
 				},
 			},
 			Scope: apiextensionsv1.NamespaceScoped,

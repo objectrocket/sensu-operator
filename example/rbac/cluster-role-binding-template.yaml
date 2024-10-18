@@ -8,5 +8,5 @@ roleRef:
   name: <ROLE_NAME>
 subjects:
 - kind: ServiceAccount
-  name: default
+  name: sensu-operator
   namespace: <NAMESPACE>

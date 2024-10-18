@@ -11,9 +11,15 @@ rules:
   - sensubackups
   - sensurestores
   - sensuassets
-  - sensuhandlers
   - sensucheckconfigs
+  - sensuhandlers
   - sensueventfilters
+  verbs:
+  - "*"
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
   verbs:
   - "*"
 - apiGroups:
@@ -24,7 +30,6 @@ rules:
   - endpoints
   - persistentvolumeclaims
   - events
-  - nodes
   verbs:
   - "*"
 - apiGroups:
@@ -39,5 +44,34 @@ rules:
   - ""
   resources:
   - secrets
+  - nodes
   verbs:
   - get
+  - list
+  - watch
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - networkpolicies
+  verbs:
+  - "*"
+# For using pod security policies
+- apiGroups:
+  - policy
+  resources:
+  - podsecuritypolicies
+  verbs:
+  - use
+  resourceNames:
+  - default
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - delete
