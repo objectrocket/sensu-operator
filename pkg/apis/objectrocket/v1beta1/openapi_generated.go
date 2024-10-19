@@ -528,14 +528,17 @@ func schema_pkg_apis_objectrocket_v1beta1_SensuHandler(ref common.ReferenceCallb
 					},
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"}, 
 							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"}, 
 							Ref: ref("github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.SensuHandlerSpec"),
 						},
 					},
+					
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Ref: ref("github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.SensuHandlerStatus"),
@@ -583,6 +586,7 @@ func schema_pkg_apis_objectrocket_v1beta1_SensuHandlerSpec(ref common.ReferenceC
 					},
 					"socket": {
 						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"}, 
 							Ref: ref("github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.HandlerSocket"),
 						},
 					},
@@ -640,12 +644,14 @@ func schema_pkg_apis_objectrocket_v1beta1_SensuHandlerSpec(ref common.ReferenceC
 					},
 					"sensuMetadata": {
 						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"}, 
 							Description: "Metadata contains the sensu name, sensu namespace, sensu annotations, and sensu labels of the handler",
 							Ref:         ref("github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.ObjectMeta"),
 						},
 					},
 					"validation": {
 						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"}, 
 							Description: "Validation is the OpenAPIV3Schema validation for sensu assets",
 							Ref:         ref("k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1.CustomResourceValidation"),
 						},

@@ -15,7 +15,6 @@
 package v1beta1
 
 import (
-	crdutil "github.com/objectrocket/sensu-operator/pkg/util/k8sutil/conversionutil"
 	sensutypes "github.com/sensu/sensu-go/types"
 	k8s_api_extensions_v1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -88,12 +87,56 @@ func (a SensuAsset) ToAPISensuAsset() *sensutypes.Asset {
 
 // GetCustomResourceValidation returns the asset's resource validation
 func (a SensuAsset) GetCustomResourceValidation() *k8s_api_extensions_v1beta1.CustomResourceValidation {
-	schemaProps := crdutil.GetCustomResourceValidation(
+	/*schemaProps := crdutil.GetCustomResourceValidation(
 		"github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.SensuAsset",
 		GetOpenAPIDefinitions,
-	)
-
+	)*/
+	//fmt.Println(schemaProps)
 	return &k8s_api_extensions_v1beta1.CustomResourceValidation{
-		OpenAPIV3Schema: schemaProps,
+		OpenAPIV3Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
+			Type: "object",
+			Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
+				"kind": {
+					Type: "string",
+				},
+				"apiVersion": {
+					Type: "string",
+				},
+				"metadata": {
+					Type: "object",
+				},
+				"spec": {
+					Type: "object",
+					Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
+						"url": {
+							Type: "string",
+						},
+						"sha512": {
+							Type: "string",
+						},
+						"filters": {
+							Type: "array",
+							Items: &k8s_api_extensions_v1beta1.JSONSchemaPropsOrArray{
+								Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
+									Type: "string",
+								},
+							},
+						},
+						"organization": {
+							Type: "string",
+						},
+						"sensuMetadata": {
+							Type: "object",
+							// Define SensuMetadata properties if needed
+						},
+					},
+					Required: []string{"sensuMetadata"}, // Adjust according to your requirements
+				},
+				"status": {
+					Type: "object",
+				},
+			},
+			Required: []string{"spec", "status"},
+		},
 	}
 }

@@ -77,6 +77,10 @@ type ClusterStatus struct {
 	// TargetVersion is the version the cluster upgrading to.
 	// If the cluster is not upgrading, TargetVersion is empty.
 	TargetVersion string `json:"targetVersion"`
+	// For unknown fields
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:pruning:PreserveUnknownFields
+	UnstructuredFields map[string]interface{} `json:"-"`
 }
 
 // ClusterCondition represents one current condition of an sensu cluster.

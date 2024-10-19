@@ -57,6 +57,27 @@ func GetCustomResourceValidation(name string, fn func(ref common.ReferenceCallba
 }
 
 // ref: https://github.com/kubernetes/kubernetes/issues/62329
+/*func fixKnownTypes(openapiSpec map[string]common.OpenAPIDefinition) {
+	openapiSpec["k8s.io/apimachinery/pkg/util/intstr.IntOrString"] = common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				AnyOf: []spec.Schema{
+					{
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"string"},
+						},
+					},
+					{
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"integer"},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+*/
 func fixKnownTypes(openapiSpec map[string]common.OpenAPIDefinition) {
 	openapiSpec["k8s.io/apimachinery/pkg/util/intstr.IntOrString"] = common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -70,6 +91,21 @@ func fixKnownTypes(openapiSpec map[string]common.OpenAPIDefinition) {
 					{
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"integer"},
+						},
+					},
+					{
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"boolean"},
+						},
+					},
+					{
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+						},
+					},
+					{
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
 						},
 					},
 				},

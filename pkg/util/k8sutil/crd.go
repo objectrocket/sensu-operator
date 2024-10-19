@@ -84,13 +84,18 @@ func CreateCRD(clientset apiextensionsclient.Interface,
 								Type: "string",
 							},
 							// Add other fields as necessary
+
 						},
 						Required: []string{"sensuMetadata"}, // Mark fields as required if needed
+						AdditionalProperties: &apiextensionsv1.JSONSchemaPropsOrBool{
+							Allows: true,
+						},
 					},
 				},
 			},
 		}
 	}
+	//fmt.Printf("\n %v endded\n", schema)
 	crd := &apiextensionsv1.CustomResourceDefinition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: crdName,

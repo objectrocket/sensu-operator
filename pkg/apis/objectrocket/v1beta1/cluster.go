@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	v1 "k8s.io/api/core/v1"
+	k8s_api_extensions_v1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -230,5 +231,159 @@ func (c *SensuCluster) SetDefaults() {
 				},
 			},
 		}
+	}
+}
+
+// GetCustomResourceValidation returns the cluster's resource validation
+func (c SensuCluster) GetCustomResourceValidation() *k8s_api_extensions_v1beta1.CustomResourceValidation {
+	trueVal := true
+	return &k8s_api_extensions_v1beta1.CustomResourceValidation{
+		OpenAPIV3Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
+			Type: "object",
+			Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
+				"kind": {
+					Type: "string",
+				},
+				"apiVersion": {
+					Type: "string",
+				},
+				"metadata": {
+					Type: "object",
+				},
+				"spec": {
+					Type: "object",
+					Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
+						"size": {
+							Type: "integer",
+						},
+						"repository": {
+							Type: "string",
+						},
+						"version": {
+							Type: "string",
+						},
+						"paused": {
+							Type: "boolean",
+						},
+						"pod": {
+							Type: "object",
+							Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
+								"labels": {
+									Type: "object",
+								},
+								"nodeSelector": {
+									Type: "object",
+								},
+								"affinity": {
+									Type: "object",
+								},
+								"resources": {
+									Type: "object",
+								},
+								"tolerations": {
+									Type: "array",
+									Items: &k8s_api_extensions_v1beta1.JSONSchemaPropsOrArray{
+										Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
+											Type: "object",
+										},
+									},
+								},
+								"sensuEnv": {
+									Type: "array",
+									Items: &k8s_api_extensions_v1beta1.JSONSchemaPropsOrArray{
+										Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
+											Type: "object",
+										},
+									},
+								},
+
+								"annotations": {
+									Type: "object",
+								},
+								"busyboxImage": {
+									Type: "string",
+								},
+								"securityContext": {
+									Type: "object",
+								},
+								"DNSTimeoutInSecond": {
+									Type: "integer",
+								},
+								"persistentVolumeClaimSpec": {
+									Type: "object",
+									Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
+										"accessModes": {
+											Type: "array",
+											Items: &k8s_api_extensions_v1beta1.JSONSchemaPropsOrArray{
+												Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
+													Type: "string",
+												},
+											},
+										},
+										"resources": {
+											Type: "object",
+											Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
+												"limits": {
+													Type: "object",
+													AdditionalProperties: &k8s_api_extensions_v1beta1.JSONSchemaPropsOrBool{
+														Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
+															Type: "string", // or the appropriate type
+														},
+													},
+												},
+												"requests": {
+													Type: "object",
+													AdditionalProperties: &k8s_api_extensions_v1beta1.JSONSchemaPropsOrBool{
+														Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
+															Type: "string", // or the appropriate type
+														},
+													},
+												},
+											},
+										},
+										"storageClassName": {
+											Type: "string",
+										},
+									},
+								},
+							},
+							XPreserveUnknownFields: &trueVal,
+						},
+						"TLS": {
+							Type: "object",
+						},
+						"clusteradminusername": {
+							Type: "string",
+						},
+						"clusteradminpassword": {
+							Type: "string",
+						},
+					},
+					Required:               []string{"size"},
+					XPreserveUnknownFields: &trueVal,
+				},
+				"status": {
+					Type: "object",
+					Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
+						"phase": {
+							Type: "string",
+						},
+						"size": {
+							Type: "integer",
+						},
+
+						"currentVersion": {
+							Type: "string",
+						},
+						"targetVersion": {
+							Type: "string",
+						},
+					},
+
+					XPreserveUnknownFields: &trueVal,
+				},
+			},
+			Required: []string{"spec"},
+		},
 	}
 }

@@ -192,11 +192,11 @@ func (c *Controller) initCRD() (err error) {
 		shortName  string
 		validation *apiextensionsv1.CustomResourceValidation
 	}{
-		{api.SensuClusterCRDName, api.SensuClusterResourceKind, api.SensuClusterResourcePlural, "sensu", nil},
-		{api.SensuAssetCRDName, api.SensuAssetResourceKind, api.SensuAssetResourcePlural, "sensuasset", nil},
-		{api.SensuCheckConfigCRDName, api.SensuCheckConfigResourceKind, api.SensuCheckConfigResourcePlural, "sensucheckconfig", nil},
-		{api.SensuHandlerCRDName, api.SensuHandlerResourceKind, api.SensuHandlerResourcePlural, "sensuhandler", nil},
-		{api.SensuEventFilterCRDName, api.SensuEventFilterResourceKind, api.SensuEventFilterResourcePlural, "sensueventfilter", nil},
+		{api.SensuClusterCRDName, api.SensuClusterResourceKind, api.SensuClusterResourcePlural, "sensu", api.SensuCluster{}.GetCustomResourceValidation()},
+		{api.SensuAssetCRDName, api.SensuAssetResourceKind, api.SensuAssetResourcePlural, "sensuasset", api.SensuAsset{}.GetCustomResourceValidation()},
+		{api.SensuCheckConfigCRDName, api.SensuCheckConfigResourceKind, api.SensuCheckConfigResourcePlural, "sensucheckconfig", api.SensuCheckConfig{}.GetCustomResourceValidation()},
+		{api.SensuHandlerCRDName, api.SensuHandlerResourceKind, api.SensuHandlerResourcePlural, "sensuhandler", api.SensuHandler{}.GetCustomResourceValidation()},
+		{api.SensuEventFilterCRDName, api.SensuEventFilterResourceKind, api.SensuEventFilterResourcePlural, "sensueventfilter", api.SensuEventFilter{}.GetCustomResourceValidation()},
 		// Add other CRDs here...
 	}
 

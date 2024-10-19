@@ -15,7 +15,6 @@
 package v1beta1
 
 import (
-	crdutil "github.com/objectrocket/sensu-operator/pkg/util/k8sutil/conversionutil"
 	sensutypes "github.com/sensu/sensu-go/types"
 	k8s_api_extensions_v1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -103,12 +102,81 @@ func (a SensuHandler) ToSensuType() *sensutypes.Handler {
 
 // GetCustomResourceValidation rreturns the handlers's resource validation
 func (a SensuHandler) GetCustomResourceValidation() *k8s_api_extensions_v1beta1.CustomResourceValidation {
-	schemaProps := crdutil.GetCustomResourceValidation(
-		"github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.SensuHandler",
-		GetOpenAPIDefinitions,
-	)
-
 	return &k8s_api_extensions_v1beta1.CustomResourceValidation{
-		OpenAPIV3Schema: schemaProps,
+		OpenAPIV3Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
+			Type: "object", // Ensure the root type is defined
+			Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
+				"kind": {
+					Type: "string",
+				},
+				"apiVersion": {
+					Type: "string",
+				},
+				"metadata": {
+					Type:       "object",
+					Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
+						// Add properties for ObjectMeta here, if needed
+					},
+				},
+				"spec": {
+					Type: "object",
+					Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
+						"type": {
+							Type: "string",
+						},
+						"mutator": {
+							Type: "string",
+						},
+						"command": {
+							Type: "string",
+						},
+						"timeout": {
+							Type: "integer", // Change to integer if it represents a timeout value
+						},
+						"socket": {
+							Type: "object", // Change to object if it contains nested properties
+							Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
+								"host": {
+									Type: "string",
+								},
+								"port": {
+									Type: "integer",
+								},
+							},
+						},
+						"handlers": {
+							Type: "array",
+							Items: &k8s_api_extensions_v1beta1.JSONSchemaPropsOrArray{
+								Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
+									Type: "string",
+								},
+							},
+						},
+						"filters": {
+							Type: "array",
+							Items: &k8s_api_extensions_v1beta1.JSONSchemaPropsOrArray{
+								Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
+									Type: "string",
+								},
+							},
+						},
+						"sensuMetadata": {
+							Type: "object",
+							// Define SensuMetadata properties if needed
+						},
+						"validation": {
+							Type: "object",
+							// Define properties as needed
+						},
+					},
+					Required: []string{"sensuMetadata"}, // Adjust according to your requirements
+				},
+				"status": {
+					Type: "object",
+					// Define properties for Status if needed
+				},
+			},
+			Required: []string{"spec", "status"}, // Ensure these required fields are defined correctly
+		},
 	}
 }
