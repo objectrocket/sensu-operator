@@ -18,6 +18,10 @@ import (
 	"fmt"
 	"time"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -37,7 +41,11 @@ const (
 	ClusterConditionUpgrading                       = "Upgrading"
 )
 
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:openapi-gen=true
 type ClusterStatus struct {
+	metav1.TypeMeta `json:",inline"` // Embed TypeMeta
+
 	// Phase is the cluster running phase
 	Phase  ClusterPhase `json:"phase"`
 	Reason string       `json:"reason,omitempty"`
@@ -46,6 +54,7 @@ type ClusterStatus struct {
 	ControlPaused bool `json:"controlPaused,omitempty"`
 
 	// Condition keeps track of all cluster conditions, if they exist.
+	// +listType=set
 	Conditions []ClusterCondition `json:"conditions,omitempty"`
 
 	// Size is the current size of the cluster.
@@ -161,6 +170,10 @@ func (cs *ClusterStatus) SetRecoveringCondition() {
 	cs.ClearCondition(ClusterConditionAvailable)
 }
 
+// GetObjectKind returns the TypeMeta information
+func (c *ClusterStatus) GetObjectKind() schema.ObjectKind {
+	return &c.TypeMeta
+}
 func (cs *ClusterStatus) SetUpgradingCondition(to string) {
 	// TODO: show x/y members has upgraded.
 	c := newClusterCondition(ClusterConditionUpgrading, v1.ConditionTrue,
@@ -218,4 +231,24 @@ func newClusterCondition(condType ClusterConditionType, status v1.ConditionStatu
 
 func scalingMsg(from, to int) string {
 	return fmt.Sprintf("Current cluster size: %d, desired cluster size: %d", from, to)
+}
+
+// DeepCopyInto copies all properties of this object into another object
+func (in *ClusterStatus) DeepCopyInto(out *ClusterStatus) {
+	*out = *in
+	// Add deep copy for any pointer fields or complex types here
+}
+
+// DeepCopy creates a new ClusterStatus and copies the receiver into it
+func (c *ClusterStatus) DeepCopy() *ClusterStatus {
+	if c == nil {
+		return nil
+	}
+	return &ClusterStatus{
+		TypeMeta:       c.TypeMeta, // shallow copy, typically fine for TypeMeta
+		Phase:          c.Phase,
+		Size:           c.Size,
+		CurrentVersion: c.CurrentVersion,
+		TargetVersion:  c.TargetVersion,
+	}
 }

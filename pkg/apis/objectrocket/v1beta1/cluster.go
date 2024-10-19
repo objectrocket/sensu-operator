@@ -271,41 +271,13 @@ func (c SensuCluster) GetCustomResourceValidation() *k8s_api_extensions_v1beta1.
 								"labels": {
 									Type: "object",
 								},
-								"nodeSelector": {
-									Type: "object",
-								},
 								"affinity": {
 									Type: "object",
 								},
-								"resources": {
-									Type: "object",
-								},
-								"tolerations": {
-									Type: "array",
-									Items: &k8s_api_extensions_v1beta1.JSONSchemaPropsOrArray{
-										Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
-											Type: "object",
-										},
-									},
-								},
-								"sensuEnv": {
-									Type: "array",
-									Items: &k8s_api_extensions_v1beta1.JSONSchemaPropsOrArray{
-										Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
-											Type: "object",
-										},
-									},
-								},
-
 								"annotations": {
 									Type: "object",
 								},
-								"busyboxImage": {
-									Type: "string",
-								},
-								"securityContext": {
-									Type: "object",
-								},
+
 								"DNSTimeoutInSecond": {
 									Type: "integer",
 								},
@@ -345,6 +317,7 @@ func (c SensuCluster) GetCustomResourceValidation() *k8s_api_extensions_v1beta1.
 											Type: "string",
 										},
 									},
+									XPreserveUnknownFields: &trueVal,
 								},
 							},
 							XPreserveUnknownFields: &trueVal,

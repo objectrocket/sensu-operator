@@ -29,6 +29,7 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
+		"github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.ClusterStatus":        schema_pkg_apis_objectrocket_v1beta1_ClusterStatus(ref),
 		"github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.SensuAsset":           schema_pkg_apis_objectrocket_v1beta1_SensuAsset(ref),
 		"github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.SensuAssetSpec":       schema_pkg_apis_objectrocket_v1beta1_SensuAssetSpec(ref),
 		"github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.SensuCheckConfig":     schema_pkg_apis_objectrocket_v1beta1_SensuCheckConfig(ref),
@@ -90,6 +91,148 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"k8s.io/apimachinery/pkg/runtime.TypeMeta":                                                  schema_k8sio_apimachinery_pkg_runtime_TypeMeta(ref),
 		"k8s.io/apimachinery/pkg/runtime.Unknown":                                                   schema_k8sio_apimachinery_pkg_runtime_Unknown(ref),
 		"k8s.io/apimachinery/pkg/version.Info":                                                      schema_k8sio_apimachinery_pkg_version_Info(ref),
+	}
+}
+
+func schema_pkg_apis_objectrocket_v1beta1_ClusterStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"phase": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Phase is the cluster running phase",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"reason": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"controlPaused": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ControlPuased indicates the operator pauses the control of the cluster.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"conditions": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Condition keeps track of all cluster conditions, if they exist.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.ClusterCondition"),
+									},
+								},
+							},
+						},
+					},
+					"size": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Size is the current size of the cluster. Currently limited to 1.",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"dashboardServiceName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "DashboardServiceName is the LB service for accessing the sensu dashboard.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"dashboardPort": {
+						SchemaProps: spec.SchemaProps{
+							Description: "DashboardPort is the port for accessing the sensu dashboard.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"agentServiceName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "AgentServiceName is the LB service for sensu agents to access the sensu backend.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"agentPort": {
+						SchemaProps: spec.SchemaProps{
+							Description: "AgentPort is the port for sensu agents to connect to the sensu backend.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"apiServiceName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIServiceName is the LB service for clients to access the sensu API.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiPort": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIPort is the port for sensu clients to connect to the sensu API.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"members": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Members are the sensu members in the cluster",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.MembersStatus"),
+						},
+					},
+					"currentVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "CurrentVersion is the current cluster version",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"targetVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TargetVersion is the version the cluster upgrading to. If the cluster is not upgrading, TargetVersion is empty.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"phase", "size", "members", "currentVersion", "targetVersion"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.ClusterCondition", "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.MembersStatus"},
 	}
 }
 

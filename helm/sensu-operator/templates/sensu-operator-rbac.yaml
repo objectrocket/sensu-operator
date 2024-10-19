@@ -84,3 +84,15 @@ rules:
   - use
   resourceNames:
   - default
+# latest k8 1.30
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - delete

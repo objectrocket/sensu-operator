@@ -92,6 +92,7 @@ func (a SensuAsset) GetCustomResourceValidation() *k8s_api_extensions_v1beta1.Cu
 		GetOpenAPIDefinitions,
 	)*/
 	//fmt.Println(schemaProps)
+	trueVal := true
 	return &k8s_api_extensions_v1beta1.CustomResourceValidation{
 		OpenAPIV3Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
 			Type: "object",
@@ -114,6 +115,9 @@ func (a SensuAsset) GetCustomResourceValidation() *k8s_api_extensions_v1beta1.Cu
 						"sha512": {
 							Type: "string",
 						},
+						"clusterName": {
+							Type: "string",
+						},
 						"filters": {
 							Type: "array",
 							Items: &k8s_api_extensions_v1beta1.JSONSchemaPropsOrArray{
@@ -121,22 +125,43 @@ func (a SensuAsset) GetCustomResourceValidation() *k8s_api_extensions_v1beta1.Cu
 									Type: "string",
 								},
 							},
+							XPreserveUnknownFields: &trueVal,
 						},
 						"organization": {
 							Type: "string",
 						},
 						"sensuMetadata": {
 							Type: "object",
+							Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
+								"name": {
+									Type: "string",
+								},
+								"clusterName": {
+									Type: "string",
+								},
+								"namespace": {
+									Type: "string",
+								},
+							},
 							// Define SensuMetadata properties if needed
 						},
 					},
-					Required: []string{"sensuMetadata"}, // Adjust according to your requirements
+					Required:               []string{"sensuMetadata"}, // Adjust according to your requirements
+					XPreserveUnknownFields: &trueVal,
 				},
 				"status": {
 					Type: "object",
+					Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
+						"accepted": {
+							Type: "boolean",
+						},
+						"lastError": {
+							Type: "string",
+						},
+					},
 				},
 			},
-			Required: []string{"spec", "status"},
+			Required: []string{"spec"},
 		},
 	}
 }
