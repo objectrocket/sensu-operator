@@ -15,6 +15,8 @@
 package cluster
 
 import (
+	//"context"
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -97,13 +99,13 @@ func New(config Config, cl *api.SensuCluster) *Cluster {
 		eventCh:   make(chan *clusterEvent, 100),
 		stopCh:    make(chan struct{}),
 		status:    *(cl.Status.DeepCopy()),
-		eventsCli: config.KubeCli.Core().Events(cl.Namespace),
+		eventsCli: config.KubeCli.CoreV1().Events(cl.Namespace),
 	}
 
 	go func() {
 		c.logger.Infof("creating NetworkPolicy for cluster %s", c.cluster.Name)
 		if err := k8sutil.CreateNetPolicy(c.config.KubeCli, c.cluster.Name, c.cluster.Namespace, c.cluster.AsOwner()); err != nil {
-			c.logger.Warningf("failed to create network policies for cluster %s: %v", c.cluster.Name, err)
+			c.logger.Warningf("failed to create network policies for cluster %s: %v:::%v::%v", c.cluster.Name, c.cluster.Namespace, c.cluster.AsOwner(), err)
 		}
 		if err := c.setup(); err != nil {
 			c.logger.Errorf("cluster failed to setup: %v", err)
@@ -310,6 +312,7 @@ func isSpecEqual(s1, s2 api.ClusterSpec) bool {
 }
 
 func (c *Cluster) startStatefulSet() error {
+	ctx := context.Background()
 	m := &etcdutil.MemberConfig{
 		Namespace:    c.cluster.Namespace,
 		SecurePeer:   c.isSecurePeer(),
@@ -320,7 +323,7 @@ func (c *Cluster) startStatefulSet() error {
 	}
 
 	c.logger.Infof("cluster created with seed member (%s-0)", c.cluster.Name)
-	_, err := c.eventsCli.Create(k8sutil.NewMemberAddEvent(c.cluster))
+	_, err := c.eventsCli.Create(ctx, k8sutil.NewMemberAddEvent(c.cluster), metav1.CreateOptions{})
 	if err != nil {
 		c.logger.Errorf("failed to create new member add event: %v", err)
 	}
@@ -367,6 +370,7 @@ func (c *Cluster) isPodPVEnabled() bool {
 }
 
 func (c *Cluster) createStatefulSet(m *etcdutil.MemberConfig) error {
+	ctx := context.Background()
 	var err error
 	set := k8sutil.NewSensuStatefulSet(m, c.cluster.Name, uuid.New(), c.cluster.Spec, c.cluster.AsOwner())
 	if c.isPodPVEnabled() {
@@ -375,7 +379,7 @@ func (c *Cluster) createStatefulSet(m *etcdutil.MemberConfig) error {
 	} else {
 		k8sutil.AddEtcdVolumeToPod(&set.Spec.Template, nil)
 	}
-	c.statefulSet, err = c.config.KubeCli.AppsV1().StatefulSets(c.cluster.Namespace).Create(set)
+	c.statefulSet, err = c.config.KubeCli.AppsV1().StatefulSets(c.cluster.Namespace).Create(ctx, set, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}
@@ -383,12 +387,14 @@ func (c *Cluster) createStatefulSet(m *etcdutil.MemberConfig) error {
 }
 
 func (c *Cluster) pollPods() (ready, notready []*v1.Pod, err error) {
-	podList, err := c.config.KubeCli.Core().Pods(c.cluster.Namespace).List(k8sutil.ClusterListOpt(c.cluster.Name))
+	ctx := context.Background()
+
+	podList, err := c.config.KubeCli.CoreV1().Pods(c.cluster.Namespace).List(ctx, k8sutil.ClusterListOpt(c.cluster.Name))
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to list running pods: %v", err)
 	}
 
-	set, err := c.config.KubeCli.AppsV1().StatefulSets(c.cluster.Namespace).Get(c.cluster.Name, metav1.GetOptions{})
+	set, err := c.config.KubeCli.AppsV1().StatefulSets(c.cluster.Namespace).Get(ctx, c.cluster.Name, metav1.GetOptions{})
 	if err != nil {
 		return nil, nil, fmt.Errorf("Failed to fetch new StatefulSet: %v", err)
 	}
@@ -446,16 +452,17 @@ func (c *Cluster) updateMemberStatus(running []*v1.Pod) {
 }
 
 func (c *Cluster) updateCRStatus() error {
+	ctx := context.Background()
 	if reflect.DeepEqual(c.cluster.Status, c.status) {
 		return nil
 	}
 
-	newCluster, err := c.config.SensuCRCli.ObjectrocketV1beta1().SensuClusters(c.cluster.GetNamespace()).Get(c.cluster.GetName(), metav1.GetOptions{})
+	newCluster, err := c.config.SensuCRCli.ObjectrocketV1beta1().SensuClusters(c.cluster.GetNamespace()).Get(ctx, c.cluster.GetName(), metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("Failed to fetch cluster for status update: %v", err)
 	}
 	newCluster.Status = c.status
-	newCluster, err = c.config.SensuCRCli.ObjectrocketV1beta1().SensuClusters(newCluster.GetNamespace()).Update(newCluster)
+	newCluster, err = c.config.SensuCRCli.ObjectrocketV1beta1().SensuClusters(newCluster.GetNamespace()).Update(ctx, newCluster, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to update CR status: %v", err)
 	}
@@ -466,6 +473,7 @@ func (c *Cluster) updateCRStatus() error {
 }
 
 func (c *Cluster) reportFailedStatus() {
+	ctx := context.Background()
 	c.logger.Info("cluster failed. Reporting failed reason...")
 
 	retryInterval := 5 * time.Second
@@ -482,7 +490,7 @@ func (c *Cluster) reportFailedStatus() {
 		}
 
 		cl, err := c.config.SensuCRCli.ObjectrocketV1beta1().SensuClusters(c.cluster.Namespace).
-			Get(c.cluster.Name, metav1.GetOptions{})
+			Get(ctx, c.cluster.Name, metav1.GetOptions{})
 		if err != nil {
 			// Update (PUT) will return conflict even if object is deleted since we have UID set in object.
 			// Because it will check UID first and return something like:
@@ -556,7 +564,7 @@ func (c *Cluster) ClientURLs(m *etcdutil.MemberConfig) (urls []string) {
 }
 
 func (c *Cluster) PeerURL(m *etcdutil.MemberConfig, ordinalID int) string {
-	return fmt.Sprintf("%s://%s.%s.%s.svc:2380",
+	return fmt.Sprintf("%s://%s.%s.%s.svc.cluster.local:2380",
 		m.PeerScheme(),
 		c.memberName(ordinalID),
 		c.name(),

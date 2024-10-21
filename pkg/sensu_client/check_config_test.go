@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	sensu_api_core_v2 "github.com/sensu/sensu-go/api/core/v2"
+	sensu_api_core_v2 "github.com/sensu/core/v2"
 )
 
 func Test_equal(t *testing.T) {

@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The sensu-operator Authors
+Copyright 2024 The sensu-operator Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,16 +19,18 @@ limitations under the License.
 package v1beta1
 
 import (
-	v1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/tools/cache"
+	objectrocketv1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // SensuBackupLister helps list SensuBackups.
+// All objects returned here must be treated as read-only.
 type SensuBackupLister interface {
 	// List lists all SensuBackups in the indexer.
-	List(selector labels.Selector) (ret []*v1beta1.SensuBackup, err error)
+	// Objects returned here must be treated as read-only.
+	List(selector labels.Selector) (ret []*objectrocketv1beta1.SensuBackup, err error)
 	// SensuBackups returns an object that can list and get SensuBackups.
 	SensuBackups(namespace string) SensuBackupNamespaceLister
 	SensuBackupListerExpansion
@@ -36,59 +38,33 @@ type SensuBackupLister interface {
 
 // sensuBackupLister implements the SensuBackupLister interface.
 type sensuBackupLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*objectrocketv1beta1.SensuBackup]
 }
 
 // NewSensuBackupLister returns a new SensuBackupLister.
 func NewSensuBackupLister(indexer cache.Indexer) SensuBackupLister {
-	return &sensuBackupLister{indexer: indexer}
-}
-
-// List lists all SensuBackups in the indexer.
-func (s *sensuBackupLister) List(selector labels.Selector) (ret []*v1beta1.SensuBackup, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1beta1.SensuBackup))
-	})
-	return ret, err
+	return &sensuBackupLister{listers.New[*objectrocketv1beta1.SensuBackup](indexer, objectrocketv1beta1.Resource("sensubackup"))}
 }
 
 // SensuBackups returns an object that can list and get SensuBackups.
 func (s *sensuBackupLister) SensuBackups(namespace string) SensuBackupNamespaceLister {
-	return sensuBackupNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return sensuBackupNamespaceLister{listers.NewNamespaced[*objectrocketv1beta1.SensuBackup](s.ResourceIndexer, namespace)}
 }
 
 // SensuBackupNamespaceLister helps list and get SensuBackups.
+// All objects returned here must be treated as read-only.
 type SensuBackupNamespaceLister interface {
 	// List lists all SensuBackups in the indexer for a given namespace.
-	List(selector labels.Selector) (ret []*v1beta1.SensuBackup, err error)
+	// Objects returned here must be treated as read-only.
+	List(selector labels.Selector) (ret []*objectrocketv1beta1.SensuBackup, err error)
 	// Get retrieves the SensuBackup from the indexer for a given namespace and name.
-	Get(name string) (*v1beta1.SensuBackup, error)
+	// Objects returned here must be treated as read-only.
+	Get(name string) (*objectrocketv1beta1.SensuBackup, error)
 	SensuBackupNamespaceListerExpansion
 }
 
 // sensuBackupNamespaceLister implements the SensuBackupNamespaceLister
 // interface.
 type sensuBackupNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all SensuBackups in the indexer for a given namespace.
-func (s sensuBackupNamespaceLister) List(selector labels.Selector) (ret []*v1beta1.SensuBackup, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1beta1.SensuBackup))
-	})
-	return ret, err
-}
-
-// Get retrieves the SensuBackup from the indexer for a given namespace and name.
-func (s sensuBackupNamespaceLister) Get(name string) (*v1beta1.SensuBackup, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1beta1.Resource("sensubackup"), name)
-	}
-	return obj.(*v1beta1.SensuBackup), nil
+	listers.ResourceIndexer[*objectrocketv1beta1.SensuBackup]
 }

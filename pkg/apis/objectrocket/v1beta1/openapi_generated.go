@@ -23,7 +23,7 @@ limitations under the License.
 package v1beta1
 
 import (
-	spec "github.com/go-openapi/spec"
+	spec "k8s.io/kube-openapi/pkg/validation/spec"
 	common "k8s.io/kube-openapi/pkg/common"
 )
 
@@ -383,7 +383,7 @@ func schema_pkg_apis_objectrocket_v1beta1_SensuCheckConfigSpec(ref common.Refere
 					"validation": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Validation is the OpenAPIV3Schema validation for sensu checks",
-							Ref:         ref("k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1.CustomResourceValidation"),
+							Ref:         ref("k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1.CustomResourceValidation"),
 						},
 					},
 				},
@@ -391,7 +391,7 @@ func schema_pkg_apis_objectrocket_v1beta1_SensuCheckConfigSpec(ref common.Refere
 			},
 		},
 		Dependencies: []string{
-			"github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.HookList", "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.ObjectMeta", "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.ProxyRequests", "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.TimeWindowWhen", "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1.CustomResourceValidation"},
+			"github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.HookList", "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.ObjectMeta", "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.ProxyRequests", "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.TimeWindowWhen", "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1.CustomResourceValidation"},
 	}
 }
 
@@ -528,14 +528,17 @@ func schema_pkg_apis_objectrocket_v1beta1_SensuHandler(ref common.ReferenceCallb
 					},
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"}, 
 							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"}, 
 							Ref: ref("github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.SensuHandlerSpec"),
 						},
 					},
+					
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Ref: ref("github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.SensuHandlerStatus"),
@@ -583,6 +586,7 @@ func schema_pkg_apis_objectrocket_v1beta1_SensuHandlerSpec(ref common.ReferenceC
 					},
 					"socket": {
 						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"}, 
 							Ref: ref("github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.HandlerSocket"),
 						},
 					},
@@ -640,14 +644,16 @@ func schema_pkg_apis_objectrocket_v1beta1_SensuHandlerSpec(ref common.ReferenceC
 					},
 					"sensuMetadata": {
 						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"}, 
 							Description: "Metadata contains the sensu name, sensu namespace, sensu annotations, and sensu labels of the handler",
 							Ref:         ref("github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.ObjectMeta"),
 						},
 					},
 					"validation": {
 						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"}, 
 							Description: "Validation is the OpenAPIV3Schema validation for sensu assets",
-							Ref:         ref("k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1.CustomResourceValidation"),
+							Ref:         ref("k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1.CustomResourceValidation"),
 						},
 					},
 				},
@@ -655,6 +661,6 @@ func schema_pkg_apis_objectrocket_v1beta1_SensuHandlerSpec(ref common.ReferenceC
 			},
 		},
 		Dependencies: []string{
-			"github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.HandlerSocket", "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.ObjectMeta", "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1.CustomResourceValidation"},
+			"github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.HandlerSocket", "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.ObjectMeta", "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1.CustomResourceValidation"},
 	}
 }

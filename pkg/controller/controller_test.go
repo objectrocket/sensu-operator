@@ -137,8 +137,7 @@ func (s *InformerTestSuite) TestInformerWithNoEvents() {
 				"kind": "SensuClusterList",
 				"metadata": {
 				  "continue": "",
-				  "resourceVersion": "3570",
-				  "selfLink": "/apis/objectrocket.com/v1beta1/namespaces/default/sensuclusters"
+				  "resourceVersion": "3570"
 				}
 			  }
 `)),
@@ -150,12 +149,10 @@ func (s *InformerTestSuite) TestInformerWithNoEvents() {
 	controller.Config.SensuCRCli.ObjectrocketV1beta1()
 	source = cache.NewListWatchFromClient(
 		&fakerest.RESTClient{
-			Client: fakerest.CreateHTTPClient(roundTripper),
-			NegotiatedSerializer: serializer.DirectCodecFactory{
-				CodecFactory: serializer.NewCodecFactory(sensuscheme.Scheme),
-			},
-			GroupVersion:     schema.GroupVersion{},
-			VersionedAPIPath: "/not/a/real/path",
+			Client:               fakerest.CreateHTTPClient(roundTripper),
+			NegotiatedSerializer: serializer.NewCodecFactory(sensuscheme.Scheme),
+			GroupVersion:         schema.GroupVersion{},
+			VersionedAPIPath:     "/not/a/real/path",
 		},
 		api.SensuClusterResourcePlural,
 		controller.Config.Namespace,
@@ -240,66 +237,64 @@ func (s *InformerTestSuite) TestInformerWithOneCluster() {
 		response := &http.Response{
 			Body: ioutil.NopCloser(bytes.NewBufferString(`
 			{
-				"apiVersion": "objectrocket.com/v1beta1",
-				"items": [
-				  {
-					"apiVersion": "objectrocket.com/v1beta1",
-					"kind": "SensuCluster",
-					"metadata": {
-					  "annotations": {
-						"kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"objectrocket.com/v1beta1\",\"kind\":\"SensuCluster\",\"metadata\":{\"annotations\":{},\"name\":\"example-sensu-cluster\",\"namespace\":\"default\"},\"spec\":{\"size\":3,\"version\":\"2.0.0-beta.8\"}}\n"
-					  },
-					  "clusterName": "",
-					  "creationTimestamp": "2019-01-02T23:14:52Z",
-					  "generation": 1,
-					  "name": "example-sensu-cluster",
-					  "namespace": "default",
-					  "resourceVersion": "3570",
-					  "selfLink": "/apis/objectrocket.com/v1beta1/namespaces/default/sensuclusters/example-sensu-cluster",
-					  "uid": "358db0b6-0ee4-11e9-a33b-0800272dcccb"
-					},
-					"spec": {
-					  "repository": "sensu/sensu",
-					  "size": 3,
-					  "version": "2.0.0-beta.8"
-					},
-					"status": {
-					  "agentPort": 8081,
-					  "agentServiceName": "example-sensu-cluster-agent",
-					  "apiPort": 8080,
-					  "apiServiceName": "example-sensu-cluster-api",
-					  "conditions": [
-						{
-						  "lastTransitionTime": "2019-01-02T23:15:48Z",
-						  "lastUpdateTime": "2019-01-02T23:15:48Z",
-						  "reason": "Cluster available",
-						  "status": "True",
-						  "type": "Available"
-						}
-					  ],
-					  "currentVersion": "2.0.0-beta.8",
-					  "dashboardPort": 3000,
-					  "dashboardServiceName": "example-sensu-cluster-dashboard",
-					  "members": {
-						"ready": [
-						  "example-sensu-cluster-6h5wp5t264",
-						  "example-sensu-cluster-8ldr4vhlz5",
-						  "example-sensu-cluster-b4cf6wcnpc"
-						]
-					  },
-					  "phase": "Running",
-					  "size": 3,
-					  "targetVersion": ""
-					}
-				  }
-				],
-				"kind": "SensuClusterList",
-				"metadata": {
-				  "continue": "",
-				  "resourceVersion": "3570",
-				  "selfLink": "/apis/objectrocket.com/v1beta1/namespaces/default/sensuclusters"
-				}
-			  }
+  "apiVersion": "objectrocket.com/v1beta1",
+  "kind": "SensuClusterList",
+  "metadata": {
+    "continue": "",
+    "resourceVersion": "3570"
+  },
+  "items": [
+    {
+      "apiVersion": "objectrocket.com/v1beta1",
+      "kind": "SensuCluster",
+      "metadata": {
+        "name": "example-sensu-cluster",
+        "namespace": "default",
+        "uid": "358db0b6-0ee4-11e9-a33b-0800272dcccb",
+        "resourceVersion": "3570",
+        "creationTimestamp": "2019-01-02T23:14:52Z",
+        "annotations": {
+          "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"objectrocket.com/v1beta1\",\"kind\":\"SensuCluster\",\"metadata\":{\"annotations\":{},\"name\":\"example-sensu-cluster\",\"namespace\":\"default\"},\"spec\":{\"size\":3,\"version\":\"2.0.0-beta.8\"}}\n"
+        },
+        "generation": 1
+      },
+      "spec": {
+        "repository": "sensu/sensu",
+        "size": 3,
+        "version": "2.0.0-beta.8"
+      },
+      "status": {
+        "phase": "Running",
+        "size": 3,
+        "currentVersion": "2.0.0-beta.8",
+        "targetVersion": "",
+        "members": {
+          "ready": [
+            "example-sensu-cluster-6h5wp5t264",
+            "example-sensu-cluster-8ldr4vhlz5",
+            "example-sensu-cluster-b4cf6wcnpc"
+          ]
+        },
+        "conditions": [
+          {
+            "type": "Available",
+            "status": "True",
+            "reason": "Cluster available",
+            "lastTransitionTime": "2019-01-02T23:15:48Z",
+            "lastUpdateTime": "2019-01-02T23:15:48Z"
+          }
+        ],
+        "agentPort": 8081,
+        "apiPort": 8080,
+        "dashboardPort": 3000,
+        "agentServiceName": "example-sensu-cluster-agent",
+        "apiServiceName": "example-sensu-cluster-api",
+        "dashboardServiceName": "example-sensu-cluster-dashboard"
+      }
+    }
+  ]
+}
+
 `)),
 			StatusCode: 200,
 		}
@@ -309,12 +304,10 @@ func (s *InformerTestSuite) TestInformerWithOneCluster() {
 	controller.Config.SensuCRCli.ObjectrocketV1beta1()
 	source = cache.NewListWatchFromClient(
 		&fakerest.RESTClient{
-			Client: fakerest.CreateHTTPClient(roundTripper),
-			NegotiatedSerializer: serializer.DirectCodecFactory{
-				CodecFactory: serializer.NewCodecFactory(sensuscheme.Scheme),
-			},
-			GroupVersion:     schema.GroupVersion{},
-			VersionedAPIPath: "/not/a/real/path",
+			Client:               fakerest.CreateHTTPClient(roundTripper),
+			NegotiatedSerializer: serializer.NewCodecFactory(sensuscheme.Scheme),
+			GroupVersion:         schema.GroupVersion{},
+			VersionedAPIPath:     "/not/a/real/path",
 		},
 		api.SensuClusterResourcePlural,
 		controller.Config.Namespace,

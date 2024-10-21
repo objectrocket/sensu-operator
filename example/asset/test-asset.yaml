@@ -12,5 +12,5 @@ spec:
   clusterName: sensu
   sensuMetadata:
     name: sensu-asset-http
-    clusterName: platdev0
-    namespace: default
+    clusterName: sensu
+    namespace: sensu

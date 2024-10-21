@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The sensu-operator Authors
+Copyright 2024 The sensu-operator Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,10 +19,11 @@ limitations under the License.
 package fake
 
 import (
+	context "context"
+
 	v1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -34,28 +35,30 @@ type FakeSensuClusters struct {
 	ns   string
 }
 
-var sensuclustersResource = schema.GroupVersionResource{Group: "objectrocket.com", Version: "v1beta1", Resource: "sensuclusters"}
+var sensuclustersResource = v1beta1.SchemeGroupVersion.WithResource("sensuclusters")
 
-var sensuclustersKind = schema.GroupVersionKind{Group: "objectrocket.com", Version: "v1beta1", Kind: "SensuCluster"}
+var sensuclustersKind = v1beta1.SchemeGroupVersion.WithKind("SensuCluster")
 
 // Get takes name of the sensuCluster, and returns the corresponding sensuCluster object, and an error if there is any.
-func (c *FakeSensuClusters) Get(name string, options v1.GetOptions) (result *v1beta1.SensuCluster, err error) {
+func (c *FakeSensuClusters) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta1.SensuCluster, err error) {
+	emptyResult := &v1beta1.SensuCluster{}
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(sensuclustersResource, c.ns, name), &v1beta1.SensuCluster{})
+		Invokes(testing.NewGetActionWithOptions(sensuclustersResource, c.ns, name, options), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.SensuCluster), err
 }
 
 // List takes label and field selectors, and returns the list of SensuClusters that match those selectors.
-func (c *FakeSensuClusters) List(opts v1.ListOptions) (result *v1beta1.SensuClusterList, err error) {
+func (c *FakeSensuClusters) List(ctx context.Context, opts v1.ListOptions) (result *v1beta1.SensuClusterList, err error) {
+	emptyResult := &v1beta1.SensuClusterList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(sensuclustersResource, sensuclustersKind, c.ns, opts), &v1beta1.SensuClusterList{})
+		Invokes(testing.NewListActionWithOptions(sensuclustersResource, sensuclustersKind, c.ns, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -72,69 +75,73 @@ func (c *FakeSensuClusters) List(opts v1.ListOptions) (result *v1beta1.SensuClus
 }
 
 // Watch returns a watch.Interface that watches the requested sensuClusters.
-func (c *FakeSensuClusters) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeSensuClusters) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(sensuclustersResource, c.ns, opts))
+		InvokesWatch(testing.NewWatchActionWithOptions(sensuclustersResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a sensuCluster and creates it.  Returns the server's representation of the sensuCluster, and an error, if there is any.
-func (c *FakeSensuClusters) Create(sensuCluster *v1beta1.SensuCluster) (result *v1beta1.SensuCluster, err error) {
+func (c *FakeSensuClusters) Create(ctx context.Context, sensuCluster *v1beta1.SensuCluster, opts v1.CreateOptions) (result *v1beta1.SensuCluster, err error) {
+	emptyResult := &v1beta1.SensuCluster{}
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(sensuclustersResource, c.ns, sensuCluster), &v1beta1.SensuCluster{})
+		Invokes(testing.NewCreateActionWithOptions(sensuclustersResource, c.ns, sensuCluster, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.SensuCluster), err
 }
 
 // Update takes the representation of a sensuCluster and updates it. Returns the server's representation of the sensuCluster, and an error, if there is any.
-func (c *FakeSensuClusters) Update(sensuCluster *v1beta1.SensuCluster) (result *v1beta1.SensuCluster, err error) {
+func (c *FakeSensuClusters) Update(ctx context.Context, sensuCluster *v1beta1.SensuCluster, opts v1.UpdateOptions) (result *v1beta1.SensuCluster, err error) {
+	emptyResult := &v1beta1.SensuCluster{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(sensuclustersResource, c.ns, sensuCluster), &v1beta1.SensuCluster{})
+		Invokes(testing.NewUpdateActionWithOptions(sensuclustersResource, c.ns, sensuCluster, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.SensuCluster), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeSensuClusters) UpdateStatus(sensuCluster *v1beta1.SensuCluster) (*v1beta1.SensuCluster, error) {
+func (c *FakeSensuClusters) UpdateStatus(ctx context.Context, sensuCluster *v1beta1.SensuCluster, opts v1.UpdateOptions) (result *v1beta1.SensuCluster, err error) {
+	emptyResult := &v1beta1.SensuCluster{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceAction(sensuclustersResource, "status", c.ns, sensuCluster), &v1beta1.SensuCluster{})
+		Invokes(testing.NewUpdateSubresourceActionWithOptions(sensuclustersResource, "status", c.ns, sensuCluster, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.SensuCluster), err
 }
 
 // Delete takes name of the sensuCluster and deletes it. Returns an error if one occurs.
-func (c *FakeSensuClusters) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeSensuClusters) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(sensuclustersResource, c.ns, name), &v1beta1.SensuCluster{})
+		Invokes(testing.NewDeleteActionWithOptions(sensuclustersResource, c.ns, name, opts), &v1beta1.SensuCluster{})
 
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeSensuClusters) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(sensuclustersResource, c.ns, listOptions)
+func (c *FakeSensuClusters) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionActionWithOptions(sensuclustersResource, c.ns, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1beta1.SensuClusterList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched sensuCluster.
-func (c *FakeSensuClusters) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.SensuCluster, err error) {
+func (c *FakeSensuClusters) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta1.SensuCluster, err error) {
+	emptyResult := &v1beta1.SensuCluster{}
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(sensuclustersResource, c.ns, name, pt, data, subresources...), &v1beta1.SensuCluster{})
+		Invokes(testing.NewPatchSubresourceActionWithOptions(sensuclustersResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.SensuCluster), err
 }

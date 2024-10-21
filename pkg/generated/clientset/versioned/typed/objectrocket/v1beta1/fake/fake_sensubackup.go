@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The sensu-operator Authors
+Copyright 2024 The sensu-operator Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,10 +19,11 @@ limitations under the License.
 package fake
 
 import (
+	context "context"
+
 	v1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -34,28 +35,30 @@ type FakeSensuBackups struct {
 	ns   string
 }
 
-var sensubackupsResource = schema.GroupVersionResource{Group: "objectrocket.com", Version: "v1beta1", Resource: "sensubackups"}
+var sensubackupsResource = v1beta1.SchemeGroupVersion.WithResource("sensubackups")
 
-var sensubackupsKind = schema.GroupVersionKind{Group: "objectrocket.com", Version: "v1beta1", Kind: "SensuBackup"}
+var sensubackupsKind = v1beta1.SchemeGroupVersion.WithKind("SensuBackup")
 
 // Get takes name of the sensuBackup, and returns the corresponding sensuBackup object, and an error if there is any.
-func (c *FakeSensuBackups) Get(name string, options v1.GetOptions) (result *v1beta1.SensuBackup, err error) {
+func (c *FakeSensuBackups) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta1.SensuBackup, err error) {
+	emptyResult := &v1beta1.SensuBackup{}
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(sensubackupsResource, c.ns, name), &v1beta1.SensuBackup{})
+		Invokes(testing.NewGetActionWithOptions(sensubackupsResource, c.ns, name, options), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.SensuBackup), err
 }
 
 // List takes label and field selectors, and returns the list of SensuBackups that match those selectors.
-func (c *FakeSensuBackups) List(opts v1.ListOptions) (result *v1beta1.SensuBackupList, err error) {
+func (c *FakeSensuBackups) List(ctx context.Context, opts v1.ListOptions) (result *v1beta1.SensuBackupList, err error) {
+	emptyResult := &v1beta1.SensuBackupList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(sensubackupsResource, sensubackupsKind, c.ns, opts), &v1beta1.SensuBackupList{})
+		Invokes(testing.NewListActionWithOptions(sensubackupsResource, sensubackupsKind, c.ns, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -72,69 +75,73 @@ func (c *FakeSensuBackups) List(opts v1.ListOptions) (result *v1beta1.SensuBacku
 }
 
 // Watch returns a watch.Interface that watches the requested sensuBackups.
-func (c *FakeSensuBackups) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeSensuBackups) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(sensubackupsResource, c.ns, opts))
+		InvokesWatch(testing.NewWatchActionWithOptions(sensubackupsResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a sensuBackup and creates it.  Returns the server's representation of the sensuBackup, and an error, if there is any.
-func (c *FakeSensuBackups) Create(sensuBackup *v1beta1.SensuBackup) (result *v1beta1.SensuBackup, err error) {
+func (c *FakeSensuBackups) Create(ctx context.Context, sensuBackup *v1beta1.SensuBackup, opts v1.CreateOptions) (result *v1beta1.SensuBackup, err error) {
+	emptyResult := &v1beta1.SensuBackup{}
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(sensubackupsResource, c.ns, sensuBackup), &v1beta1.SensuBackup{})
+		Invokes(testing.NewCreateActionWithOptions(sensubackupsResource, c.ns, sensuBackup, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.SensuBackup), err
 }
 
 // Update takes the representation of a sensuBackup and updates it. Returns the server's representation of the sensuBackup, and an error, if there is any.
-func (c *FakeSensuBackups) Update(sensuBackup *v1beta1.SensuBackup) (result *v1beta1.SensuBackup, err error) {
+func (c *FakeSensuBackups) Update(ctx context.Context, sensuBackup *v1beta1.SensuBackup, opts v1.UpdateOptions) (result *v1beta1.SensuBackup, err error) {
+	emptyResult := &v1beta1.SensuBackup{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(sensubackupsResource, c.ns, sensuBackup), &v1beta1.SensuBackup{})
+		Invokes(testing.NewUpdateActionWithOptions(sensubackupsResource, c.ns, sensuBackup, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.SensuBackup), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeSensuBackups) UpdateStatus(sensuBackup *v1beta1.SensuBackup) (*v1beta1.SensuBackup, error) {
+func (c *FakeSensuBackups) UpdateStatus(ctx context.Context, sensuBackup *v1beta1.SensuBackup, opts v1.UpdateOptions) (result *v1beta1.SensuBackup, err error) {
+	emptyResult := &v1beta1.SensuBackup{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceAction(sensubackupsResource, "status", c.ns, sensuBackup), &v1beta1.SensuBackup{})
+		Invokes(testing.NewUpdateSubresourceActionWithOptions(sensubackupsResource, "status", c.ns, sensuBackup, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.SensuBackup), err
 }
 
 // Delete takes name of the sensuBackup and deletes it. Returns an error if one occurs.
-func (c *FakeSensuBackups) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeSensuBackups) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(sensubackupsResource, c.ns, name), &v1beta1.SensuBackup{})
+		Invokes(testing.NewDeleteActionWithOptions(sensubackupsResource, c.ns, name, opts), &v1beta1.SensuBackup{})
 
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeSensuBackups) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(sensubackupsResource, c.ns, listOptions)
+func (c *FakeSensuBackups) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionActionWithOptions(sensubackupsResource, c.ns, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1beta1.SensuBackupList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched sensuBackup.
-func (c *FakeSensuBackups) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.SensuBackup, err error) {
+func (c *FakeSensuBackups) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta1.SensuBackup, err error) {
+	emptyResult := &v1beta1.SensuBackup{}
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(sensubackupsResource, c.ns, name, pt, data, subresources...), &v1beta1.SensuBackup{})
+		Invokes(testing.NewPatchSubresourceActionWithOptions(sensubackupsResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.SensuBackup), err
 }

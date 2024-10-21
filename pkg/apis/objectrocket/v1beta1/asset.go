@@ -15,9 +15,8 @@
 package v1beta1
 
 import (
-	crdutil "github.com/objectrocket/sensu-operator/pkg/util/k8sutil/conversionutil"
 	sensutypes "github.com/sensu/sensu-go/types"
-	k8s_api_extensions_v1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	k8s_api_extensions_v1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -56,6 +55,7 @@ type SensuAssetSpec struct {
 	// Filters are a collection of sensu queries, used by the system to determine
 	// if the asset should be installed. If more than one filter is present the
 	// queries are joined by the "AND" operator.
+	// +listType=atomic
 	Filters []string `json:"filters,omitempty"`
 
 	// Organization indicates to which org an asset belongs to
@@ -87,6 +87,81 @@ func (a SensuAsset) ToAPISensuAsset() *sensutypes.Asset {
 
 // GetCustomResourceValidation returns the asset's resource validation
 func (a SensuAsset) GetCustomResourceValidation() *k8s_api_extensions_v1beta1.CustomResourceValidation {
-	return crdutil.GetCustomResourceValidation("github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.SensuAsset", GetOpenAPIDefinitions)
-
+	/*schemaProps := crdutil.GetCustomResourceValidation(
+		"github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.SensuAsset",
+		GetOpenAPIDefinitions,
+	)*/
+	//fmt.Println(schemaProps)
+	trueVal := true
+	return &k8s_api_extensions_v1beta1.CustomResourceValidation{
+		OpenAPIV3Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
+			Type: "object",
+			Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
+				"kind": {
+					Type: "string",
+				},
+				"apiVersion": {
+					Type: "string",
+				},
+				"metadata": {
+					Type: "object",
+				},
+				"spec": {
+					Type: "object",
+					Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
+						"url": {
+							Type: "string",
+						},
+						"sha512": {
+							Type: "string",
+						},
+						"clusterName": {
+							Type: "string",
+						},
+						"filters": {
+							Type: "array",
+							Items: &k8s_api_extensions_v1beta1.JSONSchemaPropsOrArray{
+								Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
+									Type: "string",
+								},
+							},
+							XPreserveUnknownFields: &trueVal,
+						},
+						"organization": {
+							Type: "string",
+						},
+						"sensuMetadata": {
+							Type: "object",
+							Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
+								"name": {
+									Type: "string",
+								},
+								"clusterName": {
+									Type: "string",
+								},
+								"namespace": {
+									Type: "string",
+								},
+							},
+							// Define SensuMetadata properties if needed
+						},
+					},
+					Required:               []string{"sensuMetadata"}, // Adjust according to your requirements
+					XPreserveUnknownFields: &trueVal,
+				},
+				"status": {
+					Type: "object",
+					Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
+						"accepted": {
+							Type: "boolean",
+						},
+						"lastError": {
+							Type: "string",
+						},
+					},
+				},
+			},
+			Required: []string{"spec"},
+		},
+	}
 }

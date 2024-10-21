@@ -1,4 +1,4 @@
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: <ROLE_BINDING_NAME>
@@ -8,5 +8,5 @@ roleRef:
   name: <ROLE_NAME>
 subjects:
 - kind: ServiceAccount
-  name: default
+  name: sensu-operator
   namespace: <NAMESPACE>

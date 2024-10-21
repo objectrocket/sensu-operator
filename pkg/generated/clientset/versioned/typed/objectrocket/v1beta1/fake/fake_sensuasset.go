@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The sensu-operator Authors
+Copyright 2024 The sensu-operator Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,10 +19,11 @@ limitations under the License.
 package fake
 
 import (
+	context "context"
+
 	v1beta1 "github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -34,28 +35,30 @@ type FakeSensuAssets struct {
 	ns   string
 }
 
-var sensuassetsResource = schema.GroupVersionResource{Group: "objectrocket.com", Version: "v1beta1", Resource: "sensuassets"}
+var sensuassetsResource = v1beta1.SchemeGroupVersion.WithResource("sensuassets")
 
-var sensuassetsKind = schema.GroupVersionKind{Group: "objectrocket.com", Version: "v1beta1", Kind: "SensuAsset"}
+var sensuassetsKind = v1beta1.SchemeGroupVersion.WithKind("SensuAsset")
 
 // Get takes name of the sensuAsset, and returns the corresponding sensuAsset object, and an error if there is any.
-func (c *FakeSensuAssets) Get(name string, options v1.GetOptions) (result *v1beta1.SensuAsset, err error) {
+func (c *FakeSensuAssets) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta1.SensuAsset, err error) {
+	emptyResult := &v1beta1.SensuAsset{}
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(sensuassetsResource, c.ns, name), &v1beta1.SensuAsset{})
+		Invokes(testing.NewGetActionWithOptions(sensuassetsResource, c.ns, name, options), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.SensuAsset), err
 }
 
 // List takes label and field selectors, and returns the list of SensuAssets that match those selectors.
-func (c *FakeSensuAssets) List(opts v1.ListOptions) (result *v1beta1.SensuAssetList, err error) {
+func (c *FakeSensuAssets) List(ctx context.Context, opts v1.ListOptions) (result *v1beta1.SensuAssetList, err error) {
+	emptyResult := &v1beta1.SensuAssetList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(sensuassetsResource, sensuassetsKind, c.ns, opts), &v1beta1.SensuAssetList{})
+		Invokes(testing.NewListActionWithOptions(sensuassetsResource, sensuassetsKind, c.ns, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -72,69 +75,73 @@ func (c *FakeSensuAssets) List(opts v1.ListOptions) (result *v1beta1.SensuAssetL
 }
 
 // Watch returns a watch.Interface that watches the requested sensuAssets.
-func (c *FakeSensuAssets) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeSensuAssets) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(sensuassetsResource, c.ns, opts))
+		InvokesWatch(testing.NewWatchActionWithOptions(sensuassetsResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a sensuAsset and creates it.  Returns the server's representation of the sensuAsset, and an error, if there is any.
-func (c *FakeSensuAssets) Create(sensuAsset *v1beta1.SensuAsset) (result *v1beta1.SensuAsset, err error) {
+func (c *FakeSensuAssets) Create(ctx context.Context, sensuAsset *v1beta1.SensuAsset, opts v1.CreateOptions) (result *v1beta1.SensuAsset, err error) {
+	emptyResult := &v1beta1.SensuAsset{}
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(sensuassetsResource, c.ns, sensuAsset), &v1beta1.SensuAsset{})
+		Invokes(testing.NewCreateActionWithOptions(sensuassetsResource, c.ns, sensuAsset, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.SensuAsset), err
 }
 
 // Update takes the representation of a sensuAsset and updates it. Returns the server's representation of the sensuAsset, and an error, if there is any.
-func (c *FakeSensuAssets) Update(sensuAsset *v1beta1.SensuAsset) (result *v1beta1.SensuAsset, err error) {
+func (c *FakeSensuAssets) Update(ctx context.Context, sensuAsset *v1beta1.SensuAsset, opts v1.UpdateOptions) (result *v1beta1.SensuAsset, err error) {
+	emptyResult := &v1beta1.SensuAsset{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(sensuassetsResource, c.ns, sensuAsset), &v1beta1.SensuAsset{})
+		Invokes(testing.NewUpdateActionWithOptions(sensuassetsResource, c.ns, sensuAsset, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.SensuAsset), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeSensuAssets) UpdateStatus(sensuAsset *v1beta1.SensuAsset) (*v1beta1.SensuAsset, error) {
+func (c *FakeSensuAssets) UpdateStatus(ctx context.Context, sensuAsset *v1beta1.SensuAsset, opts v1.UpdateOptions) (result *v1beta1.SensuAsset, err error) {
+	emptyResult := &v1beta1.SensuAsset{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceAction(sensuassetsResource, "status", c.ns, sensuAsset), &v1beta1.SensuAsset{})
+		Invokes(testing.NewUpdateSubresourceActionWithOptions(sensuassetsResource, "status", c.ns, sensuAsset, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.SensuAsset), err
 }
 
 // Delete takes name of the sensuAsset and deletes it. Returns an error if one occurs.
-func (c *FakeSensuAssets) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeSensuAssets) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(sensuassetsResource, c.ns, name), &v1beta1.SensuAsset{})
+		Invokes(testing.NewDeleteActionWithOptions(sensuassetsResource, c.ns, name, opts), &v1beta1.SensuAsset{})
 
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeSensuAssets) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(sensuassetsResource, c.ns, listOptions)
+func (c *FakeSensuAssets) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionActionWithOptions(sensuassetsResource, c.ns, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1beta1.SensuAssetList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched sensuAsset.
-func (c *FakeSensuAssets) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.SensuAsset, err error) {
+func (c *FakeSensuAssets) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta1.SensuAsset, err error) {
+	emptyResult := &v1beta1.SensuAsset{}
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(sensuassetsResource, c.ns, name, pt, data, subresources...), &v1beta1.SensuAsset{})
+		Invokes(testing.NewPatchSubresourceActionWithOptions(sensuassetsResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.SensuAsset), err
 }

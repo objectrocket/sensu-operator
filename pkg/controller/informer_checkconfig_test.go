@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -16,6 +17,8 @@ import (
 )
 
 func TestController_syncSensuCheckConfig(t *testing.T) {
+	ctx := context.Background()
+
 	assetInformer, checkInformer, handlerInformer, eventFilterInformer, nodeInformer := initInformers()
 	type fields struct {
 		logger     *logrus.Entry
@@ -64,14 +67,14 @@ func TestController_syncSensuCheckConfig(t *testing.T) {
 				},
 			},
 			func(t *testing.T, c *Controller, check *api.SensuCheckConfig) {
-				_, err := c.SensuCRCli.ObjectrocketV1beta1().SensuCheckConfigs("sensu").Create(check)
+				_, err := c.SensuCRCli.ObjectrocketV1beta1().SensuCheckConfigs("sensu").Create(ctx, check, metav1.CreateOptions{})
 				if err != nil {
 					t.Error(err)
 				}
 			},
 			func(c *Controller, check *api.SensuCheckConfig) error {
 				c.syncSensuCheckConfig(check)
-				k8sCheck, err := c.SensuCRCli.ObjectrocketV1beta1().SensuCheckConfigs("sensu").Get("testCheckConfig", metav1.GetOptions{})
+				k8sCheck, err := c.SensuCRCli.ObjectrocketV1beta1().SensuCheckConfigs("sensu").Get(ctx, "testCheckConfig", metav1.GetOptions{})
 				if err != nil {
 					return errors.New("failed to find checkconfig in k8s")
 				}

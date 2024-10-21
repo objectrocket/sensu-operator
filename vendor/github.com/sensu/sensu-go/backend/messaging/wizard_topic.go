@@ -21,12 +21,26 @@ func (t *wizardTopic) Send(msg interface{}) {
 		subscribers = append(subscribers, subscriber)
 	}
 	t.RUnlock()
+
 	for _, subscriber := range subscribers {
-		select {
-		case subscriber.Receiver() <- msg:
-		case <-t.done:
-			return
-		}
+		topicCounter.WithLabelValues(t.id).Set(float64(len(subscriber.Receiver())))
+		safeSend(subscriber.Receiver(), msg, t.done)
+	}
+}
+
+// safeSend can attempt to send to a closed channel without panicking.
+// This is only necessary because of a design flaw in wizard bus. Do not
+// use this elsewhere.
+//
+// The topic reads the subscribers and then releases its lock, in Send(). In rare cases,
+// cancelling a subscription can lead to a send on a closed channel.
+func safeSend(c chan<- interface{}, message interface{}, done chan struct{}) {
+	defer func() {
+		_ = recover()
+	}()
+	select {
+	case c <- message:
+	case <-done:
 	}
 }
 

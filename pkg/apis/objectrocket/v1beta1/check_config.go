@@ -15,9 +15,8 @@
 package v1beta1
 
 import (
-	crdutil "github.com/objectrocket/sensu-operator/pkg/util/k8sutil/conversionutil"
-	sensu_go_v2 "github.com/sensu/sensu-go/api/core/v2"
-	k8s_api_extensions_v1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	sensu_go_v2 "github.com/sensu/core/v2"
+	k8s_api_extensions_v1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -49,6 +48,7 @@ type SensuCheckConfigSpec struct {
 	// Command is the command to be executed.
 	Command string `json:"command"`
 	// Handlers are the event handler for the check (incidents and/or metrics).
+	//+listType=set
 	Handlers []string `json:"handlers,omitempty"`
 	// HighFlapThreshold is the flap detection high threshold (% state change) for
 	// the check. Sensu uses the same flap detection algorithm as Nagios.
@@ -61,14 +61,17 @@ type SensuCheckConfigSpec struct {
 	// Publish indicates if check requests are published for the check
 	Publish bool `json:"publish,omitempty"`
 	// RuntimeAssets are a list of assets required to execute check.
+	//+listType=set
 	RuntimeAssets []string `json:"runtimeAssets,omitempty"`
 	// Subscriptions is the list of subscribers for the check.
+	//+listType=set
 	Subscriptions []string `json:"subscriptions"`
 	// ExtendedAttributes store serialized arbitrary JSON-encoded data
 	ExtendedAttributes []byte `json:"-"`
 	// Sources indicates the name of the entity representing an external resource
 	ProxyEntityName string `json:"proxyEntityName,omitempty"`
 	// CheckHooks is the list of check hooks for the check
+	//+listType=set
 	CheckHooks []HookList `json:"checkHooks,omitempty"`
 	// STDIN indicates if the check command accepts JSON via stdin from the agent
 	Stdin bool `json:"stdin,omitempty"`
@@ -89,9 +92,11 @@ type SensuCheckConfigSpec struct {
 	OutputMetricFormat string `json:"outputMetricFormat,omitempty"`
 	// OutputOutputMetricHandlers is the list of event handlers that will respond to metrics
 	// that have been extracted from the check.
+	//+listType=set
 	OutputMetricHandlers []string `json:"outputMetricHandlers,omitempty"`
 	// EnvVars is the list of environment variables to set for the check's
 	// execution environment.
+	//+listType=set
 	EnvVars []string `json:"envVars,omitempty"`
 	// Metadata contains the sensu name, sensu clusterName, sensu namespace, sensu labels and sensu annotations of the check
 	SensuMetadata ObjectMeta `json:"sensuMetadata,omitempty"`
@@ -255,7 +260,161 @@ func (c SensuCheckConfig) ToSensuType() *sensu_go_v2.CheckConfig {
 	return checkConfig
 }
 
+/*
 // GetCustomResourceValidation returns the asset's resource validation
 func (c SensuCheckConfig) GetCustomResourceValidation() *k8s_api_extensions_v1beta1.CustomResourceValidation {
-	return crdutil.GetCustomResourceValidation("github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.SensuCheckConfig", GetOpenAPIDefinitions)
+	schemaProps := crdutil.GetCustomResourceValidation(
+		"github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.SensuCheckConfig",
+		GetOpenAPIDefinitions,
+	)
+
+	return &k8s_api_extensions_v1beta1.CustomResourceValidation{
+		OpenAPIV3Schema: schemaProps,
+	}
+}*/
+// GetCustomResourceValidation returns the check config's resource validation
+func (c SensuCheckConfig) GetCustomResourceValidation() *k8s_api_extensions_v1beta1.CustomResourceValidation {
+	return &k8s_api_extensions_v1beta1.CustomResourceValidation{
+		OpenAPIV3Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
+			Type: "object",
+			Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
+				"kind": {
+					Type: "string",
+				},
+				"apiVersion": {
+					Type: "string",
+				},
+				"metadata": {
+					Type: "object",
+				},
+				"spec": {
+					Type: "object",
+					Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
+						"command": {
+							Type: "string",
+						},
+						"handlers": {
+							Type: "array",
+							Items: &k8s_api_extensions_v1beta1.JSONSchemaPropsOrArray{
+								Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
+									Type: "string",
+								},
+							},
+						},
+						"highFlapThreshold": {
+							Type: "integer",
+						},
+						"interval": {
+							Type: "integer",
+						},
+						"lowFlapThreshold": {
+							Type: "integer",
+						},
+						"publish": {
+							Type: "boolean",
+						},
+						"runtimeAssets": {
+							Type: "array",
+							Items: &k8s_api_extensions_v1beta1.JSONSchemaPropsOrArray{
+								Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
+									Type: "string",
+								},
+							},
+						},
+						"subscriptions": {
+							Type: "array",
+							Items: &k8s_api_extensions_v1beta1.JSONSchemaPropsOrArray{
+								Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
+									Type: "string",
+								},
+							},
+						},
+						"extendedAttributes": {
+							Type: "string",
+						},
+						"proxyEntityName": {
+							Type: "string",
+						},
+						"checkHooks": {
+							Type: "array",
+							Items: &k8s_api_extensions_v1beta1.JSONSchemaPropsOrArray{
+								Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
+									Type: "object",
+									Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
+										"hooks": {
+											Type: "array",
+											Items: &k8s_api_extensions_v1beta1.JSONSchemaPropsOrArray{
+												Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
+													Type: "string",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+						"stdin": {
+							Type: "boolean",
+						},
+						"subdue": {
+							Type: "object",
+						},
+						"cron": {
+							Type: "string",
+						},
+						"ttl": {
+							Type: "integer",
+						},
+						"timeout": {
+							Type: "integer",
+						},
+						"proxyRequests": {
+							Type: "object",
+						},
+						"roundRobin": {
+							Type: "boolean",
+						},
+						"outputMetricFormat": {
+							Type: "string",
+						},
+						"outputMetricHandlers": {
+							Type: "array",
+							Items: &k8s_api_extensions_v1beta1.JSONSchemaPropsOrArray{
+								Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
+									Type: "string",
+								},
+							},
+						},
+						"envVars": {
+							Type: "array",
+							Items: &k8s_api_extensions_v1beta1.JSONSchemaPropsOrArray{
+								Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
+									Type: "string",
+								},
+							},
+						},
+						"sensuMetadata": {
+							Type: "object",
+						},
+						"validation": {
+							Type: "object",
+						},
+					},
+					Required: []string{"command", "subscriptions"},
+				},
+				"status": {
+					Type: "object",
+					Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
+						"accepted": {
+							Type: "boolean",
+						},
+						"lastError": {
+							Type: "string",
+						},
+					},
+				},
+			},
+			Required: []string{"spec", "status"},
+		},
+	}
 }

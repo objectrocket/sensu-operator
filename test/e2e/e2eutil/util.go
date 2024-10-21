@@ -16,6 +16,7 @@ package e2eutil
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -28,9 +29,10 @@ import (
 )
 
 func DeleteSecrets(kubecli kubernetes.Interface, namespace string, secretNames ...string) error {
+	ctx := context.Background()
 	var retErr error
 	for _, sname := range secretNames {
-		err := kubecli.CoreV1().Secrets(namespace).Delete(sname, metav1.NewDeleteOptions(0))
+		err := kubecli.CoreV1().Secrets(namespace).Delete(ctx, sname, *metav1.NewDeleteOptions(0))
 		if err != nil {
 			retErr = fmt.Errorf("failed to delete secret (%s): %v; %v", sname, err, retErr)
 		}
@@ -39,8 +41,9 @@ func DeleteSecrets(kubecli kubernetes.Interface, namespace string, secretNames .
 }
 
 func KillMembers(kubecli kubernetes.Interface, namespace string, names ...string) error {
+	ctx := context.Background()
 	for _, name := range names {
-		err := kubecli.CoreV1().Pods(namespace).Delete(name, metav1.NewDeleteOptions(0))
+		err := kubecli.CoreV1().Pods(namespace).Delete(ctx, name, *metav1.NewDeleteOptions(0))
 		if err != nil && !k8sutil.IsKubernetesResourceNotFoundError(err) {
 			return err
 		}
@@ -49,23 +52,25 @@ func KillMembers(kubecli kubernetes.Interface, namespace string, names ...string
 }
 
 func DeleteDummyDeployment(kubecli kubernetes.Interface, nameSpace, name string) error {
+	ctx := context.Background()
 	gracePeriod := int64(0)
 	deletePolicy := metav1.DeletePropagationBackground
-	deleteOptions := &metav1.DeleteOptions{
+	deleteOptions := metav1.DeleteOptions{
 		GracePeriodSeconds: &gracePeriod,
 		PropagationPolicy:  &deletePolicy,
 	}
-	return kubecli.AppsV1().Deployments(nameSpace).Delete(name, deleteOptions)
+	return kubecli.AppsV1().Deployments(nameSpace).Delete(ctx, name, deleteOptions)
 }
 
 func DeleteDummyPod(kubecli kubernetes.Interface, nameSpace, name string) error {
+	ctx := context.Background()
 	gracePeriod := int64(0)
 	deletePolicy := metav1.DeletePropagationBackground
-	deleteOptions := &metav1.DeleteOptions{
+	deleteOptions := metav1.DeleteOptions{
 		GracePeriodSeconds: &gracePeriod,
 		PropagationPolicy:  &deletePolicy,
 	}
-	return kubecli.CoreV1().Pods(nameSpace).Delete(name, deleteOptions)
+	return kubecli.CoreV1().Pods(nameSpace).Delete(ctx, name, deleteOptions)
 }
 
 func LogfWithTimestamp(t *testing.T, format string, args ...interface{}) {

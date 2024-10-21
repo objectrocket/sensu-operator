@@ -31,7 +31,7 @@ import (
 	"github.com/objectrocket/sensu-operator/pkg/util/retryutil"
 	"github.com/objectrocket/sensu-operator/version"
 
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -39,6 +39,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
+
+	//	"k8s.io/client-go/kubernetes/typed/coordination/v1"
 	v1core "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
@@ -156,13 +158,14 @@ func mainLoop() {
 	kubecli := k8sutil.MustNewKubeClient()
 
 	http.HandleFunc(probe.HTTPReadyzEndpoint, probe.ReadyzHandler)
-	http.Handle("/metrics", prometheus.Handler())
+	http.Handle("/metrics", promhttp.Handler())
 	go http.ListenAndServe(listenAddr, nil)
 
-	rl, err := resourcelock.New(resourcelock.EndpointsResourceLock,
+	rl, err := resourcelock.New(resourcelock.LeasesResourceLock,
 		namespace,
 		"sensu-operator",
 		kubecli.CoreV1(),
+		kubecli.CoordinationV1(),
 		resourcelock.ResourceLockConfig{
 			Identity:      id,
 			EventRecorder: createRecorder(kubecli, name, namespace),
@@ -225,9 +228,10 @@ func newControllerConfig() controller.Config {
 }
 
 func getMyPodServiceAccount(kubecli kubernetes.Interface) (string, error) {
+	ctx := context.Background()
 	var sa string
 	err := retryutil.Retry(5*time.Second, 100, func() (bool, error) {
-		pod, err := kubecli.CoreV1().Pods(namespace).Get(name, metav1.GetOptions{})
+		pod, err := kubecli.CoreV1().Pods(namespace).Get(ctx, name, metav1.GetOptions{})
 		if err != nil {
 			logrus.Errorf("fail to get operator pod (%s): %v", name, err)
 			return false, nil
@@ -241,6 +245,6 @@ func getMyPodServiceAccount(kubecli kubernetes.Interface) (string, error) {
 func createRecorder(kubecli kubernetes.Interface, name, namespace string) record.EventRecorder {
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(logrus.Infof)
-	eventBroadcaster.StartRecordingToSink(&v1core.EventSinkImpl{Interface: v1core.New(kubecli.Core().RESTClient()).Events(namespace)})
+	eventBroadcaster.StartRecordingToSink(&v1core.EventSinkImpl{Interface: v1core.New(kubecli.CoreV1().RESTClient()).Events(namespace)})
 	return eventBroadcaster.NewRecorder(scheme.Scheme, v1.EventSource{Component: name})
 }

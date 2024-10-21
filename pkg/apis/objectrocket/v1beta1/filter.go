@@ -15,9 +15,8 @@
 package v1beta1
 
 import (
-	crdutil "github.com/objectrocket/sensu-operator/pkg/util/k8sutil/conversionutil"
 	sensutypes "github.com/sensu/sensu-go/types"
-	k8s_api_extensions_v1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	k8s_api_extensions_v1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -51,9 +50,11 @@ type SensuEventFilterSpec struct {
 	Action string `json:"action"`
 	// Expressions is an array of boolean expressions that are &&'d together
 	// to determine if the event matches this filter.
+	//+listType=set
 	Expressions []string `json:"expressions"`
 	// Runtime assets are Sensu assets that contain javascript libraries. They
 	// are evaluated within the execution context.
+	//+listType=set
 	RuntimeAssets []string `json:"runtimeAssets,omitempty"`
 
 	// Organization indicates to which org an event filter belongs to
@@ -84,7 +85,81 @@ func (f SensuEventFilter) ToSensuType() *sensutypes.EventFilter {
 }
 
 // GetCustomResourceValidation returns the event filter's resource validation
-func (f SensuEventFilter) GetCustomResourceValidation() *k8s_api_extensions_v1beta1.CustomResourceValidation {
-	return crdutil.GetCustomResourceValidation("github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.SensuEventHandler", GetOpenAPIDefinitions)
+/*func (f SensuEventFilter) GetCustomResourceValidation() *k8s_api_extensions_v1beta1.CustomResourceValidation {
+	schemaProps := crdutil.GetCustomResourceValidation(
+		"github.com/objectrocket/sensu-operator/pkg/apis/objectrocket/v1beta1.SensuEventFilter",
+		GetOpenAPIDefinitions,
+	)
 
+	return &k8s_api_extensions_v1beta1.CustomResourceValidation{
+		OpenAPIV3Schema: schemaProps,
+	}
+
+}*/
+// GetCustomResourceValidation returns the event filter's resource validation
+func (f SensuEventFilter) GetCustomResourceValidation() *k8s_api_extensions_v1beta1.CustomResourceValidation {
+	return &k8s_api_extensions_v1beta1.CustomResourceValidation{
+		OpenAPIV3Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
+			Type: "object",
+			Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
+				"kind": {
+					Type: "string",
+				},
+				"apiVersion": {
+					Type: "string",
+				},
+				"metadata": {
+					Type:       "object",
+					Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
+						// Define ObjectMeta properties here if needed
+					},
+				},
+				"spec": {
+					Type: "object",
+					Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
+						"action": {
+							Type: "string",
+						},
+						"expressions": {
+							Type: "array",
+							Items: &k8s_api_extensions_v1beta1.JSONSchemaPropsOrArray{
+								Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
+									Type: "string",
+								},
+							},
+						},
+						"runtimeAssets": {
+							Type: "array",
+							Items: &k8s_api_extensions_v1beta1.JSONSchemaPropsOrArray{
+								Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
+									Type: "string",
+								},
+							},
+						},
+						"organization": {
+							Type: "string",
+						},
+						"sensuMetadata": {
+							Type: "object",
+							// Define SensuMetadata properties here if needed
+						},
+					},
+					Required: []string{"action", "expressions", "sensuMetadata"}, // Adjust according to your requirements
+				},
+				"status": {
+					Type: "object",
+					Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
+						"accepted": {
+							Type: "boolean",
+						},
+						"lastError": {
+							Type: "string",
+						},
+					},
+					Required: []string{"accepted"}, // Define required fields if any
+				},
+			},
+			Required: []string{"spec", "status"}, // Define required fields at the root level
+		},
+	}
 }
