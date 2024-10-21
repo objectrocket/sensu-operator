@@ -335,7 +335,7 @@ func CreateNetPolicy(kubecli kubernetes.Interface, clusterName, namespace string
 			ObjectMeta: metav1.ObjectMeta{
 				GenerateName: "sensu-block-all-",
 				Labels:       labels,
-				Namespace:    metav1.NamespaceDefault,
+				Namespace:    namespace,
 			},
 			Spec: networkingv1.NetworkPolicySpec{
 				PodSelector: metav1.LabelSelector{
@@ -348,7 +348,7 @@ func CreateNetPolicy(kubecli kubernetes.Interface, clusterName, namespace string
 			ObjectMeta: metav1.ObjectMeta{
 				GenerateName: "sensu-api-pods-",
 				Labels:       labels,
-				Namespace:    metav1.NamespaceDefault,
+				Namespace:    namespace,
 			},
 			Spec: networkingv1.NetworkPolicySpec{
 				PodSelector: metav1.LabelSelector{
@@ -376,7 +376,7 @@ func CreateNetPolicy(kubecli kubernetes.Interface, clusterName, namespace string
 			ObjectMeta: metav1.ObjectMeta{
 				GenerateName: "sensu-operator-pods-",
 				Labels:       labels,
-				Namespace:    metav1.NamespaceDefault,
+				Namespace:    namespace,
 			},
 			Spec: networkingv1.NetworkPolicySpec{
 				PodSelector: metav1.LabelSelector{
@@ -409,7 +409,7 @@ func CreateNetPolicy(kubecli kubernetes.Interface, clusterName, namespace string
 			ObjectMeta: metav1.ObjectMeta{
 				GenerateName: "sensu-cluster-pods-",
 				Labels:       labels,
-				Namespace:    metav1.NamespaceDefault,
+				Namespace:    namespace,
 			},
 			Spec: networkingv1.NetworkPolicySpec{
 				PodSelector: metav1.LabelSelector{
@@ -441,7 +441,9 @@ func CreateNetPolicy(kubecli kubernetes.Interface, clusterName, namespace string
 	for _, net := range netCases {
 		addOwnerRefToObject(net.GetObjectMeta(), owner)
 		if _, err := kubecli.NetworkingV1().NetworkPolicies(namespace).Create(ctx, &net, metav1.CreateOptions{}); err != nil {
-			return err
+			//err = fmt.Printf("errored: %v :::::::: %v", err, *net)
+
+			return fmt.Errorf("errored: %v :::::::: %v:: %v---%v", err, net.ObjectMeta, net.Spec, metav1.NamespaceDefault)
 		}
 	}
 	return nil
@@ -631,6 +633,12 @@ cat /etc/sensu/backend.yml
 `, token, clusterName, m.Namespace, options)},
 					VolumeMounts: []v1.VolumeMount{configVolumeMount},
 				},
+				/*{
+					Image: imageNameBusybox(cs.Pod),
+					Name:  "volume-mount-hack",
+					Command: []string{"sh", "-c", "chown -R 1000:1000  /var/lib/sensu/etcd;"},
+					VolumeMounts: []v1.VolumeMount{configVolumeMountData},
+				},*/
 			},
 			Containers:    []v1.Container{container},
 			RestartPolicy: v1.RestartPolicyAlways,

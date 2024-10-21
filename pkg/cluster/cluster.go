@@ -105,7 +105,7 @@ func New(config Config, cl *api.SensuCluster) *Cluster {
 	go func() {
 		c.logger.Infof("creating NetworkPolicy for cluster %s", c.cluster.Name)
 		if err := k8sutil.CreateNetPolicy(c.config.KubeCli, c.cluster.Name, c.cluster.Namespace, c.cluster.AsOwner()); err != nil {
-			c.logger.Warningf("failed to create network policies for cluster %s: %v", c.cluster.Name, err)
+			c.logger.Warningf("failed to create network policies for cluster %s: %v:::%v::%v", c.cluster.Name, c.cluster.Namespace, c.cluster.AsOwner(), err)
 		}
 		if err := c.setup(); err != nil {
 			c.logger.Errorf("cluster failed to setup: %v", err)
