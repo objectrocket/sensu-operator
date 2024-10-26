@@ -102,6 +102,7 @@ func (a SensuHandler) ToSensuType() *sensutypes.Handler {
 
 // GetCustomResourceValidation rreturns the handlers's resource validation
 func (a SensuHandler) GetCustomResourceValidation() *k8s_api_extensions_v1beta1.CustomResourceValidation {
+	trueVal := true
 	return &k8s_api_extensions_v1beta1.CustomResourceValidation{
 		OpenAPIV3Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
 			Type: "object", // Ensure the root type is defined
@@ -162,7 +163,19 @@ func (a SensuHandler) GetCustomResourceValidation() *k8s_api_extensions_v1beta1.
 						},
 						"sensuMetadata": {
 							Type: "object",
+							Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
+								"name": {
+									Type: "string",
+								},
+								"clusterName": {
+									Type: "string",
+								},
+								"namespace": {
+									Type: "string",
+								},
+							},
 							// Define SensuMetadata properties if needed
+							XPreserveUnknownFields: &trueVal,
 						},
 						"validation": {
 							Type: "object",
@@ -176,7 +189,7 @@ func (a SensuHandler) GetCustomResourceValidation() *k8s_api_extensions_v1beta1.
 					// Define properties for Status if needed
 				},
 			},
-			Required: []string{"spec", "status"}, // Ensure these required fields are defined correctly
+			Required: []string{"spec"}, // Ensure these required fields are defined correctly
 		},
 	}
 }

@@ -630,6 +630,7 @@ cat >> /etc/sensu/backend.yml <<EOL
 %s
 EOL
 cat /etc/sensu/backend.yml
+
 `, token, clusterName, m.Namespace, options)},
 					VolumeMounts: []v1.VolumeMount{configVolumeMount},
 				},

@@ -98,6 +98,7 @@ func (f SensuEventFilter) ToSensuType() *sensutypes.EventFilter {
 }*/
 // GetCustomResourceValidation returns the event filter's resource validation
 func (f SensuEventFilter) GetCustomResourceValidation() *k8s_api_extensions_v1beta1.CustomResourceValidation {
+	trueVal := true
 	return &k8s_api_extensions_v1beta1.CustomResourceValidation{
 		OpenAPIV3Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
 			Type: "object",
@@ -141,7 +142,19 @@ func (f SensuEventFilter) GetCustomResourceValidation() *k8s_api_extensions_v1be
 						},
 						"sensuMetadata": {
 							Type: "object",
-							// Define SensuMetadata properties here if needed
+							Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
+								"name": {
+									Type: "string",
+								},
+								"clusterName": {
+									Type: "string",
+								},
+								"namespace": {
+									Type: "string",
+								},
+							},
+							// Define SensuMetadata properties if needed
+							XPreserveUnknownFields: &trueVal,
 						},
 					},
 					Required: []string{"action", "expressions", "sensuMetadata"}, // Adjust according to your requirements
@@ -159,7 +172,7 @@ func (f SensuEventFilter) GetCustomResourceValidation() *k8s_api_extensions_v1be
 					Required: []string{"accepted"}, // Define required fields if any
 				},
 			},
-			Required: []string{"spec", "status"}, // Define required fields at the root level
+			Required: []string{"spec"}, // Define required fields at the root level
 		},
 	}
 }

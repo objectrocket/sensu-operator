@@ -8,7 +8,7 @@ import (
 
 const (
 	platformSensuClusterName    = "sensu"
-	platformSensuNamespace      = "platform"
+	platformSensuNamespace      = "sensu"
 	platformKubernetesNamespace = "sensu"
 )
 

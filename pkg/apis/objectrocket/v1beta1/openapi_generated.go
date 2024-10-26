@@ -78,7 +78,7 @@ func schema_pkg_apis_objectrocket_v1beta1_SensuAsset(ref common.ReferenceCallbac
 						},
 					},
 				},
-				Required: []string{"spec", "status"},
+				Required: []string{"spec"},
 			},
 		},
 		Dependencies: []string{
@@ -180,7 +180,7 @@ func schema_pkg_apis_objectrocket_v1beta1_SensuCheckConfig(ref common.ReferenceC
 						},
 					},
 				},
-				Required: []string{"spec", "status"},
+				Required: []string{"spec"},
 			},
 		},
 		Dependencies: []string{
@@ -433,7 +433,7 @@ func schema_pkg_apis_objectrocket_v1beta1_SensuEventFilter(ref common.ReferenceC
 						},
 					},
 				},
-				Required: []string{"spec", "status"},
+				Required: []string{"spec"},
 			},
 		},
 		Dependencies: []string{
@@ -545,7 +545,7 @@ func schema_pkg_apis_objectrocket_v1beta1_SensuHandler(ref common.ReferenceCallb
 						},
 					},
 				},
-				Required: []string{"spec", "status"},
+				Required: []string{"spec"},
 			},
 		},
 		Dependencies: []string{
