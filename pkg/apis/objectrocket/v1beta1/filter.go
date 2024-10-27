@@ -157,7 +157,7 @@ func (f SensuEventFilter) GetCustomResourceValidation() *k8s_api_extensions_v1be
 							XPreserveUnknownFields: &trueVal,
 						},
 					},
-					Required: []string{"action", "expressions", "sensuMetadata"}, // Adjust according to your requirements
+					Required: []string{"action", "expressions"}, // Adjust according to your requirements
 				},
 				"status": {
 					Type: "object",
@@ -169,7 +169,6 @@ func (f SensuEventFilter) GetCustomResourceValidation() *k8s_api_extensions_v1be
 							Type: "string",
 						},
 					},
-					Required: []string{"accepted"}, // Define required fields if any
 				},
 			},
 			Required: []string{"spec"}, // Define required fields at the root level

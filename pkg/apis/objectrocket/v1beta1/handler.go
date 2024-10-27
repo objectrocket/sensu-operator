@@ -177,16 +177,42 @@ func (a SensuHandler) GetCustomResourceValidation() *k8s_api_extensions_v1beta1.
 							// Define SensuMetadata properties if needed
 							XPreserveUnknownFields: &trueVal,
 						},
+						"runtimeAssets": {
+							Type: "array",
+							Items: &k8s_api_extensions_v1beta1.JSONSchemaPropsOrArray{
+								Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
+									Type: "string",
+								},
+							},
+							XPreserveUnknownFields: &trueVal,
+						},
+						"envVars": {
+							Type: "array",
+							Items: &k8s_api_extensions_v1beta1.JSONSchemaPropsOrArray{
+								Schema: &k8s_api_extensions_v1beta1.JSONSchemaProps{
+									Type: "string",
+								},
+							},
+							XPreserveUnknownFields: &trueVal,
+						},
 						"validation": {
 							Type: "object",
 							// Define properties as needed
 						},
 					},
-					Required: []string{"sensuMetadata"}, // Adjust according to your requirements
+					XPreserveUnknownFields: &trueVal,
+					//Required: []string{"sensuMetadata"}, // Adjust according to your requirements
 				},
 				"status": {
 					Type: "object",
-					// Define properties for Status if needed
+					Properties: map[string]k8s_api_extensions_v1beta1.JSONSchemaProps{
+						"accepted": {
+							Type: "boolean",
+						},
+						"lastError": {
+							Type: "string",
+						},
+					},
 				},
 			},
 			Required: []string{"spec"}, // Ensure these required fields are defined correctly

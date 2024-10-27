@@ -146,7 +146,6 @@ func (a SensuAsset) GetCustomResourceValidation() *k8s_api_extensions_v1beta1.Cu
 							// Define SensuMetadata properties if needed
 						},
 					},
-					Required:               []string{"sensuMetadata"}, // Adjust according to your requirements
 					XPreserveUnknownFields: &trueVal,
 				},
 				"status": {

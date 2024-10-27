@@ -393,6 +393,7 @@ func (c SensuCheckConfig) GetCustomResourceValidation() *k8s_api_extensions_v1be
 									Type: "string",
 								},
 							},
+							XPreserveUnknownFields: &trueVal,
 						},
 						"sensuMetadata": {
 							Type: "object",

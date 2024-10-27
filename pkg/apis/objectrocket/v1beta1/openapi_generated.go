@@ -135,7 +135,7 @@ func schema_pkg_apis_objectrocket_v1beta1_SensuAssetSpec(ref common.ReferenceCal
 						},
 					},
 				},
-				Required: []string{"sensuMetadata"},
+				
 			},
 		},
 		Dependencies: []string{
@@ -497,7 +497,7 @@ func schema_pkg_apis_objectrocket_v1beta1_SensuEventFilterSpec(ref common.Refere
 						},
 					},
 				},
-				Required: []string{"action", "expressions", "sensuMetadata"},
+				Required: []string{"action", "expressions"},
 			},
 		},
 		Dependencies: []string{
@@ -657,7 +657,7 @@ func schema_pkg_apis_objectrocket_v1beta1_SensuHandlerSpec(ref common.ReferenceC
 						},
 					},
 				},
-				Required: []string{"type", "sensuMetadata"},
+				Required: []string{"type"},
 			},
 		},
 		Dependencies: []string{
